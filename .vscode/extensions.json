@@ -10,6 +10,8 @@
         "will-stone.in-any-case",
         "EditorConfig.editorconfig",
         "PKief.material-icon-theme",
+        "GitHub.vscode-pull-request-github",
+        "eamodio.gitlens",
         "Gruntfuggly.todo-tree"
     ]
 }
