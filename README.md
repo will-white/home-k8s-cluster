@@ -121,33 +121,6 @@ Once you have installed Talos or Debian on your nodes, there are six stages to g
 > [!NOTE]
 > For **Talos** skip ahead to ⛵ [**Stage 5**](#-stage-5-install-kubernetes)
 
-#### k3s
-
-📍 _Here we will be running an Ansible playbook to prepare your nodes for running a Kubernetes cluster._
-
-1. Ensure you are able to SSH into your nodes from your workstation using a private SSH key **without a passphrase** (for example using a SSH agent). This lets Ansible interact with your nodes.
-
-3. Install the Ansible dependencies
-
-    ```sh
-    task ansible:deps
-    ```
-
-4. Verify Ansible can view your config and ping your nodes
-
-    ```sh
-    task ansible:list
-    task ansible:ping
-    ```
-
-5. Run the Ansible prepare playbook (nodes wil reboot when done)
-
-    ```sh
-    task ansible:run playbook=cluster-prepare
-    ```
-
-6. Continue on to ⛵ [**Stage 5**](#-stage-5-install-kubernetes)
-
 ### ⛵ Stage 5: Install Kubernetes
 
 #### Talos
@@ -159,14 +132,6 @@ Once you have installed Talos or Debian on your nodes, there are six stages to g
     ```
 
 2. ⚠️ It might take a while for the cluster to be setup (10+ minutes is normal), during which time you will see a variety of error messages like: "couldn't get current server API group list," "error: no matching resources found", etc. This is a normal. If this step gets interrupted, e.g. by pressing <kbd>Ctrl</kbd> + <kbd>C</kbd>, you likely will need to [nuke the cluster](#-Nuke) before trying again.
-
-#### k3s
-
-1. Install Kubernetes depending on the distribution you chose
-
-    ```sh
-    task ansible:run playbook=cluster-installation
-    ```
 
 #### Cluster validation
 
@@ -295,8 +260,6 @@ By default Flux will periodically check your git repository for changes. In orde
 There might be a situation where you want to destroy your Kubernetes cluster. This will completely clean the OS of all traces of the Kubernetes distribution you chose and then reboot the nodes.
 
 ```sh
-# k3s: Remove all traces of k3s from the nodes
-task ansible:run playbook=cluster-nuke
 # Talos: Reset your nodes back to maintenance mode and reboot
 task talos:soft-nuke
 # Talos: Comletely format your the Talos installation and reboot
