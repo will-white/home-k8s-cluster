@@ -19,14 +19,14 @@ spec:
     cleanupOnFail: true
     remediation:
       strategy: rollback
-      retries: 3
+      retries: 10
   values:
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
-        runAsUser: 568
-        runAsGroup: 568
-        fsGroup: 568
+        runAsUser: 473
+        runAsGroup: 473
+        fsGroup: 473
         fsGroupChangePolicy: OnRootMismatch
         supplementalGroups: [10000]
         seccompProfile: { type: RuntimeDefault }
@@ -78,7 +78,7 @@ spec:
                 memory: 100Mi
                 cpu: 100m
               limits:
-                memory: 3Gi
+                memory: 4Gi
     service:
       app:
         controller: *app

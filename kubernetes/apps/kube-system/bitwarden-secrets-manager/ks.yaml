@@ -8,6 +8,8 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
+  dependsOn:
+    - name: kubernetes-replicator
   path: "./kubernetes/apps/kube-system/bitwarden-secrets-manager/app"
   prune: true
   sourceRef:

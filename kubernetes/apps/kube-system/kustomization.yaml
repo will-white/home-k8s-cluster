@@ -5,8 +5,9 @@ resources:
   - ./namespace.yaml
   - ./bitwarden-secrets-manager/ks.yaml
   - ./cilium/ks.yaml
-  - ./metrics-server/ks.yaml
-  - ./kubernetes-replicator/ks.yaml
-  - ./reloader/ks.yaml
+  - ./coredns/ks.yaml
   - ./kubelet-csr-approver/ks.yaml
+  - ./kubernetes-replicator/ks.yaml
+  - ./metrics-server/ks.yaml
+  - ./reloader/ks.yaml
   - ./spegel/ks.yaml

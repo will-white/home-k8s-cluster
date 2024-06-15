@@ -10,7 +10,7 @@ cgroup:
   hostRoot: /sys/fs/cgroup
 cluster:
   id: 1
-  name: main-cluster
+  name: home-kubernetes
 cni:
   exclusive: false
 containerRuntime:

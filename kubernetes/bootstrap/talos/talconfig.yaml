@@ -5,7 +5,7 @@ talosVersion: v1.7.4
 # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
 kubernetesVersion: v1.30.2
 
-clusterName: &cluster main-cluster
+clusterName: "home-kubernetes"
 endpoint: https://192.168.5.45:6443
 clusterPodNets:
   - "10.69.0.0/16"
@@ -15,6 +15,8 @@ additionalApiServerCertSans: &sans
   - "192.168.5.45"
   - 127.0.0.1 # KubePrism
 additionalMachineCertSans: *sans
+
+# Disable built-in Flannel to use Cilium
 cniConfig:
   name: none
 
@@ -31,10 +33,10 @@ nodes:
         dhcp: false
         addresses:
           - "192.168.5.40/24"
-        mtu: 1500
         routes:
           - network: 0.0.0.0/0
             gateway: "192.168.5.1"
+        mtu: 1500
         vip:
           ip: "192.168.5.45"
   - hostname: "mj0581m7"
@@ -49,10 +51,10 @@ nodes:
         dhcp: false
         addresses:
           - "192.168.5.41/24"
-        mtu: 1500
         routes:
           - network: 0.0.0.0/0
             gateway: "192.168.5.1"
+        mtu: 1500
         vip:
           ip: "192.168.5.45"
   - hostname: "mj0583eq"
@@ -67,10 +69,10 @@ nodes:
         dhcp: false
         addresses:
           - "192.168.5.42/24"
-        mtu: 1500
         routes:
           - network: 0.0.0.0/0
             gateway: "192.168.5.1"
+        mtu: 1500
         vip:
           ip: "192.168.5.45"
   - hostname: "mj05ajfj"
@@ -85,26 +87,10 @@ nodes:
         dhcp: false
         addresses:
           - "192.168.5.50/24"
-        mtu: 1500
         routes:
           - network: 0.0.0.0/0
             gateway: "192.168.5.1"
-  - hostname: "mj04ew44"
-    ipAddress: "192.168.5.51"
-    installDiskSelector:
-      serial: "50026B7686C2A39D"
-    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-    controlPlane: false
-    networkInterfaces:
-      - deviceSelector:
-          hardwareAddr: "00:23:24:bd:ba:21"
-        dhcp: false
-        addresses:
-          - "192.168.5.51/24"
         mtu: 1500
-        routes:
-          - network: 0.0.0.0/0
-            gateway: "192.168.5.1"
   - hostname: "mj0581rw"
     ipAddress: "192.168.5.52"
     installDiskSelector:
@@ -117,10 +103,10 @@ nodes:
         dhcp: false
         addresses:
           - "192.168.5.52/24"
-        mtu: 1500
         routes:
           - network: 0.0.0.0/0
             gateway: "192.168.5.1"
+        mtu: 1500
   - hostname: "mj04968e"
     ipAddress: "192.168.5.53"
     installDiskSelector:
@@ -133,10 +119,10 @@ nodes:
         dhcp: false
         addresses:
           - "192.168.5.53/24"
-        mtu: 1500
         routes:
           - network: 0.0.0.0/0
             gateway: "192.168.5.1"
+        mtu: 1500
   - hostname: "mj05g4ub"
     ipAddress: "192.168.5.54"
     installDiskSelector:
@@ -149,123 +135,26 @@ nodes:
         dhcp: false
         addresses:
           - "192.168.5.54/24"
-        mtu: 1500
         routes:
           - network: 0.0.0.0/0
             gateway: "192.168.5.1"
+        mtu: 1500
 
+# Global patches
 patches:
-  # Configure containerd
-  - |-
-    machine:
-      files:
-        - op: create
-          path: /etc/cri/conf.d/20-customization.part
-          content: |-
-            [plugins."io.containerd.grpc.v1.cri"]
-              enable_unprivileged_ports = true
-              enable_unprivileged_icmp = true
-            [plugins."io.containerd.grpc.v1.cri".containerd]
-              discard_unpacked_layers = false
-            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-              discard_unpacked_layers = false
+  - "@./patches/global/cluster-discovery.yaml"
+  - "@./patches/global/containerd.yaml"
+  - "@./patches/global/disable-search-domain.yaml"
+  - "@./patches/global/hostdns.yaml"
+  - "@./patches/global/kubelet.yaml"
+  - "@./patches/global/openebs-local.yaml"
+  - "@./patches/global/sysctl.yaml"
 
-  # Disable search domain everywhere
-  - |-
-    machine:
-      network:
-        disableSearchDomain: true
-
-  # Enable cluster discovery
-  - |-
-    cluster:
-      discovery:
-        registries:
-          kubernetes:
-            disabled: false
-          service:
-            disabled: false
-
-  # Configure kubelet
-  - |-
-    machine:
-      kubelet:
-        extraArgs:
-          rotate-server-certificates: true
-        nodeIP:
-          validSubnets: ["192.168.5.0/24"]
-
-  # Force nameserver
-  - |-
-    machine:
-      network:
-        nameservers:
-
-  # Configure NTP
-  - |-
-    machine:
-      time:
-        disabled: false
-        servers: ["time.cloudflare.com"]
-
-  # Custom sysctl settings
-  - |-
-    machine:
-      sysctls:
-        fs.inotify.max_queued_events: "65536"
-        fs.inotify.max_user_watches: "524288"
-        fs.inotify.max_user_instances: "8192"
-        net.core.rmem_max: "2500000"
-        net.core.wmem_max: "2500000"
-
-  # Mount openebs-hostpath in kubelet
-  - |-
-    machine:
-      kubelet:
-        extraMounts:
-          - destination: /var/openebs/local
-            type: bind
-            source: /var/openebs/local
-            options: ["bind", "rshared", "rw"]
-
-
-
+# Controller patches
 controlPlane:
   patches:
-    # Cluster configuration
-    - |-
-      cluster:
-        allowSchedulingOnControlPlanes: true
-        controllerManager:
-          extraArgs:
-            bind-address: 0.0.0.0
-        proxy:
-          disabled: true
-        scheduler:
-          extraArgs:
-            bind-address: 0.0.0.0
-
-    # ETCD configuration
-    - |-
-      cluster:
-        etcd:
-          extraArgs:
-            listen-metrics-urls: http://0.0.0.0:2381
-          advertisedSubnets:
-            - "192.168.5.0/24"
-
-    # Disable default API server admission plugins.
-    - |-
-      - op: remove
-        path: /cluster/apiServer/admissionControl
-
-    # Enable K8s Talos API Access
-    - |-
-      machine:
-        features:
-          kubernetesTalosAPIAccess:
-            enabled: true
-            allowedRoles: ["os:admin"]
-            allowedKubernetesNamespaces: ["system-upgrade"]
-
+    - "@./patches/controller/api-access.yaml"
+    - "@./patches/controller/cluster.yaml"
+    - "@./patches/controller/disable-admission-controller.yaml"
+    - "@./patches/controller/etcd.yaml"
 
