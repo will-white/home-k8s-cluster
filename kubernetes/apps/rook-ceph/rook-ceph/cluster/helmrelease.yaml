@@ -4,7 +4,7 @@ metadata:
   name: rook-ceph-cluster
 spec:
   interval: 30m
-  timeout: 15m
+  timeout: 60m
   chart:
     spec:
       chart: rook-ceph-cluster
@@ -29,7 +29,7 @@ spec:
   values:
     monitoring:
       enabled: true
-      createPrometheusRules: true
+      # createPrometheusRules: true
     ingress:
       dashboard:
         ingressClassName: internal
@@ -50,7 +50,7 @@ spec:
         enabled: true
         urlPrefix: /
         ssl: false
-        prometheusEndpoint: http://thanos-query-frontend.observability.svc.cluster.local:10902
+        # prometheusEndpoint: http://thanos-query-frontend.observability.svc.cluster.local:10902
       mgr:
         modules:
           - name: pg_autoscaler
@@ -68,9 +68,10 @@ spec:
       placement:
         mgr: &placement
           nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 1
+                preference:
+                  matchExpressions:
                     - key: node-role.kubernetes.io/control-plane
                       operator: Exists
         mon: *placement
@@ -199,7 +200,7 @@ spec:
                 cpu: 100m
                 memory: 1Gi
               limits:
-                memory: 2Gi
+                memory: 3Gi
             instances: 2
             priorityClassName: system-cluster-critical
           healthCheck:

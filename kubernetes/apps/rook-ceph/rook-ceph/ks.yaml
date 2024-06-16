@@ -10,6 +10,7 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: bitwarden-sm
+    - name: kubernetes-replicator
   path: ./kubernetes/apps/rook-ceph/rook-ceph/app
   prune: false # never should be deleted
   sourceRef:
