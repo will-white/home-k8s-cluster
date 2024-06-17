@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: thanos
-      version: 1.17.2
+      version: 1.17.1
       sourceRef:
         kind: HelmRepository
         name: stevehipwell
@@ -72,7 +72,7 @@ spec:
         size: 10Gi
     query:
       replicas: 2
-      extraArgs: ["--alert.query-url=https://thanos.devbu.io"]
+      extraArgs: ["--alert.query-url=https://thanos.${SECRET_DOMAIN}"]
       additionalStores: ["thanos.turbo.ac:10901"]
     queryFrontend:
       enabled: true
@@ -88,7 +88,7 @@ spec:
         enabled: true
         ingressClassName: internal
         hosts:
-          - thanos.devbu.io
+          - thanos.${SECRET_DOMAIN}
       podAnnotations: &podAnnotations
         configmap.reloader.stakater.com/reload: *configMap
     rule:
