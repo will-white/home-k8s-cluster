@@ -10,6 +10,7 @@ talosconfig
 *.pub
 *.key
 # Private
+*.pem
 .private
 .bin
 # Ansible
