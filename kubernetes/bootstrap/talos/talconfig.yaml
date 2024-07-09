@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json
 ---
 # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-talosVersion: v1.7.5
+talosVersion: v1.7.4
 # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
 kubernetesVersion: v1.30.2
 
@@ -91,6 +91,22 @@ nodes:
           - network: 0.0.0.0/0
             gateway: "192.168.5.1"
         mtu: 1500
+  - hostname: "mj04ew44"
+    ipAddress: "192.168.5.51"
+    installDiskSelector:
+      serial: "50026B7686C2A39D"
+    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+    controlPlane: false
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "6c:0b:84:e0:20:b1"
+        dhcp: false
+        addresses:
+          - "192.168.5.51/24"
+        routes:
+          - network: 0.0.0.0/0
+            gateway: "192.168.5.1"
+        mtu: 1500
   - hostname: "mj0581rw"
     ipAddress: "192.168.5.52"
     installDiskSelector:
@@ -157,4 +173,3 @@ controlPlane:
     - "@./patches/controller/cluster.yaml"
     - "@./patches/controller/disable-admission-controller.yaml"
     - "@./patches/controller/etcd.yaml"
-

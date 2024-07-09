@@ -13,7 +13,6 @@ env:
   TALOSCONFIG: "{{.TALOSCONFIG_FILE}}"
 
 tasks:
-
   bootstrap:
     desc: Bootstrap the Talos cluster
     dir: "{{.KUBERNETES_DIR}}/bootstrap/talos"
