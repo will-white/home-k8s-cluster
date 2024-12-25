@@ -6,7 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 30m
-  url: "https://github.com/will-white/new-cluster.git"
+  url: "https://github.com/will-white/home-k8s-cluster.git"
   secretRef:
     name: github-deploy-key
   ref:
