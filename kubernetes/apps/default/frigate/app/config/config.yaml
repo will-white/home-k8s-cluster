@@ -64,6 +64,8 @@ cameras:
             - record
             - detect
             # - audio # <- only necessary if audio detection is enabled
+    motion:
+      mask: 0.68,0.302,1,0.095,1,0,0.803,0,0.681,0.262
   camera1:
     ffmpeg:
       output_args:
