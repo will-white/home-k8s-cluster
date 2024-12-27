@@ -32,11 +32,11 @@ snapshots:
 record:
   enabled: true
   retain:
-    days: 2
+    days: 1
     mode: motion
   events:
     retain:
-      default: 14
+      default: 7
       mode: active_objects
       objects:
         dog: 2
