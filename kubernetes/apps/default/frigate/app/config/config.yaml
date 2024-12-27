@@ -63,7 +63,7 @@ cameras:
           roles:
             - record
             - detect
-            - audio # <- only necessary if audio detection is enabled
+            # - audio # <- only necessary if audio detection is enabled
   camera1:
     ffmpeg:
       output_args:
@@ -73,8 +73,8 @@ cameras:
           input_args: preset-rtsp-restream
           roles:
             - record
-            - detect
-            - audio # <- only necessary if audio detection is enabled
+            # - detect
+            # - audio # <- only necessary if audio detection is enabled
   camera2:
     ffmpeg:
       output_args:
@@ -84,8 +84,8 @@ cameras:
           input_args: preset-rtsp-restream
           roles:
             - record
-            - detect
-            - audio # <- only necessary if audio detection is enabled
+            # - detect
+            # - audio # <- only necessary if audio detection is enabled
   amcrest1:
     ffmpeg:
       output_args:
@@ -95,8 +95,8 @@ cameras:
           input_args: preset-rtsp-restream
           roles:
             - record
-            - detect
-            - audio # <- only necessary if audio detection is enabled
+            # - detect
+            # - audio # <- only necessary if audio detection is enabled
     # detect:
     #   width: 640
     #   height: 480
