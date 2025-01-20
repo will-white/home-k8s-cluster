@@ -19,8 +19,8 @@ spec:
     encoding: PKCS8
     size: 2048
     rotationPolicy: Always
-  duration: 168h # 7d
-  renewBefore: 24h # 1d
+  duration: 2160h # 90d
+  renewBefore: 720h # 30d
   issuerRef:
     name: self-issuer
     kind: ClusterIssuer
