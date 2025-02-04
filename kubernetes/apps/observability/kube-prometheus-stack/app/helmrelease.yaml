@@ -140,8 +140,8 @@ spec:
         podMonitorSelectorNilUsesHelmValues: false
         probeSelectorNilUsesHelmValues: false
         resources:
-          limits:
-            memory: 2000Mi
+          # limits:
+          #   memory: 4000Mi
           requests:
             cpu: 100m
         retention: 14d
