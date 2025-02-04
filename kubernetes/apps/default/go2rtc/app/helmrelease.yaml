@@ -90,7 +90,7 @@ spec:
           gethomepage.dev/name: go2rtc
         className: internal
         hosts:
-          - host: go2rtc.${SECRET_DOMAIN}
+          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
             paths:
               - path: /
                 service:
