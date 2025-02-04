@@ -8,11 +8,5 @@ resources:
   - ./helmrelease.yaml
   - ../../../../templates/gatus/guarded
   - ../../../../templates/volsync
-configMapGenerator:
-  - name: frigate-configmap
-    files:
-      - config.yaml=./config/config.yaml
 generatorOptions:
   disableNameSuffixHash: true
-  annotations:
-    kustomize.toolkit.fluxcd.io/substitute: disabled

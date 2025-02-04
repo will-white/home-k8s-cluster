@@ -17,11 +17,6 @@ spec:
   install:
     remediation:
       retries: 3
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      strategy: rollback
-      retries: 3
   dependsOn:
     - name: emqx
       namespace: database
@@ -59,9 +54,9 @@ spec:
                   httpGet:
                     path: /api/version
                     port: &port 5000
-                  initialDelaySeconds: 0
-                  periodSeconds: 10
-                  timeoutSeconds: 1
+                  initialDelaySeconds: 30
+                  periodSeconds: 20
+                  timeoutSeconds: 10
                   failureThreshold: 3
               readiness: *probes
               startup:
@@ -103,14 +98,13 @@ spec:
                   identifier: app
                   port: http
     persistence:
-      config:
-        enabled: true
+      database:
         existingClaim: *app
         globalMounts:
           - path: /data
-      config-file:
+      config:
         type: configMap
-        name: frigate-configmap
+        name: frigate-config
         globalMounts:
           - path: /config/config.yaml
             subPath: config.yaml
@@ -124,7 +118,13 @@ spec:
       cache:
         type: emptyDir
         medium: Memory
-        sizeLimit: 4Gi
+        sizeLimit: 1Gi
+        globalMounts:
+          - path: /tmp/cache
+      shm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 1Gi
         globalMounts:
           - path: /dev/shm
       coral:
