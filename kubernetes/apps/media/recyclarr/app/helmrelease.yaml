@@ -1,7 +1,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: recyclarr
+  name: &app recyclarr
 spec:
   interval: 30m
   chart:
@@ -66,7 +66,7 @@ spec:
         seccompProfile: { type: RuntimeDefault }
     persistence:
       config:
-        existingClaim: recyclarr
+        existingClaim: *app
       config-file:
         type: configMap
         name: recyclarr-configmap

@@ -1,7 +1,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: home-assistant
+  name: &app home-assistant
 spec:
   interval: 30m
   chart:
@@ -109,7 +109,7 @@ spec:
                   port: code-server
     persistence:
       config:
-        existingClaim: home-assistant
+        existingClaim: *app
         globalMounts:
           - path: /config
       logs:

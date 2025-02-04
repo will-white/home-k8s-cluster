@@ -1,7 +1,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: sonarr
+  name: &app sonarr
 spec:
   interval: 30m
   chart:
@@ -109,7 +109,7 @@ spec:
                   port: http
     persistence:
       config:
-        existingClaim: sonarr
+        existingClaim: *app
       scripts:
         type: configMap
         name: sonarr-configmap
