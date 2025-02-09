@@ -114,40 +114,20 @@ data:
       showSearchSuggestions: true
       hideVisitURL: true
     layout:
-      Network:
-        # style: row
-        # columns: 3
-        icon: mdi-network
-      # Games:
-      #   style: row
-      #   columns: 3
-      #   icon: mdi-minecraft
+      Home:
+        icon: mdi-home-analytics
       Calendar:
-        style: column
         icon: mdi-calendar
-      Video:
-        style: column
-        icon: mdi-play-circle
-      Books:
-        # style: row
-        # columns: 2
-        icon: mdi-book
+      Downloads:
+        icon: mdi-download-circle
+      Applications:
+        icon: mdi-application
+      Network:
+        icon: mdi-network
       Infrastructure:
-        # style: row
-        # columns: 5
         icon: mdi-server
       Observability:
-        # style: row
-        # columns: 5
         icon: mdi-chart-line
-      Home:
-        # style: row
-        # columns: 5
-        icon: mdi-home-analytics
-      Downloads:
-        # style: row
-        # columns: 3
-        icon: mdi-download-circle
   widgets.yaml: |
     - kubernetes:
         cluster:
