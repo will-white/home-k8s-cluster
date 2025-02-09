@@ -19,7 +19,6 @@ detectors:
 
 ffmpeg:
   global_args: [-hide_banner, -loglevel, info]
-  hwaccel_args: preset-vaapi
 
 snapshots:
   enabled: true
@@ -53,8 +52,6 @@ objects:
 cameras:
   doorbell:
     ffmpeg:
-      output_args:
-        record: preset-record-generic-audio-copy
       inputs:
         - path: rtsp://go2rtc.default.svc.cluster.local:8554/doorbell?mp4
           input_args: preset-rtsp-restream
@@ -66,8 +63,6 @@ cameras:
       mask: 0.68,0.302,1,0.095,1,0,0.803,0,0.681,0.262
   camera1:
     ffmpeg:
-      output_args:
-        record: preset-record-generic-audio-copy
       inputs:
         - path: rtsp://go2rtc.default.svc.cluster.local:8554/camera1?mp4
           input_args: preset-rtsp-restream
