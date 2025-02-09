@@ -2,9 +2,6 @@ apiVersion: v1
 data:
   bookmarks.yaml: |
     - Communicate:
-        - Discord:
-            - icon: discord.png
-              href: 'https://discord.com/app'
         - Gmail:
             - icon: gmail.png
               href: 'http://gmail.com'
@@ -14,33 +11,13 @@ data:
         - Outlook:
             - icon: https://raw.githubusercontent.com/joryirving/home-ops/main/docs/src/assets/icons/outlook.png
               href: 'https://outlook.com'
-    - Media:
-        - YouTube:
-            - icon: youtube.png
-              href: 'https://youtube.com/feed/subscriptions'
-        - Spotify:
-            - icon: spotify.png
-              href: 'http://open.spotify.com'
-        - Youtube Music:
-            - icon: https://raw.githubusercontent.com/joryirving/home-ops/main/docs/src/assets/icons/youtube-music.png
-              href: 'https://music.youtube.com'
-    - Reading:
-        - Beyond:
-            - icon: https://raw.githubusercontent.com/joryirving/home-ops/main/docs/src/assets/icons/beyond.png
-              href: 'https://forums.beyond.ca/search.php?do=getnew&contenttype=vBForum_Post'
-        - Western Subaru Club:
-            - icon: https://raw.githubusercontent.com/joryirving/home-ops/main/docs/src/assets/icons/wsc.png
-              href: 'http://westernsubaruclub.com/smf/index.php?action=unread'
-        - Reddit:
-            - icon: reddit.png
-              href: 'https://reddit.com'
     - Git:
         - kubesearch:
             - icon: kubernetes-dashboard.png
               href: 'https://kubesearch.dev/'
         - home-ops:
             - icon: github.png
-              href: 'https://github.com/joryirving/home-ops'
+              href: 'https://github.com/will-white/home-k8s-cluster'
         - dashboard-icons:
             - icon: github.png
               href: 'https://github.com/walkxcode/dashboard-icons/blob/main/ICONS.md'
@@ -69,12 +46,12 @@ data:
               username: admin
               password: backup
         - Unifi:
-            href: https://unifi.ui.com
+            href: https://unifi.${SECRET_DOMAIN}
             icon: unifi.png
             description: Unifi Dashboard
             widget:
               type: unifi
-              url: https://unifi.default.svc.cluster.local
+              url: http://unifi.default.svc.cluster.local
               username: unpoller
               password: Congenial-Docile-Residency9
     - Calendar:
@@ -109,7 +86,7 @@ data:
             description: NAS
             widget:
               type: truenas
-              url: https://nas.${SECRET_DOMAIN}
+              url: http://192.168.5.10
               username: {{HOMEPAGE_VAR_TRUENAS_USER}}
               password: {{HOMEPAGE_VAR_TRUENAS_PASS}}
               # key: yourtruenasapikey # not required if using username / password
@@ -129,9 +106,6 @@ data:
     favicon: https://github.com/walkxcode/dashboard-icons/blob/main/png/heimdall.png
     useEqualHeights: true
     theme: dark
-    # background:
-    #   image: https://raw.githubusercontent.com/joryirving/home-ops/main/docs/src/assets/101518784_p0.jpg
-    #   opacity: 20
     color: slate
     headerStyle: clean
     quicklaunch:
@@ -187,13 +161,6 @@ data:
           memory: true
           show: true
           showLabel: true
-    - openmeteo:
-        label: Home
-        latitude: {{LATITUDE}}
-        longitude: {{LONGITUDE}}
-        timezone: ${TIMEZONE}
-        units: imperial
-        cache: 5
 kind: ConfigMap
 metadata:
   labels:
