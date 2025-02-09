@@ -1,0 +1,75 @@
+version: 0.15-1
+
+auth:
+  enabled: false
+
+tls:
+  enabled: false
+
+mqtt:
+  enabled: false
+
+database:
+  path: /data/frigate.db
+
+detectors:
+  coral:
+    type: edgetpu
+    device: pci
+
+ffmpeg:
+  global_args: [-hide_banner, -loglevel, info]
+  hwaccel_args: preset-vaapi
+
+snapshots:
+  enabled: true
+  timestamp: true
+  bounding_box: true
+  retain:
+    default: 7
+
+record:
+  enabled: true
+  retain:
+    days: 1
+    mode: motion
+  alerts:
+    retain:
+      days: 7
+  detections:
+    retain:
+      days: 7
+
+objects:
+  track: [person, dog]
+  filters:
+    person:
+      threshold: 0.75
+      min_score: 0.70
+    dog:
+      threshold: 0.75
+      min_score: 0.70
+
+cameras:
+  doorbell:
+    ffmpeg:
+      output_args:
+        record: preset-record-generic-audio-copy
+      inputs:
+        - path: rtsp://go2rtc.default.svc.cluster.local:8554/doorbell?mp4
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+            - detect
+            # - audio # <- only necessary if audio detection is enabled
+    motion:
+      mask: 0.68,0.302,1,0.095,1,0,0.803,0,0.681,0.262
+  camera1:
+    ffmpeg:
+      output_args:
+        record: preset-record-generic-audio-copy
+      inputs:
+        - path: rtsp://go2rtc.default.svc.cluster.local:8554/camera1?mp4
+          input_args: preset-rtsp-restream
+          roles:
+            - record
