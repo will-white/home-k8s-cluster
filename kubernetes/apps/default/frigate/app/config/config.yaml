@@ -1,3 +1,5 @@
+version: 0.15-1
+
 auth:
   enabled: false
 
@@ -20,7 +22,6 @@ detectors:
 
 ffmpeg:
   global_args: [-hide_banner, -loglevel, info]
-  hwaccel_args: preset-vaapi
 
 snapshots:
   enabled: true
@@ -34,13 +35,12 @@ record:
   retain:
     days: 1
     mode: motion
-  events:
+  alerts:
     retain:
-      default: 7
-      mode: active_objects
-      objects:
-        dog: 2
-        car: 7
+      days: 7
+  detections:
+    retain:
+      days: 7
 
 objects:
   track: [person, dog]
@@ -55,10 +55,8 @@ objects:
 cameras:
   doorbell:
     ffmpeg:
-      output_args:
-        record: preset-record-generic-audio-copy
       inputs:
-        - path: rtsp://go2rtc.default.svc.cluster.local:8554/doorbell?mp4 # <--- the name here must match the name of the camera in restream
+        - path: rtsp://go2rtc.default.svc.cluster.local:8554/doorbell?mp4
           input_args: preset-rtsp-restream
           roles:
             - record
@@ -68,44 +66,8 @@ cameras:
       mask: 0.68,0.302,1,0.095,1,0,0.803,0,0.681,0.262
   camera1:
     ffmpeg:
-      output_args:
-        record: preset-record-generic-audio-copy
       inputs:
-        - path: rtsp://go2rtc.default.svc.cluster.local:8554/camera1?mp4 # <--- the name here must match the name of the camera in restream
+        - path: rtsp://go2rtc.default.svc.cluster.local:8554/camera1?mp4
           input_args: preset-rtsp-restream
           roles:
             - record
-            # - detect
-            # - audio # <- only necessary if audio detection is enabled
-  # camera2:
-  #   ffmpeg:
-  #     output_args:
-  #       record: preset-record-generic-audio-copy
-  #     inputs:
-  #       - path: rtsp://go2rtc.default.svc.cluster.local:8554/camera2?mp4 # <--- the name here must match the name of the camera in restream
-  #         input_args: preset-rtsp-restream
-  #         roles:
-  #           - record
-  #           # - detect
-  #           # - audio # <- only necessary if audio detection is enabled
-  # amcrest1:
-  #   ffmpeg:
-  #     output_args:
-  #       record: preset-record-generic-audio-copy
-  #     inputs:
-  #       - path: rtsp://go2rtc.default.svc.cluster.local:8554/amcrest1?mp4 # <--- the name here must match the name of the camera in restream
-  #         input_args: preset-rtsp-restream
-  #         roles:
-  #           - record
-  #           # - detect
-  #           # - audio # <- only necessary if audio detection is enabled
-    # detect:
-    #   width: 640
-    #   height: 480
-    #   fps: 7
-    # objects:
-    #   filters:
-    #     person:
-    #       mask:
-    #         - 960,626,800,617,797,0,960,0
-    #         - 960,0,960,138,0,149,0,0
