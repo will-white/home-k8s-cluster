@@ -36,14 +36,9 @@ spec:
             env:
               MQTT_BROKER_URL: emqx-listeners.database.svc.cluster.local:1883
               MQTT_CLIENT_ID: dahua-companion
-              MQTT_USERNAME: ad410
-              MQTT_PASSWORD: Reveal-Relearn3-Ladies-Preshow
-              HOSTNAME_OR_IP: 192.168.5.198
-              USERNAME: admin
-              PASSWORD: backup90
-            # envFrom:
-            #   - secretRef:
-            #       name: dahua-companion-secret
+            envFrom:
+              - secretRef:
+                  name: dahua-companion-secret
             probes:
               liveness: &probes
                 custom: true
