@@ -44,6 +44,14 @@ spec:
             # envFrom:
             #   - secretRef:
             #       name: dahua-companion-secret
+            probes:
+              liveness: &probes
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: &port 8080
+              startup: *probes
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
