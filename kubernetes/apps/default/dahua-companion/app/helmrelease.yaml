@@ -1,0 +1,81 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app dahua-companion
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  dependsOn:
+    - name: emqx
+      namespace: database
+  values:
+    controllers:
+      dahua-companion:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/will-white/dahua-companion
+              tag: v0.0.1@sha256:543dccf6a37ab8437060abcbf6d6ebfe617aaaa5197c7c2fd36936e83c337c95
+            env:
+              MQTT_BROKER_URL: emqx-listeners.database.svc.cluster.local:1883
+              MQTT_CLIENT_ID: dahua-companion
+              MQTT_USERNAME: ad410
+              MQTT_PASSWORD: Reveal-Relearn3-Ladies-Preshow
+              HOSTNAME_OR_IP: 192.168.5.198
+              USERNAME: admin
+              PASSWORD: backup90
+            # envFrom:
+            #   - secretRef:
+            #       name: dahua-companion-secret
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 10m
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+    # service:
+    #   app:
+    #     controller: dahua-companion
+    #     ports:
+    #       http:
+    #         port: 8123
+    #       code-server:
+    #         port: 12321
+    # ingress:
+    #   app:
+    #     annotations:
+    #       external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+    #     className: external
+    #     hosts:
+    #       - host: hass.${SECRET_DOMAIN}
+    #         paths:
+    #           - path: /
+    #             service:
+    #               identifier: app
+    #               port: http
