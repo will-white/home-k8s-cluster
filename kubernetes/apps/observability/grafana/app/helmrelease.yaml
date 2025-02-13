@@ -88,32 +88,32 @@ spec:
           datasource: Prometheus
           # renovate: depName="Kubernetes / System / API Server"
           gnetId: 15761
-          revision: 18
+          revision: 19
         kubernetes-coredns:
           datasource: Prometheus
           # renovate: depName="Kubernetes / System / CoreDNS"
           gnetId: 15762
-          revision: 19
+          revision: 20
         kubernetes-global:
           datasource: Prometheus
           # renovate: depName="Kubernetes / Views / Global"
           gnetId: 15757
-          revision: 42
+          revision: 43
         kubernetes-namespaces:
           datasource: Prometheus
           # renovate: depName="Kubernetes / Views / Namespaces"
           gnetId: 15758
-          revision: 41
+          revision: 42
         kubernetes-nodes:
           datasource: Prometheus
           # renovate: depName="Kubernetes / Views / Nodes"
           gnetId: 15759
-          revision: 32
+          revision: 34
         kubernetes-pods:
           datasource: Prometheus
           # renovate: depName="Kubernetes / Views / Pods"
           gnetId: 15760
-          revision: 34
+          revision: 36
         kubernetes-volumes:
           datasource: Prometheus
           # renovate: depName="K8s / Storage / Volumes / Cluster"
@@ -140,14 +140,14 @@ spec:
           datasource: Prometheus
           # renovate: depName="Prometheus"
           gnetId: 19105
-          revision: 6
-        smart:
+          revision: 7
+        smartctl-exporter:
           datasource:
             - name: DS_PROMETHEUS
               value: Prometheus
-          # renovate: depName="Dashboard for smartctl_exporter"
-          gnetId: 20204
-          revision: 1
+          # renovate: depName="SMARTctl Exporter Dashboard"
+          gnetId: 22604
+          revision: 2
         unifi-insights:
           datasource: Prometheus
           # renovate: depName="UniFi-Poller: Client Insights - Prometheus"
@@ -195,31 +195,29 @@ spec:
         datasources:
           - access: proxy
             isDefault: true
-            jsonData:
-              timeInterval: 1m
             name: Prometheus
             type: prometheus
             uid: prometheus
             url: http://prometheus-operated.observability.svc.cluster.local:9090
-          # - access: proxy
-          #   jsonData:
-          #     maxLines: 250
-          #   name: Loki
-          #   type: loki
-          #   uid: loki
-          #   url: http://loki-headless.observability.svc.cluster.local:3100
-          # - access: proxy
-          #   jsonData:
-          #     implementation: prometheus
-          #   name: Alertmanager
-          #   type: alertmanager
-          #   uid: alertmanager
-          #   url: http://alertmanager-operated.observability.svc.cluster.local:9093
+          - access: proxy
+            jsonData:
+              maxLines: 250
+            name: Loki
+            type: loki
+            uid: loki
+            url: http://loki-headless.observability.svc.cluster.local:3100
+          - access: proxy
+            jsonData:
+              implementation: prometheus
+            name: Alertmanager
+            type: alertmanager
+            uid: alertmanager
+            url: http://alertmanager-operated.observability.svc.cluster.local:9093
         deleteDatasources:
-          # - name: Alertmanager
-          #   orgId: 1
-          # - name: Loki
-          #   orgId: 1
+          - name: Alertmanager
+            orgId: 1
+          - name: Loki
+            orgId: 1
           - name: Prometheus
             orgId: 1
     deploymentStrategy:

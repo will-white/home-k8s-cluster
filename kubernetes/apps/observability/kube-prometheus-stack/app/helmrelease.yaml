@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -11,20 +12,18 @@ spec:
         kind: HelmRepository
         name: prometheus-community
         namespace: flux-system
-      version: 69.2.2
+      version: 69.2.4
   dependsOn:
     - name: prometheus-operator-crds
       namespace: observability
     - name: rook-ceph-cluster
       namespace: rook-ceph
   install:
-    crds: Skip
     remediation:
       retries: 3
   interval: 30m
   upgrade:
     cleanupOnFail: true
-    crds: Skip
     remediation:
       retries: 3
       strategy: rollback
@@ -60,28 +59,31 @@ spec:
                 expr: node_zfs_zpool_state{state!="online"} > 0
                 labels:
                   severity: critical
-    # alertmanager:
-    #   alertmanagerSpec:
-    #     alertmanagerConfiguration:
-    #       global:
-    #         resolveTimeout: 5m
-    #       name: alertmanager
-    #     externalUrl: https://alertmanager.${SECRET_DOMAIN}
-    #     storage:
-    #       volumeClaimTemplate:
-    #         spec:
-    #           resources:
-    #             requests:
-    #               storage: 1Gi
-    #           storageClassName: ceph-block
-    #   ingress:
-    #     enabled: true
-    #     hosts: ["alertmanager.${SECRET_DOMAIN}"]
-    #     ingressClassName: internal
-    #     pathType: Prefix
+    alertmanager:
+      alertmanagerSpec:
+        alertmanagerConfiguration:
+          global:
+            resolveTimeout: 5m
+          name: alertmanager
+        externalUrl: https://alertmanager.${SECRET_DOMAIN}
+        storage:
+          volumeClaimTemplate:
+            spec:
+              resources:
+                requests:
+                  storage: 1Gi
+              storageClassName: ceph-block
+      ingress:
+        enabled: true
+        hosts: ["alertmanager.${SECRET_DOMAIN}"]
+        ingressClassName: internal
+        pathType: Prefix
     cleanPrometheusOperatorObjectNames: true
     crds:
-      enabled: false
+      enabled: true
+      upgradeJob:
+        enabled: true
+        forceConflicts: true
     grafana:
       enabled: false
       forceDeployDashboards: true
@@ -118,19 +120,8 @@ spec:
           k8s-app: kube-scheduler
     prometheus:
       ingress:
-        annotations:
-          external-dns.alpha.kubernetes.io/target: internal.${SECRET_DOMAIN}
-          gethomepage.dev/app: prometheus
-          gethomepage.dev/description: Monitoring Scrape Service
-          gethomepage.dev/enabled: 'true'
-          gethomepage.dev/group: Observability
-          gethomepage.dev/icon: prometheus.png
-          gethomepage.dev/name: Prometheus
-          gethomepage.dev/widget.type: prometheus
-          gethomepage.dev/widget.url: http://kube-prometheus-stack-prometheus.observability:9090
         enabled: true
-        hosts:
-          - prometheus.${SECRET_DOMAIN}
+        hosts: ["prometheus.${SECRET_DOMAIN}"]
         ingressClassName: internal
         pathType: Prefix
       prometheusSpec:
@@ -140,8 +131,8 @@ spec:
         podMonitorSelectorNilUsesHelmValues: false
         probeSelectorNilUsesHelmValues: false
         resources:
-          # limits:
-          #   memory: 4000Mi
+          limits:
+            memory: 2000Mi
           requests:
             cpu: 100m
         retention: 14d

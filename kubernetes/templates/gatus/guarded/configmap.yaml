@@ -5,6 +5,7 @@ metadata:
   labels:
     gatus.io/enabled: "true"
 data:
+  # body lenght equal to zero to ensure nothing is returned e.g. it's only accesible internally
   config.yaml: |
     endpoints:
       - name: "${APP}"
