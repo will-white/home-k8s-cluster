@@ -120,6 +120,16 @@ spec:
           k8s-app: kube-scheduler
     prometheus:
       ingress:
+        annotations:
+          external-dns.alpha.kubernetes.io/target: internal.${SECRET_DOMAIN}
+          gethomepage.dev/app: prometheus
+          gethomepage.dev/description: Monitoring Scrape Service
+          gethomepage.dev/enabled: 'true'
+          gethomepage.dev/group: Observability
+          gethomepage.dev/icon: prometheus.png
+          gethomepage.dev/name: Prometheus
+          gethomepage.dev/widget.type: prometheus
+          gethomepage.dev/widget.url: http://kube-prometheus-stack-prometheus.observability:9090
         enabled: true
         hosts: ["prometheus.${SECRET_DOMAIN}"]
         ingressClassName: internal
