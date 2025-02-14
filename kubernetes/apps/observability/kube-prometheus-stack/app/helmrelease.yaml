@@ -74,6 +74,13 @@ spec:
                   storage: 1Gi
               storageClassName: ceph-block
       ingress:
+        annotations:
+          gethomepage.dev/app: alertmanager
+          gethomepage.dev/description: Alerting service
+          gethomepage.dev/enabled: 'true'
+          gethomepage.dev/group: Observability
+          gethomepage.dev/icon: alertmanager.png
+          gethomepage.dev/name: Alertmanager
         enabled: true
         hosts: ["alertmanager.${SECRET_DOMAIN}"]
         ingressClassName: internal
@@ -141,8 +148,6 @@ spec:
         podMonitorSelectorNilUsesHelmValues: false
         probeSelectorNilUsesHelmValues: false
         resources:
-          limits:
-            memory: 2000Mi
           requests:
             cpu: 100m
         retention: 14d
