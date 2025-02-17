@@ -30,8 +30,21 @@ spec:
       enableLiveness: true
       serviceMonitor:
         enabled: true
+      pluginTolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+      provisionerTolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+    discover:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
     monitoring:
       enabled: true
+    tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
     resources:
       requests:
         memory: 128Mi # unchangable

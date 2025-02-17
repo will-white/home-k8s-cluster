@@ -27,9 +27,15 @@ spec:
   values:
     master:
       replicaCount: 2
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
     worker:
       config:
         core:
           labelSources: ["pci", "system", "usb"]
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
     prometheus:
       enable: true
