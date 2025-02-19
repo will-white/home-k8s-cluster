@@ -59,10 +59,6 @@ spec:
                   severity: critical
     alertmanager:
       alertmanagerSpec:
-        alertmanagerConfiguration:
-          global:
-            resolveTimeout: 5m
-          name: alertmanager
         externalUrl: https://alertmanager.${SECRET_DOMAIN}
         storage:
           volumeClaimTemplate:
