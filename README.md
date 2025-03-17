@@ -33,6 +33,7 @@ While most of my infrastructure and workloads are self-hosted I do rely upon the
 | Service                                                               | Use                                                               | Cost                |
 |-----------------------------------------------------------------------|-------------------------------------------------------------------|---------------------|
 | [Cloudflare](https://www.cloudflare.com/)                             | Domain(s), Email                                                  | ~$10/yr             |
+| [Private Internet Access](https://www.privateinternetaccess.com/)     | VPN Provider                                                      | ~$40/yr             |
 | [GitHub](https://github.com/)                                         | Hosting this repository and continuous integration/deployments    | Free                |
 | [Bitwarden Secrets](https://bitwarden.com/products/secrets-manager/)  | External Secrets, and secret management                           | Free                |
-|                                                                       |                                                                   | Total: ~10$/yr      |
+|                                                                       |                                                                   | Total: ~50$/yr      |
