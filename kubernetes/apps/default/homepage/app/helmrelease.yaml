@@ -32,6 +32,7 @@ spec:
               tag: v1.0.4
             env:
               TZ: ${TIMEZONE}
+              HOMEPAGE_ALLOWED_HOSTS: dash.${SECRET_DOMAIN}
             envFrom:
               - secretRef:
                   name: homepage-secret
