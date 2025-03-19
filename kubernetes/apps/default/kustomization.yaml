@@ -10,3 +10,4 @@ resources:
   - ./homepage/ks.yaml
   - ./mealie/ks.yaml
   - ./unifi/ks.yaml
+  - ./zigbee2mqtt/ks.yaml
