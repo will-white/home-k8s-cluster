@@ -5,59 +5,52 @@ kind: HelmRelease
 metadata:
   name: zigbee2mqtt
 spec:
-  interval: 30m
   chart:
     spec:
       chart: app-template
-      version: 3.7.3
       sourceRef:
         kind: HelmRepository
         name: bjw-s
         namespace: flux-system
-  install:
-    remediation:
-      retries: 3
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      strategy: rollback
-      retries: 3
+      version: 3.7.3
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
     - name: volsync
       namespace: volsync-system
+  install:
+    remediation:
+      retries: 3
+  interval: 30m
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
   values:
     controllers:
       zigbee2mqtt:
         annotations:
-          reloader.stakater.com/auto: "true"
+          reloader.stakater.com/auto: 'true'
         containers:
           app:
-            image:
-              repository: ghcr.io/koenkk/zigbee2mqtt
-              tag: 2.1.3@sha256:80f82f8fed251acb706a002c51fffab166b25bb18b1aff15f37f85cf3d73c171
             env:
-              TZ: "${TIMEZONE}"
-              ZIGBEE2MQTT_DATA: /config
+              TZ: ${TIMEZONE}
+              ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT: false
               ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_DISCOVERY_TOPIC: homeassistant
-              ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_LEGACY_ENTITY_ATTRIBUTES: false
-              ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_LEGACY_TRIGGERS: false
               ZIGBEE2MQTT_CONFIG_ADVANCED_HOMEASSISTANT_STATUS_TOPIC: homeassistant/status
               ZIGBEE2MQTT_CONFIG_ADVANCED_LAST_SEEN: ISO_8601
-              ZIGBEE2MQTT_CONFIG_ADVANCED_LEGACY_API: false
-              ZIGBEE2MQTT_CONFIG_ADVANCED_LEGACY_AVAILABILITY_PAYLOAD: false
-              ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL: info # debug
+              ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_LEVEL: info
               ZIGBEE2MQTT_CONFIG_ADVANCED_LOG_OUTPUT: '["console"]'
               ZIGBEE2MQTT_CONFIG_AVAILABILITY_ACTIVE_TIMEOUT: 60
               ZIGBEE2MQTT_CONFIG_AVAILABILITY_PASSIVE_TIMEOUT: 2000
-              ZIGBEE2MQTT_CONFIG_DEVICE_OPTIONS_LEGACY: false
               ZIGBEE2MQTT_CONFIG_DEVICE_OPTIONS_RETAIN: true
               ZIGBEE2MQTT_CONFIG_EXPERIMENTAL_NEW_API: true
-              ZIGBEE2MQTT_CONFIG_FRONTEND: false
-              ZIGBEE2MQTT_CONFIG_FRONTEND_PORT: &port 80
-              ZIGBEE2MQTT_CONFIG_FRONTEND_URL: &host zigbee.${SECRET_DOMAIN}
-              ZIGBEE2MQTT_CONFIG_HOMEASSISTANT: true
+              ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED: true
+              ZIGBEE2MQTT_CONFIG_FRONTEND_PORT: 80
+              ZIGBEE2MQTT_CONFIG_FRONTEND_URL: zigbee.${SECRET_DOMAIN}
+              ZIGBEE2MQTT_CONFIG_HOMEASSISTANT: false
+              ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_ENABLED: true
               ZIGBEE2MQTT_CONFIG_MQTT_INCLUDE_DEVICE_INFORMATION: true
               ZIGBEE2MQTT_CONFIG_MQTT_KEEPALIVE: 60
               ZIGBEE2MQTT_CONFIG_MQTT_REJECT_UNAUTHORIZED: true
@@ -68,9 +61,13 @@ spec:
               ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE: 115200
               ZIGBEE2MQTT_CONFIG_SERIAL_DISABLE_LED: false
               ZIGBEE2MQTT_CONFIG_SERIAL_PORT: tcp://192.168.5.237:6638
+              ZIGBEE2MQTT_DATA: /config
             envFrom:
               - secretRef:
                   name: zigbee2mqtt-secret
+            image:
+              repository: ghcr.io/koenkk/zigbee2mqtt
+              tag: 2.1.3@sha256:80f82f8fed251acb706a002c51fffab166b25bb18b1aff15f37f85cf3d73c171
             probes:
               liveness:
                 enabled: true
@@ -81,39 +78,35 @@ spec:
                 spec:
                   failureThreshold: 30
                   periodSeconds: 10
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities: { drop: ["ALL"] }
             resources:
-              requests:
-                cpu: 10m
               limits:
                 memory: 1Gi
+              requests:
+                cpu: 10m
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              readOnlyRootFilesystem: true
     defaultPodOptions:
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
-        seccompProfile: { type: RuntimeDefault }
-    service:
-      app:
-        controller: zigbee2mqtt
-        ports:
-          http:
-            port: *port
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
     ingress:
       app:
-        className: internal
         annotations:
-          gethomepage.dev/enabled: "true"
+          gethomepage.dev/enabled: 'true'
           gethomepage.dev/group: Home
-          gethomepage.dev/name: Zigbee
           gethomepage.dev/icon: mdi-radio
+          gethomepage.dev/name: Zigbee
+        className: internal
         hosts:
-          - host: *host
+          - host: zigbee.${SECRET_DOMAIN}
             paths:
               - path: /
                 service:
@@ -122,3 +115,9 @@ spec:
     persistence:
       config:
         existingClaim: zigbee2mqtt
+    service:
+      app:
+        controller: zigbee2mqtt
+        ports:
+          http:
+            port: 80
