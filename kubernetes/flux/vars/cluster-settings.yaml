@@ -10,7 +10,6 @@ data:
   TORRENTS_LB: 192.168.5.24
   UNIFI_LB: 192.168.5.25
   AMBIENTWEATHER_LB: 192.168.5.26
-  zigbee2mqtt_lb: 192.168.5.27
 kind: ConfigMap
 metadata:
   name: cluster-settings
