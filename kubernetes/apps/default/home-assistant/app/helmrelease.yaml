@@ -89,6 +89,15 @@ spec:
     ingress:
       app:
         annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/group: Home
+          gethomepage.dev/name: Home Assistant
+          gethomepage.dev/icon: home-assistant.png
+          gethomepage.dev/description: Home Automation Software
+          gethomepage.dev/widget.type: homeassistant
+          gethomepage.dev/widget.url: http://home-assistant.default:8123
+          gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_HASS_TOKEN}}` }}"
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=home-assistant
           external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
         className: external
         hosts:

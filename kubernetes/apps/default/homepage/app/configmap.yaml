@@ -36,24 +36,25 @@ data:
               tunnelid: {{HOMEPAGE_VAR_CLOUDFLARED_TUNNELID}}
               key: {{HOMEPAGE_VAR_CLOUDFLARED_API_TOKEN}}
               fields: ["status"]
+        - OPNSense:
+            href: https://opnsense.${SECRET_DOMAIN}
+            icon: opnsense.png
+            description: OPNSense status
+            # widget:
+            #   type: opnsense
+            #   url: https://opnsense.${SECRET_DOMAIN}
+            #   username: {{HOMEPAGE_VAR_OPNSENSE_USERNAME}}
+            #   password: {{HOMEPAGE_VAR_OPNSENSE_PASSWORD}}
+            #   # wan: opt1 # optional, defaults to wan
         - AdGuard Home:
             href: https://adguard.${SECRET_DOMAIN}
             icon: adguard-home.png
             description: Adguard Home Status
-            widget:
-              type: adguard
-              url: https://192.168.5.2
-              username: admin
-              password: backup
-        - Unifi:
-            href: https://unifi.${SECRET_DOMAIN}
-            icon: unifi.png
-            description: Unifi Dashboard
-            widget:
-              type: unifi
-              url: http://unifi.default.svc.cluster.local
-              username: unpoller
-              password: Congenial-Docile-Residency9
+            # widget:
+            #   type: adguard
+            #   url: https://adguard.${SECRET_DOMAIN}
+            #   username: {{HOMEPAGE_VAR_ADGUARD_USERNAME}}
+            #   password: {{HOMEPAGE_VAR_ADGUARD_PASSWORD}}
     - Calendar:
         - Agenda:
             widget:
@@ -72,35 +73,43 @@ data:
                 #   service_name: Readarr # service name for that widget
     - Infrastructure:
         - Portainer:
-            href: &url http://192.168.5.5:9002
+            href: &url https://portainer.${SECRET_DOMAIN}
             icon: portainer.png
             description: Docker Container Management
-            widget:
-              type: portainer
-              url: http://192.168.5.5:9002
-              env: 2
-              key: {{HOMEPAGE_VAR_PORTAINER_TOKEN}}
+            # widget:
+            #   type: portainer
+            #   url: https://portainer.${SECRET_DOMAIN}
+            #   env: 2
+            #   key: {{HOMEPAGE_VAR_PORTAINER_TOKEN}}
         - TrueNAS:
             href: https://nas.${SECRET_DOMAIN}
             icon: truenas-core.png
             description: NAS
-            widget:
-              type: truenas
-              url: http://192.168.5.10
-              username: {{HOMEPAGE_VAR_TRUENAS_USER}}
-              password: {{HOMEPAGE_VAR_TRUENAS_PASS}}
-              # key: yourtruenasapikey # not required if using username / password
-              enablePools: true # optional, defaults to false
-              nasType: scale # defaults to scale, must be set to 'core' if using enablePools with TrueNAS Core
+            # widget:
+            #   type: truenas
+            #   url: https://nas.${SECRET_DOMAIN}
+            #   username: {{HOMEPAGE_VAR_TRUENAS_USERNAME}}
+            #   password: {{HOMEPAGE_VAR_TRUENAS_PASSWORD}}
+            #   # key: yourtruenasapikey # not required if using username / password
+            #   enablePools: true # optional, defaults to false
+            #   nasType: scale # defaults to scale, must be set to 'core' if using enablePools with TrueNAS Core
+        - S3:
+            href: https://s3.${SECRET_DOMAIN}
+            icon: minio.png
+            description: Minio S3 blob storage used mainly for K8s replicas
+        - Netboot:
+            href: https://netboot.${SECRET_DOMAIN}
+            icon: netboot.png
+            description: IPXE controller
     - Home:
-        - Home-Assistant:
-            href: https://hass.${SECRET_DOMAIN}
-            icon: home-assistant.png
-            description: Home Automation Software
-            widget:
-              type: homeassistant
-              url: http://home-assistant.default.svc.cluster.local:8123
-              key: {{HOMEPAGE_VAR_HASS_TOKEN}}
+        - Plex:
+            href: https://plex.${SECRET_DOMAIN}
+            icon: plex.png
+            description: PLEX media player and library manager
+            # widget:
+            #   type: plex
+            #   url: https://plex.${SECRET_DOMAIN}
+            #   key: {{HOMEPAGE_VAR_PLEX_PASSWORD}} # see https://www.plexopedia.com/plex-media-server/general/plex-token/
   settings.yaml: |
     title: Dashboard
     favicon: https://github.com/walkxcode/dashboard-icons/blob/main/png/heimdall.png

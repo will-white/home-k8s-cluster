@@ -56,6 +56,16 @@ spec:
             port: 9000
     ingress:
       app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/group: Home
+          gethomepage.dev/name: Mealie
+          gethomepage.dev/icon: mealie.png
+          gethomepage.dev/description: Self hosted recipe manager, meal planner and shopping list
+          gethomepage.dev/widget.type: mealie
+          gethomepage.dev/widget.url: http://mealie.default:9000
+          gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_MEALIE_API_KEY}}` }}"
+          gethomepage.dev/widget.version: "2"
         className: internal
         hosts:
           - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"

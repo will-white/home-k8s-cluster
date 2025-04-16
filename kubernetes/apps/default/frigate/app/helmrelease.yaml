@@ -82,7 +82,7 @@ spec:
           gethomepage.dev/enabled: "true"
           gethomepage.dev/name: Frigate
           gethomepage.dev/description: NVR with realtime local object detection for IP cameras
-          gethomepage.dev/group: Applications
+          gethomepage.dev/group: Home
           gethomepage.dev/icon: frigate.png
         className: internal
         enabled: true

@@ -74,6 +74,14 @@ spec:
     ingress:
       app:
         annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/group: Downloads
+          gethomepage.dev/name: Overseerr
+          gethomepage.dev/icon: overseerr.png
+          gethomepage.dev/description: Application for managing requests for the media library
+          gethomepage.dev/widget.type: overseerr
+          gethomepage.dev/widget.url: http://overseerr.media
+          gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_OVERSEERR_API_KEY}}` }}"
           external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
         className: external
         hosts:

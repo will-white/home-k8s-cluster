@@ -89,7 +89,7 @@ spec:
         annotations:
           gethomepage.dev/enabled: 'true'
           gethomepage.dev/group: Home
-          gethomepage.dev/icon: mdi-radio
+          gethomepage.dev/icon: zigbee2mqtt.png
           gethomepage.dev/name: Zigbee
         className: internal
         hosts:
