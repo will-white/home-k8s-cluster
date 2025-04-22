@@ -73,3 +73,11 @@ cameras:
           input_args: preset-rtsp-restream
           roles:
             - record
+  mechanical:
+    ffmpeg:
+      inputs:
+        - path: rtsp://go2rtc.default.svc.cluster.local:8554/mechanical?mp4
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+            - audio
