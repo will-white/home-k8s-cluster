@@ -1,12 +1,52 @@
 {
   "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
   "name": "Flux Cluster Template",
-  "image": "ghcr.io/onedr0p/cluster-template/devcontainer:latest",
-  "initializeCommand": "docker pull ghcr.io/onedr0p/cluster-template/devcontainer:latest",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": "false",
+      "installOhMyZsh": "false",
+      "upgradePackages": "true",
+      "username": "vscode",
+      "userUid": "1000",
+      "userGid": "1000"
+    },
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.22"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    },
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": "true",
+      "installDockerBuildx": "true",
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers-contrib/features/flux:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers-contrib/features/fish-persistence:1": {},
+    "ghcr.io/warrenbuckley/codespace-features/task:1": {
+      "version": "latest"
+    },
+    "ghcr.io/audacioustux/devcontainer-features/direnv:1": {}
+  },
   "postCreateCommand": {
-    "setup": "bash ${containerWorkspaceFolder}/.devcontainer/postCreateCommand.sh"
+    "fisher": "bash -c \"$(curl -sL https://git.io/fisher)\" && fish -c \"fisher install jorgebucaran/fisher && fisher update && fisher install decors/fish-colored-man edc/bass jorgebucaran/autopair.fish nickeb96/puffer-fish PatrickF1/fzf.fish\"",
+    "workstation-venv": "task workstation:venv"
   },
   "postStartCommand": {
     "git": "git config --global --add safe.directory ${containerWorkspaceFolder}"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker"
+      ]
+    }
   }
 }
