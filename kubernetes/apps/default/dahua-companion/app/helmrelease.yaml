@@ -41,11 +41,13 @@ spec:
                   name: dahua-companion-secret
             probes:
               liveness: &probes
+                enabled: true
                 custom: true
                 spec:
                   httpGet:
                     path: /health
                     port: 8080
+              readiness: *probes
               startup: *probes
             securityContext:
               allowPrivilegeEscalation: false
