@@ -26,14 +26,12 @@
       "version": "latest",
       "dockerDashComposeVersion": "v2"
     },
-    "ghcr.io/devcontainers-contrib/features/flux:1": {
+    "ghcr.io/jsburckhardt/devcontainer-features/flux:1": {
       "version": "latest"
     },
-    "ghcr.io/devcontainers-contrib/features/fish-persistence:1": {},
-    "ghcr.io/warrenbuckley/codespace-features/task:1": {
-      "version": "latest"
-    },
-    "ghcr.io/audacioustux/devcontainer-features/direnv:1": {}
+    "ghcr.io/nikobockerman/devcontainer-features/fish-persistent-data:2": {},
+    "ghcr.io/eitsupi/devcontainer-features/go-task:1": {},
+    "ghcr.io/devcontainers-community/features/direnv:1": {}
   },
   "postCreateCommand": {
     "fisher": "bash -c \"$(curl -sL https://git.io/fisher)\" && fish -c \"fisher install jorgebucaran/fisher && fisher update && fisher install decors/fish-colored-man edc/bass jorgebucaran/autopair.fish nickeb96/puffer-fish PatrickF1/fzf.fish\"",
