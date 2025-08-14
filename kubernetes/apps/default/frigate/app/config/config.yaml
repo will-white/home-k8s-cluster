@@ -53,19 +53,19 @@ objects:
       min_score: 0.70
 
 cameras:
-  doorbell:
-    ffmpeg:
-      output_args:
-        record: preset-record-generic-audio-copy
-      inputs:
-        - path: rtsp://go2rtc.default.svc.cluster.local:8554/doorbell?mp4
-          input_args: preset-rtsp-restream
-          roles:
-            - record
-            - detect
-            # - audio # <- only necessary if audio detection is enabled
-    motion:
-      mask: 0.68,0.302,1,0.095,1,0,0.803,0,0.681,0.262
+  # doorbell:
+  #   ffmpeg:
+  #     # output_args:
+  #     #   record: preset-record-generic-audio-copy
+  #     inputs:
+  #       - path: rtsp://go2rtc.default.svc.cluster.local:8554/doorbell?mp4
+  #         input_args: preset-rtsp-restream
+  #         roles:
+  #           - record
+  #           - detect
+  #           # - audio # <- only necessary if audio detection is enabled
+  #   motion:
+  #     mask: 0.68,0.302,1,0.095,1,0,0.803,0,0.681,0.262
   camera1:
     ffmpeg:
       inputs:
