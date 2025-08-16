@@ -32,7 +32,7 @@ spec:
           app:
             image:
               repository: ghcr.io/will-white/dahua-companion
-              tag: v0.0.1@sha256:543dccf6a37ab8437060abcbf6d6ebfe617aaaa5197c7c2fd36936e83c337c95
+              tag: v0.1.1@sha256:79f72f0bc91a8d275500667ff8532f6871731741d9bead985e022514887c1303
             env:
               MQTT_BROKER_URL: emqx-listeners.database.svc.cluster.local:1883
               MQTT_CLIENT_ID: dahua-companion
