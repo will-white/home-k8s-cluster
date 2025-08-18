@@ -59,7 +59,7 @@ cameras:
         record: preset-record-generic-audio-copy
       inputs:
         - path: rtsp://go2rtc.default.svc.cluster.local:8554/doorbell?mp4
-          input_args: preset-rtsp-restream
+          input_args: preset-rtsp-restream-low-latency
           roles:
             - record
             - detect

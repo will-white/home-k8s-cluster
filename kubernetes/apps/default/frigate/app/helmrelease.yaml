@@ -95,7 +95,7 @@ spec:
                   port: http
     persistence:
       database:
-        existingClaim: *app
+        existingClaim: frigate-v15
         globalMounts:
           - path: /data
       config:
