@@ -39,10 +39,10 @@ spec:
           app:
             image:
               repository: ghcr.io/blakeblackshear/frigate
-              tag: 0.15.2
+              tag: 0.16.0
             env:
               TZ: ${TIMEZONE}
-              LIBVA_DRIVER_NAME: i965
+              LIBVA_DRIVER_NAME: iHD
             envFrom:
               - secretRef:
                   name: frigate-secret
@@ -95,7 +95,7 @@ spec:
                   port: http
     persistence:
       database:
-        existingClaim: frigate-v15
+        existingClaim: *app
         globalMounts:
           - path: /data
       config:
