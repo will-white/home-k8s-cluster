@@ -64,6 +64,7 @@ spec:
       csi:
         readAffinity:
           enabled: true
+          crushLocationLabels: ["kubernetes.io/hostname"] #TODO: Remove once https://github.com/rook/rook/pull/16376 is pushed up
       dashboard:
         enabled: true
         prometheusEndpoint: http://prometheus-operated.observability.svc.cluster.local:9090
