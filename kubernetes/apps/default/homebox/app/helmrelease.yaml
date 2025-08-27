@@ -43,6 +43,7 @@ spec:
               HBOX_DATABASE_DRIVER: postgres
               HBOX_OPTIONS_CHECK_GITHUB_RELEASE: false
               HBOX_LOG_FORMAT: json
+              HBOX_DATABASE_SSL_MODE: require
               TZ: ${TIMEZONE}
             envFrom: *envFrom
             resources:
