@@ -1,0 +1,74 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app headlamp
+  namespace: flux-system
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: headlamp
+  dependsOn:
+    - name: external-secrets-bitwarden
+  install:
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    podAnnotations:
+      reloader.stakater.com/auto: "true"
+    fullnameOverride: headlamp
+    initContainers:
+      - image: ghcr.io/headlamp-k8s/headlamp-plugin-flux:v0.4.0@sha256:8d14174a166e2ccb2080a9f745b2ce8e19587ff8a2f41753eb1294875e650474
+        command:
+          - /bin/sh
+          - -c
+          - mkdir -p /build/plugins && cp -r /plugins/* /build/plugins/
+        name: headlamp-plugins
+        volumeMounts:
+          - mountPath: /build/plugins
+            name: headlamp-plugins
+    config:
+      pluginsDir: /build/plugins
+      oidc-client-id:
+        valueFrom:
+          secretKeyRef:
+            name: headlamp-oidc-secret
+            key: OIDC_CLIENT_ID
+      oidc-client-secret:
+        valueFrom:
+          secretKeyRef:
+            name: headlamp-oidc-secret
+            key: OIDC_CLIENT_SECRET
+      oidc-idp-issuer-url: "https://auth.${SECRET_DOMAIN}"
+      oidc-scopes: "openid, profile, email, groups"
+    serviceAccount:
+      create: false
+      name: headlamp-admin
+    clusterRoleBinding:
+      create: false
+    volumeMounts:
+      - mountPath: /build/plugins
+        name: headlamp-plugins
+    volumes:
+      - name: headlamp-plugins
+        emptyDir: {}
+    ingress:
+      enabled: true
+      className: "internal"
+      annotations:
+        hajimari.io/enable: "true"
+        hajimari.io/icon: "developer-board"
+        hajimari.io/group: "System"
+      hosts:
+        - host: &host "headlamp.${SECRET_DOMAIN}"
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+      tls:
+        - hosts:
+            - *host
