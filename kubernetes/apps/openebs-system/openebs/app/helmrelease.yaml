@@ -4,23 +4,27 @@ kind: HelmRelease
 metadata:
   name: openebs
 spec:
-  interval: 30m
   chart:
     spec:
       chart: openebs
-      version: 4.3.3
       sourceRef:
         kind: HelmRepository
         name: openebs
         namespace: flux-system
+      version: 4.3.3
   install:
+    disableHooks: true
     remediation:
-      retries: 3
+      retries: -1
+  interval: 30m
   upgrade:
     cleanupOnFail: true
+    disableHooks: true
     remediation:
       retries: 3
   values:
+    alloy:
+      enabled: false
     engines:
       local:
         lvm:
@@ -30,19 +34,31 @@ spec:
       replicated:
         mayastor:
           enabled: false
-    openebs-crds:
-      csi:
-        volumeSnapshots:
-          enabled: false
     localpv-provisioner:
-      localpv:
-        image:
-          registry: quay.io/
       helperPod:
         image:
           registry: quay.io/
       hostpathClass:
+        basePath: /var/mnt/local-hostpath
         enabled: true
-        name: openebs-hostpath
         isDefaultClass: false
-        basePath: /var/openebs/local
+        name: openebs-hostpath
+      localpv:
+        basePath: /var/mnt/local-hostpath
+        image:
+          registry: quay.io/
+    loki:
+      enabled: false
+    lvm-localpv:
+      enabled: false
+    mayastor:
+      enabled: false
+    minio:
+      enabled: false
+    openebs-crds:
+      csi:
+        volumeSnapshots:
+          enabled: false
+          keep: false
+    zfs-localpv:
+      enabled: false
