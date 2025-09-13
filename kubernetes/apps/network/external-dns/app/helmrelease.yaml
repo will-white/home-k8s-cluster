@@ -28,16 +28,11 @@ spec:
   values:
     fullnameOverride: *app
     provider:
-       name: cloudflare
-    env:
-      - name: CF_API_TOKEN
-        valueFrom:
-          secretKeyRef:
-            name: external-dns-secret
-            key: api-token
+       name: webhook
+       webhook:
+         url: http://external-dns-adguard-webhook.network.svc.cluster.local
     extraArgs:
       - --ingress-class=external
-      - --cloudflare-proxied
       - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
       - --crd-source-kind=DNSEndpoint
     policy: sync
@@ -47,5 +42,3 @@ spec:
     domainFilters: ["${SECRET_DOMAIN}"]
     serviceMonitor:
       enabled: true
-    podAnnotations:
-      secret.reloader.stakater.com/reload: external-dns-secret
