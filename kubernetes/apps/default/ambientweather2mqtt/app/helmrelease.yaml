@@ -24,7 +24,7 @@ spec:
           ambientweather2mqtt:
             image:
               repository: ghcr.io/neilenns/ambientweather2mqtt
-              tag: v4.10.0@sha256:d37f8c46067c7ca4fcdfe9e200c8577b7723d5d9b8482730bb13459219d807ff
+              tag: v5.0.1@sha256:a9d9899ebf9c2af9378c275e83ead6ced841fe9d051a6aec4e10e25eb5193e21
             env:
               MQTT_SERVER: http://emqx-listeners.database.svc.cluster.local:1883
               PORT: &port 80
