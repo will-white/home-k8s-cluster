@@ -81,7 +81,7 @@ cd ..
 ```bash
 # NEVER CANCEL: Configure cluster manifests - takes 30-60 seconds
 # This processes templates and encrypts secrets
-# NOTE: Requires bootstrap directory - may not be available in production repository
+# NOTE: Requires the kubernetes/bootstrap directory, which is present in this repository
 task configure
 
 # NEVER CANCEL: Validate Kubernetes manifests - takes 3-30 seconds depending on network
@@ -95,7 +95,7 @@ The repository requires Python tools for template processing:
 
 ```bash
 # Virtual environment is required for makejinja
-source .venv/bin/activate  # If not using direnv
+source .venv/bin/activate  # Not needed if using direnv, because .envrc sets VIRTUAL_ENV
 
 # Verify makejinja installation
 .venv/bin/makejinja --version
@@ -123,7 +123,7 @@ task kubernetes:resources
 ### Manual Validation Scenarios
 For substantial changes, perform these validation scenarios:
 
-1. **Manifest Changes**: Run `task kubernetes:kubeconform` and verify all 340+ YAML files validate correctly
+1. **Manifest Changes**: Run `task kubernetes:kubeconform` and verify all YAML files validate correctly
 2. **Application Changes**: Test specific app deployment with `task kubernetes:apply-ks PATH=apps/namespace/app-name`
 3. **Secret Changes**: Verify SOPS encryption works: `sops --encrypt --in-place test-secret.sops.yaml`
 4. **Template Changes**: Re-run `task configure` and check generated manifests
@@ -213,7 +213,7 @@ task kubernetes:reconcile
 ## Common Tasks
 
 ### Working with Applications
-The cluster manages 420+ applications across these main categories:
+The cluster manages 420+ Kubernetes resources across these main categories:
 - **Media**: Radarr, Sonarr, Bazarr, qBittorrent, Overseerr, Prowlarr (kubernetes/apps/media/)
 - **Database**: PostgreSQL, Redis (kubernetes/apps/database/)
 - **Monitoring**: Prometheus, Grafana (kubernetes/apps/observability/)
@@ -256,6 +256,7 @@ The repository includes devcontainer configuration with:
 export KUBECONFIG="./kubeconfig"              # Kubernetes config
 export SOPS_AGE_KEY_FILE="./age.key"          # SOPS encryption key
 export VIRTUAL_ENV="./.venv"                  # Python virtual environment
+# TALOSCONFIG is generated during Talos bootstrap (see bootstrap docs)
 export TALOSCONFIG="./kubernetes/bootstrap/talos/clusterconfig/talosconfig"
 ```
 
