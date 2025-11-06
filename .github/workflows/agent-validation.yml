@@ -1,0 +1,298 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "Agent Validation"
+
+# This workflow provides non-destructive validation of Kubernetes manifests
+# Safe for automated agents to trigger and rely on for validation
+# Does NOT connect to cluster or access secrets
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+env:
+  KUBERNETES_DIR: ./kubernetes
+
+jobs:
+  validate-manifests:
+    name: Validate Kubernetes Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Validation Tools
+        run: |
+          set -e
+          echo "Installing kubeconform..."
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
+          chmod +x kubeconform
+          sudo mv kubeconform /usr/local/bin/
+          
+          echo "Installing kustomize..."
+          curl -sL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+          
+          echo "Installing yamllint..."
+          sudo apt-get update && sudo apt-get install -y yamllint
+          
+          echo "Verifying installations..."
+          kubeconform -v
+          kustomize version
+          yamllint --version
+
+      - name: Determine Changed Files
+        id: changed-files
+        run: |
+          set -e
+          
+          # Determine the base ref for comparison
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="${{ github.event.pull_request.base.sha }}"
+            echo "Comparing against PR base: $BASE_REF"
+          else
+            # For push events, compare with previous commit
+            BASE_REF="${{ github.event.before }}"
+            echo "Comparing against previous commit: $BASE_REF"
+          fi
+          
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only $BASE_REF...HEAD || echo "")
+          
+          # Filter for kubernetes manifest files
+          CHANGED_K8S_FILES=$(echo "$CHANGED_FILES" | grep -E "^kubernetes/.*\.(yaml|yml)$" || echo "")
+          
+          echo "Changed Kubernetes files:"
+          echo "$CHANGED_K8S_FILES"
+          
+          # Save to file for later steps
+          echo "$CHANGED_K8S_FILES" > /tmp/changed-k8s-files.txt
+          
+          # Find affected kustomization directories
+          KUSTOMIZE_DIRS=""
+          for file in $CHANGED_K8S_FILES; do
+            dir=$(dirname "$file")
+            # Check if directory contains kustomization.yaml
+            while [ "$dir" != "." ] && [ "$dir" != "kubernetes" ]; do
+              if [ -f "$dir/kustomization.yaml" ]; then
+                KUSTOMIZE_DIRS="$KUSTOMIZE_DIRS $dir"
+                break
+              fi
+              dir=$(dirname "$dir")
+            done
+          done
+          
+          # Remove duplicates and save
+          KUSTOMIZE_DIRS=$(echo "$KUSTOMIZE_DIRS" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+          echo "Affected kustomization directories:"
+          echo "$KUSTOMIZE_DIRS"
+          echo "$KUSTOMIZE_DIRS" > /tmp/kustomize-dirs.txt
+
+      - name: Run Kubeconform on Changed Kustomizations
+        id: kubeconform
+        continue-on-error: true
+        run: |
+          set -e
+          mkdir -p ./validation-results
+          
+          KUSTOMIZE_DIRS=$(cat /tmp/kustomize-dirs.txt)
+          
+          if [ -z "$KUSTOMIZE_DIRS" ]; then
+            echo "No kustomization directories changed, skipping kubeconform validation"
+            echo "status=skipped" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Running kubeconform on affected kustomizations..."
+          FAILED=0
+          
+          for dir in $KUSTOMIZE_DIRS; do
+            echo "=== Validating kustomization in $dir ==="
+            OUTPUT_FILE="./validation-results/kubeconform-$(echo $dir | tr '/' '-').txt"
+            
+            if kustomize build "$dir" --load-restrictor=LoadRestrictionsNone > /tmp/manifests.yaml 2>&1; then
+              if kubeconform -strict -ignore-missing-schemas \
+                  -skip "Secret,ExternalSecret,ReplicationSource,ReplicationDestination,HTTPRoute" \
+                  -schema-location default \
+                  -schema-location 'https://kubernetes-schemas.pages.dev/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                  -verbose /tmp/manifests.yaml 2>&1 | tee "$OUTPUT_FILE"; then
+                echo "✓ Validation passed for $dir"
+              else
+                echo "✗ Validation failed for $dir"
+                FAILED=1
+              fi
+            else
+              echo "✗ Failed to build kustomization for $dir" | tee "$OUTPUT_FILE"
+              FAILED=1
+            fi
+          done
+          
+          if [ $FAILED -eq 1 ]; then
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "status=passed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Full Repository Validation
+        id: full-validation
+        continue-on-error: true
+        run: |
+          set -e
+          mkdir -p ./validation-results
+          
+          echo "Running full repository validation using existing script..."
+          if bash ./scripts/kubeconform.sh ./kubernetes 2>&1 | tee ./validation-results/full-kubeconform.txt; then
+            echo "✓ Full repository validation passed"
+            echo "status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "✗ Full repository validation failed"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Check for Unencrypted Secrets
+        id: secret-check
+        continue-on-error: true
+        run: |
+          set -e
+          mkdir -p ./validation-results
+          
+          echo "Checking for unencrypted secrets..."
+          CHANGED_FILES=$(cat /tmp/changed-k8s-files.txt)
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No Kubernetes files changed, skipping secret check"
+            echo "status=skipped" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          UNENCRYPTED_SECRETS=""
+          for file in $CHANGED_FILES; do
+            if [ -f "$file" ]; then
+              # Check if file contains Secret kind
+              if grep -q "kind: Secret" "$file"; then
+                # Check if it's encrypted with SOPS
+                if ! grep -q "sops:" "$file"; then
+                  echo "⚠ WARNING: Potential unencrypted secret in $file"
+                  UNENCRYPTED_SECRETS="$UNENCRYPTED_SECRETS $file"
+                fi
+              fi
+            fi
+          done
+          
+          if [ -n "$UNENCRYPTED_SECRETS" ]; then
+            echo "Found potential unencrypted secrets in:" | tee ./validation-results/secret-check.txt
+            echo "$UNENCRYPTED_SECRETS" | tee -a ./validation-results/secret-check.txt
+            echo "status=warning" >> $GITHUB_OUTPUT
+          else
+            echo "✓ No unencrypted secrets detected" | tee ./validation-results/secret-check.txt
+            echo "status=passed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run YAML Lint
+        id: yamllint
+        continue-on-error: true
+        run: |
+          set -e
+          mkdir -p ./validation-results
+          
+          echo "Running yamllint on Kubernetes manifests..."
+          if yamllint -f parsable kubernetes/ 2>&1 | tee ./validation-results/yamllint.txt; then
+            echo "✓ YAML lint passed"
+            echo "status=passed" >> $GITHUB_OUTPUT
+          else
+            echo "⚠ YAML lint found issues"
+            echo "status=warning" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Validation Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-results
+          path: ./validation-results/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Generate Validation Summary
+        if: always()
+        run: |
+          set -e
+          
+          echo "## Agent Validation Summary" > validation-summary.md
+          echo "" >> validation-summary.md
+          echo "Validation results for commit ${{ github.sha }}" >> validation-summary.md
+          echo "" >> validation-summary.md
+          
+          echo "### Kubeconform (Changed Kustomizations)" >> validation-summary.md
+          if [ "${{ steps.kubeconform.outputs.status }}" = "passed" ]; then
+            echo "✅ Passed" >> validation-summary.md
+          elif [ "${{ steps.kubeconform.outputs.status }}" = "failed" ]; then
+            echo "❌ Failed" >> validation-summary.md
+          else
+            echo "⏭️ Skipped" >> validation-summary.md
+          fi
+          echo "" >> validation-summary.md
+          
+          echo "### Kubeconform (Full Repository)" >> validation-summary.md
+          if [ "${{ steps.full-validation.outputs.status }}" = "passed" ]; then
+            echo "✅ Passed" >> validation-summary.md
+          elif [ "${{ steps.full-validation.outputs.status }}" = "failed" ]; then
+            echo "❌ Failed" >> validation-summary.md
+          else
+            echo "⏭️ Skipped" >> validation-summary.md
+          fi
+          echo "" >> validation-summary.md
+          
+          echo "### Secret Encryption Check" >> validation-summary.md
+          if [ "${{ steps.secret-check.outputs.status }}" = "passed" ]; then
+            echo "✅ Passed - No unencrypted secrets detected" >> validation-summary.md
+          elif [ "${{ steps.secret-check.outputs.status }}" = "warning" ]; then
+            echo "⚠️ Warning - Potential unencrypted secrets found" >> validation-summary.md
+          else
+            echo "⏭️ Skipped" >> validation-summary.md
+          fi
+          echo "" >> validation-summary.md
+          
+          echo "### YAML Lint" >> validation-summary.md
+          if [ "${{ steps.yamllint.outputs.status }}" = "passed" ]; then
+            echo "✅ Passed" >> validation-summary.md
+          elif [ "${{ steps.yamllint.outputs.status }}" = "warning" ]; then
+            echo "⚠️ Warning - Style issues found" >> validation-summary.md
+          else
+            echo "⏭️ Skipped" >> validation-summary.md
+          fi
+          echo "" >> validation-summary.md
+          
+          echo "### Details" >> validation-summary.md
+          echo "Validation artifacts are available in the workflow run." >> validation-summary.md
+          echo "" >> validation-summary.md
+          
+          cat validation-summary.md
+
+      - name: Check Overall Status
+        if: always()
+        run: |
+          # Fail the job if critical validations failed
+          if [ "${{ steps.kubeconform.outputs.status }}" = "failed" ] || \
+             [ "${{ steps.full-validation.outputs.status }}" = "failed" ]; then
+            echo "❌ Critical validations failed"
+            exit 1
+          fi
+          
+          # Warn but don't fail on non-critical issues
+          if [ "${{ steps.secret-check.outputs.status }}" = "warning" ]; then
+            echo "⚠️ Warning: Review potential unencrypted secrets"
+          fi
+          
+          if [ "${{ steps.yamllint.outputs.status }}" = "warning" ]; then
+            echo "⚠️ Warning: YAML lint found style issues"
+          fi
+          
+          echo "✅ All critical validations passed"
