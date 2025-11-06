@@ -1,4 +1,36 @@
-# Home Kubernetes Cluster
+# Copilot Instructions for Home K8s Cluster
+
+> **Note**: This repository includes machine-parseable agent policies. See [agent-config.yaml](./agent-config.yaml) for the canonical policy configuration and the [agent-validation workflow](./.github/workflows/agent-validation.yml) for automated validation checks.
+
+---
+agent_policy:
+  version: 1
+  allowed_actions:
+    - read_repo
+    - run_local_validation
+    - open_pull_request
+    - propose_changes
+  forbidden_actions:
+    - apply_to_cluster
+    - edit_secrets
+    - push_secrets
+    - run_sudo
+    - exfiltrate_data
+  requires_human_approval:
+    - task kubernetes:reconcile
+    - task kubernetes:apply-ks
+    - sops --encrypt
+  env_required:
+    - KUBECONFIG
+    - SOPS_AGE_KEY_FILE
+  recommended_timeouts_seconds:
+    configure: 120
+    install_tools: 300
+  agent_behavior: |
+    Agents must not run cluster-affecting commands without explicit, recorded human approval. Prefer dry-run alternatives. Log all attempted actions in the PR description.
+---
+
+## Overview
 
 This repository manages a home Kubernetes cluster using Talos Linux, Flux GitOps, and Task automation. The cluster runs on multiple Lenovo Tiny machines with CEPH storage and includes comprehensive monitoring, media services, and infrastructure applications.
 
@@ -257,3 +289,47 @@ kustomize build kubernetes/apps/media/radarr | kubeconform -
 - Never commit unencrypted secrets
 - Age public key is in config.yaml, private key is in age.key (gitignored)
 - Always run `task configure` after editing config.yaml to re-encrypt secrets
+
+## Safe Operations (Allowed for Agents)
+
+Agents can safely perform these operations:
+
+1. **Read repository contents** - Browse files, understand structure
+2. **Run local validation** - Execute kubeconform, kustomize build, yamllint
+3. **Propose changes** - Open pull requests with suggested modifications
+4. **Generate documentation** - Update README files and comments
+
+## Dangerous Operations (Human Approval Required)
+
+The following operations require explicit human approval and should be marked with `HUMAN_APPROVAL_REQUIRED:` prefix:
+
+- **HUMAN_APPROVAL_REQUIRED: task kubernetes:reconcile** - Forces Flux to pull changes from Git
+  - Dry-run alternative: `flux diff kustomization cluster --path ./kubernetes`
+  
+- **HUMAN_APPROVAL_REQUIRED: task kubernetes:apply-ks PATH=<path>** - Applies a Flux Kustomization to the cluster
+  - Dry-run alternative: `flux build ks <name> --kustomization-file <file> --path <path> --dry-run`
+  
+- **HUMAN_APPROVAL_REQUIRED: sops --encrypt** - Encrypts secrets with SOPS
+  - Validation alternative: Review the `.sops.yaml` configuration file and verify SOPS config with `sops --config .sops.yaml updatekeys --yes <file>` (Note: SOPS does not support a `--dry-run` flag)
+
+## Best Practices for Agents
+
+1. **Always validate before proposing changes** - Run kubeconform and kustomize build
+2. **Never modify secrets directly** - Use SOPS encryption workflow
+3. **Use dry-run modes** - Test commands with `--dry-run` flag when available
+4. **Document all changes** - Explain the reasoning in PR descriptions
+5. **Respect timeouts** - Some operations take time; don't cancel prematurely
+6. **Check for existing workflows** - Review `.github/workflows/` before adding new validation
+7. **Test locally when possible** - Use local kustomize/kubeconform instead of cluster access
+8. **Flag validation warnings** - Include output of validation commands in PR description
+9. **Summarize impact** - Explain changes made and their impact on the cluster
+
+## Common Pitfalls
+
+- **DON'T** run `task kubernetes:reconcile` without human approval - it affects the live cluster
+- **DON'T** commit unencrypted secrets - always use SOPS
+- **DON'T** modify files in `kubernetes/bootstrap/flux/` without understanding Flux bootstrap process
+- **DON'T** change `.sops.yaml` without verifying age key compatibility
+- **DO** use the existing kubeconform script instead of reinventing validation
+- **DO** respect the load restrictor settings in kustomize commands
+- **DO** test changes against the validation workflow before merging
