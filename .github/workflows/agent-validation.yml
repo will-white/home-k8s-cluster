@@ -20,6 +20,8 @@ jobs:
   validate-manifests:
     name: Validate Kubernetes Manifests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Only need to read repository contents
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
