@@ -132,7 +132,7 @@ jobs:
             # Use unique temp file for this kustomization to avoid conflicts
             TEMP_MANIFEST="./validation-results/manifests-$(echo $dir | tr '/' '-').yaml"
 
-            if kustomize build "$dir" --load-restrictor=LoadRestrictionsNone > "$TEMP_MANIFEST" 2>&1; then
+            if kustomize build "$dir" --load-restrictor=LoadRestrictionsNone > "$TEMP_MANIFEST"; then
               if kubeconform -strict -ignore-missing-schemas \
                   -skip "Secret,ExternalSecret,ReplicationSource,ReplicationDestination,HTTPRoute" \
                   -schema-location default \
@@ -202,8 +202,8 @@ jobs:
           for file in $CHANGED_FILES; do
             if [ -f "$file" ]; then
               # Check if file contains Secret kind as a standalone resource
-              # Use grep with word boundaries to avoid false positives in comments
-              if grep -E "^kind:[[:space:]]*Secret[[:space:]]*$" "$file" > /dev/null; then
+              # Use grep with word boundaries and account for YAML indentation
+              if grep -E "^[[:space:]]*kind:[[:space:]]*Secret[[:space:]]*$" "$file" > /dev/null; then
                 # Check if it's encrypted with SOPS (has sops metadata)
                 if ! grep -q "sops:" "$file"; then
                   echo "⚠ WARNING: Potential unencrypted secret in $file"
