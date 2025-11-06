@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -30,12 +30,17 @@ jobs:
         run: |
           set -e
           echo "Installing kubeconform..."
-          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
+          # Using latest release - in production, pin to specific version
+          KUBECONFORM_VERSION="v0.7.0"
+          curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
           chmod +x kubeconform
           sudo mv kubeconform /usr/local/bin/
 
           echo "Installing kustomize..."
-          curl -sL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          # Using specific version for reproducibility
+          KUSTOMIZE_VERSION="v5.5.0"
+          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
+          chmod +x kustomize
           sudo mv kustomize /usr/local/bin/
 
           echo "Installing yamllint..."
@@ -194,9 +199,10 @@ jobs:
           UNENCRYPTED_SECRETS=""
           for file in $CHANGED_FILES; do
             if [ -f "$file" ]; then
-              # Check if file contains Secret kind
-              if grep -q "kind: Secret" "$file"; then
-                # Check if it's encrypted with SOPS
+              # Check if file contains Secret kind as a standalone resource
+              # Use grep with word boundaries to avoid false positives in comments
+              if grep -E "^kind:[[:space:]]*Secret[[:space:]]*$" "$file" > /dev/null; then
+                # Check if it's encrypted with SOPS (has sops metadata)
                 if ! grep -q "sops:" "$file"; then
                   echo "⚠ WARNING: Potential unencrypted secret in $file"
                   UNENCRYPTED_SECRETS="$UNENCRYPTED_SECRETS $file"
