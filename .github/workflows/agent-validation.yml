@@ -59,6 +59,13 @@ jobs:
             # For push events, compare with previous commit
             BASE_REF="${{ github.event.before }}"
             echo "Comparing against previous commit: $BASE_REF"
+            # Check for initial commit (all zeros)
+            if [ "$BASE_REF" = "0000000000000000000000000000000000000000" ]; then
+              echo "Initial commit detected, skipping file change detection"
+              touch /tmp/changed-k8s-files.txt
+              touch /tmp/kustomize-dirs.txt
+              exit 0
+            fi
           fi
 
           # Get list of changed files
@@ -115,17 +122,22 @@ jobs:
             echo "=== Validating kustomization in $dir ==="
             OUTPUT_FILE="./validation-results/kubeconform-$(echo $dir | tr '/' '-').txt"
 
-            if kustomize build "$dir" --load-restrictor=LoadRestrictionsNone > /tmp/manifests.yaml 2>&1; then
+            # Use unique temp file for this kustomization to avoid conflicts
+            TEMP_MANIFEST="./validation-results/manifests-$(echo $dir | tr '/' '-').yaml"
+
+            if kustomize build "$dir" --load-restrictor=LoadRestrictionsNone > "$TEMP_MANIFEST" 2>&1; then
               if kubeconform -strict -ignore-missing-schemas \
                   -skip "Secret,ExternalSecret,ReplicationSource,ReplicationDestination,HTTPRoute" \
                   -schema-location default \
                   -schema-location 'https://kubernetes-schemas.pages.dev/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
-                  -verbose /tmp/manifests.yaml 2>&1 | tee "$OUTPUT_FILE"; then
+                  -verbose "$TEMP_MANIFEST" 2>&1 | tee "$OUTPUT_FILE"; then
                 echo "✓ Validation passed for $dir"
               else
                 echo "✗ Validation failed for $dir"
                 FAILED=1
               fi
+              # Clean up temp manifest
+              rm -f "$TEMP_MANIFEST"
             else
               echo "✗ Failed to build kustomization for $dir" | tee "$OUTPUT_FILE"
               FAILED=1
@@ -145,6 +157,13 @@ jobs:
         run: |
           set -e
           mkdir -p ./validation-results
+
+          # Check if kubeconform script exists
+          if [ ! -f ./scripts/kubeconform.sh ]; then
+            echo "⚠ Warning: ./scripts/kubeconform.sh not found, skipping full validation"
+            echo "status=skipped" >> $GITHUB_OUTPUT
+            exit 0
+          fi
 
           echo "Running full repository validation using existing script..."
           if bash ./scripts/kubeconform.sh ./kubernetes 2>&1 | tee ./validation-results/full-kubeconform.txt; then
