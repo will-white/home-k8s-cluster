@@ -1,0 +1,42 @@
+---
+# Machine-parseable agent policy configuration
+# This file defines safe and forbidden operations for automated agents
+# working with this Kubernetes cluster repository.
+
+agent_policy:
+  version: 1
+
+  # Actions that agents are permitted to perform
+  allowed_actions:
+    - read_repo
+    - run_local_validation
+    - open_pull_request
+    - propose_changes
+
+  # Actions that agents must never perform
+  forbidden_actions:
+    - apply_to_cluster
+    - edit_secrets
+    - push_secrets
+    - run_sudo
+    - exfiltrate_data
+
+  # Commands/operations that require explicit human approval before execution
+  requires_human_approval:
+    - task kubernetes:reconcile
+    - task kubernetes:apply-ks
+    - sops --encrypt
+
+  # Environment variables required for cluster operations
+  # Agents should verify these exist before attempting cluster operations
+  env_required:
+    - KUBECONFIG
+    - SOPS_AGE_KEY_FILE
+
+  # Recommended timeout values (in seconds) for long-running operations
+  recommended_timeouts_seconds:
+    configure: 120
+    install_tools: 300
+
+  # Behavioral guidelines for agents
+  agent_behavior: "Agents must not run cluster-affecting commands without explicit, recorded human approval. Prefer dry-run alternatives. Log all attempted actions in the PR description."
