@@ -64,7 +64,7 @@ The following operations require explicit human approval and should be marked wi
   - Dry-run alternative: `flux build ks <name> --kustomization-file <file> --path <path> --dry-run`
   
 - **HUMAN_APPROVAL_REQUIRED: sops --encrypt** - Encrypts secrets with SOPS
-  - Validation alternative: Verify SOPS config with `sops --config .sops.yaml updatekeys --yes <file> --dry-run` (if supported)
+  - Validation alternative: Review the `.sops.yaml` configuration file and verify SOPS config with `sops --config .sops.yaml updatekeys --yes <file>` (Note: SOPS does not support a `--dry-run` flag)
 
 ### Configuration Tasks
 
