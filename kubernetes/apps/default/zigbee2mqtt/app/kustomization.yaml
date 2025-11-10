@@ -13,7 +13,7 @@ configMapGenerator:
     literals:
       - NAMESPACE=default
       - GATUS_PORT=80
-      - GATUS_PATH=/api/info
+      - GATUS_PATH=/
   - name: zigbee2mqtt-loki-rules
     files:
       - zigbee2mqtt.yaml=./lokirule.yaml
