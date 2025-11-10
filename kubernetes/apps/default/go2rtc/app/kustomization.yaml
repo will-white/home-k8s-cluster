@@ -11,5 +11,5 @@ configMapGenerator:
     behavior: merge
     literals:
       - NAMESPACE=default
-      - GATUS_PORT=8555
+      - GATUS_PORT=1984
       - GATUS_PATH=/api
