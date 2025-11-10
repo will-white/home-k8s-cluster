@@ -35,6 +35,7 @@ spec:
       - --managed-record-types=AAAA
       - --managed-record-types=TXT
       - --managed-record-types=SRV
+    logLevel: debug
     podAnnotations:
       secret.reloader.stakater.com/reload: adguard-dns-secret
     policy: sync
