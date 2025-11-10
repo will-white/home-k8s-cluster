@@ -6,3 +6,10 @@ resources:
   - ./helmrelease.yaml
   - ../../../../templates/gatus/guarded
   - ../../../../templates/volsync
+configMapGenerator:
+  - name: homebox-gatus-ep
+    behavior: merge
+    literals:
+      - NAMESPACE=default
+      - GATUS_PORT=7745
+      - GATUS_PATH=/api/v1/status

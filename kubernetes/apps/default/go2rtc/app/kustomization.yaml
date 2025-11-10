@@ -6,3 +6,10 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ../../../../templates/gatus/guarded
+configMapGenerator:
+  - name: go2rtc-gatus-ep
+    behavior: merge
+    literals:
+      - NAMESPACE=default
+      - GATUS_PORT=8555
+      - GATUS_PATH=/api

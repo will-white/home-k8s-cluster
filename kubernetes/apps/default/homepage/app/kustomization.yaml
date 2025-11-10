@@ -7,3 +7,10 @@ resources:
   - ./helmrelease.yaml
   - ./rbac.yaml
   - ../../../../templates/gatus/guarded
+configMapGenerator:
+  - name: homepage-gatus-ep
+    behavior: merge
+    literals:
+      - NAMESPACE=default
+      - GATUS_PORT=3000
+      - GATUS_PATH=/api/ping

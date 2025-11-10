@@ -6,3 +6,10 @@ namespace: default
 resources:
   - ./helmrelease.yaml
   - ../../../../templates/gatus/guarded
+configMapGenerator:
+  - name: stirling-pdf-gatus-ep
+    behavior: merge
+    literals:
+      - NAMESPACE=default
+      - GATUS_PORT=8080
+      - GATUS_PATH=/api/v1/info/status

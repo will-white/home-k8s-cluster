@@ -5,3 +5,10 @@ resources:
   - ./helmrelease.yaml
   # - ./scrapeconfig.yaml
   - ../../../../templates/gatus/guarded
+configMapGenerator:
+  - name: kube-prometheus-stack-gatus-ep
+    behavior: merge
+    literals:
+      - NAMESPACE=observability
+      - GATUS_PORT=9090
+      - GATUS_PATH=/-/healthy
