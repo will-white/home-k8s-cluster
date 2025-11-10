@@ -78,7 +78,7 @@ spec:
             value: "false"
     registry: txt
     sources:
-      - gateway-httproute
+      - ingress
       - service
     triggerLoopOnEvent: true
     txtOwnerId: default
