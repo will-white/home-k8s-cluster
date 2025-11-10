@@ -7,7 +7,6 @@ resources:
   - ../../../../templates/volsync
 configMapGenerator:
   - name: home-assistant-gatus-ep
-    behavior: merge
     literals:
       - GATUS_SUBDOMAIN=hass
       - GATUS_PATH=/api/

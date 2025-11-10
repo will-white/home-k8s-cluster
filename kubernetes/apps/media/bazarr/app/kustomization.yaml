@@ -9,7 +9,6 @@ resources:
   - ../../../../templates/volsync
 configMapGenerator:
   - name: bazarr-gatus-ep
-    behavior: merge
     literals:
       - NAMESPACE=media
       - GATUS_PORT=6767

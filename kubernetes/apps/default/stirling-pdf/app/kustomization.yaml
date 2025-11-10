@@ -8,7 +8,6 @@ resources:
   - ../../../../templates/gatus/guarded
 configMapGenerator:
   - name: stirling-pdf-gatus-ep
-    behavior: merge
     literals:
       - NAMESPACE=default
       - GATUS_PORT=8080

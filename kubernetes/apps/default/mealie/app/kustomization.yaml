@@ -8,7 +8,6 @@ resources:
   - ../../../../templates/volsync
 configMapGenerator:
   - name: mealie-gatus-ep
-    behavior: merge
     literals:
       - NAMESPACE=default
       - GATUS_PORT=9000

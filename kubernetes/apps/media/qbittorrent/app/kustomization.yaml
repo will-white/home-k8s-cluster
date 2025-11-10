@@ -7,7 +7,6 @@ resources:
   - ../../../../templates/volsync
 configMapGenerator:
   - name: qbittorrent-gatus-ep
-    behavior: merge
     literals:
       - NAMESPACE=media
       - GATUS_PORT=80

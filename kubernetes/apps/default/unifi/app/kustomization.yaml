@@ -7,7 +7,6 @@ resources:
   - ../../../../templates/volsync
 configMapGenerator:
   - name: unifi-gatus-ep
-    behavior: merge
     literals:
       - NAMESPACE=default
       - GATUS_URL=https://unifi.default.svc.cluster.local:8443/status

@@ -6,7 +6,6 @@ resources:
   - ../../../../templates/gatus/guarded
 configMapGenerator:
   - name: prowlarr-gatus-ep
-    behavior: merge
     literals:
       - NAMESPACE=media
       - GATUS_PORT=80
