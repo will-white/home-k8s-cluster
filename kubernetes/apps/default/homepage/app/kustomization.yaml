@@ -6,10 +6,4 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ./rbac.yaml
-  - ../../../../templates/gatus/guarded
-configMapGenerator:
-  - name: homepage-gatus-ep
-    literals:
-      - NAMESPACE=default
-      - GATUS_PORT=3000
-      - GATUS_PATH=/
+  - ./gatus.yaml

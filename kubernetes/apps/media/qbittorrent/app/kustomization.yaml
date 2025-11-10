@@ -3,14 +3,9 @@ kind: Kustomization
 resources:
   # - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ../../../../templates/gatus/guarded
+  - ./gatus.yaml
   - ../../../../templates/volsync
 configMapGenerator:
-  - name: qbittorrent-gatus-ep
-    literals:
-      - NAMESPACE=media
-      - GATUS_PORT=80
-      - GATUS_PATH=/api/v2/app/version
   - name: qbittorrent-loki-rules
     files:
       - qbittorrent.yaml=./resources/lokirule.yaml

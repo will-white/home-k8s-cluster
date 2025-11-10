@@ -3,11 +3,5 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ../../../../templates/gatus/external
+  - ./gatus.yaml
   - ../../../../templates/volsync
-configMapGenerator:
-  - name: home-assistant-gatus-ep
-    literals:
-      - GATUS_SUBDOMAIN=hass
-      - GATUS_PATH=/api/
-      - GATUS_STATUS=200

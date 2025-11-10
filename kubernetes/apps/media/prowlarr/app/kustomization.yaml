@@ -3,10 +3,4 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ../../../../templates/gatus/guarded
-configMapGenerator:
-  - name: prowlarr-gatus-ep
-    literals:
-      - NAMESPACE=media
-      - GATUS_PORT=80
-      - GATUS_PATH=/api/v1/health
+  - ./gatus.yaml

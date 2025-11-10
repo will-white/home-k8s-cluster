@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: home-assistant-gatus-ep
+  labels:
+    gatus.io/enabled: "true"
+data:
+  config.yaml: |
+    endpoints:
+      - name: home-assistant
+        group: external
+        url: https://hass.${SECRET_DOMAIN}/api/
+        interval: 1m
+        client:
+          dns-resolver: tcp://1.1.1.1:53
+        conditions:
+          - "[STATUS] == 200"
+          - "[RESPONSE_TIME] < 10000"
+        alerts:
+          - type: pushover

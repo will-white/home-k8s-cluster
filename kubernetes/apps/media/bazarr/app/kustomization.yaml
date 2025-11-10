@@ -5,14 +5,9 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ../../../../templates/gatus/guarded
+  - ./gatus.yaml
   - ../../../../templates/volsync
 configMapGenerator:
-  - name: bazarr-gatus-ep
-    literals:
-      - NAMESPACE=media
-      - GATUS_PORT=6767
-      - GATUS_PATH=/api/system/health
   - name: bazarr-scripts
     files:
       - subcleaner.sh=./resources/subcleaner.sh

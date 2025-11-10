@@ -3,13 +3,8 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ../../../../templates/gatus/guarded
+  - ./gatus.yaml
 configMapGenerator:
-  - name: autobrr-gatus-ep
-    literals:
-      - NAMESPACE=media
-      - GATUS_PORT=80
-      - GATUS_PATH=/api/healthz/liveness
   - name: autobrr-loki-rules
     files:
       - autobrr.yaml=./resources/lokirule.yaml

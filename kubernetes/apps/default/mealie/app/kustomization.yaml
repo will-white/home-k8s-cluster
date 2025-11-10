@@ -4,11 +4,5 @@ namespace: default
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ../../../../templates/gatus/guarded
+  - ./gatus.yaml
   - ../../../../templates/volsync
-configMapGenerator:
-  - name: mealie-gatus-ep
-    literals:
-      - NAMESPACE=default
-      - GATUS_PORT=9000
-      - GATUS_PATH=/
