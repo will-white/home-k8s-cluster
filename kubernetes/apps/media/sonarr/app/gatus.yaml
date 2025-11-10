@@ -9,7 +9,7 @@ data:
     endpoints:
       - name: sonarr
         group: guarded
-        url: http://sonarr.media.svc.cluster.local:80/api/v3/health
+        url: http://sonarr.media.svc.cluster.local:80/
         interval: 1m
         ui:
           hide-hostname: true

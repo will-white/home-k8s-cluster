@@ -9,7 +9,7 @@ data:
     endpoints:
       - name: radarr
         group: guarded
-        url: http://radarr.media.svc.cluster.local:80/api/v3/health
+        url: http://radarr.media.svc.cluster.local:80/
         interval: 1m
         ui:
           hide-hostname: true

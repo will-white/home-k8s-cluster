@@ -9,7 +9,7 @@ data:
     endpoints:
       - name: home-assistant
         group: external
-        url: https://hass.${SECRET_DOMAIN}/api/
+        url: https://hass.${SECRET_DOMAIN}/
         interval: 1m
         client:
           dns-resolver: tcp://1.1.1.1:53

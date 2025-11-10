@@ -9,7 +9,7 @@ data:
     endpoints:
       - name: qbittorrent
         group: guarded
-        url: http://qbittorrent.media.svc.cluster.local:80/api/v2/app/version
+        url: http://qbittorrent.media.svc.cluster.local:80/
         interval: 1m
         ui:
           hide-hostname: true
