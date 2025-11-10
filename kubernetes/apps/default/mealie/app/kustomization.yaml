@@ -12,4 +12,4 @@ configMapGenerator:
     literals:
       - NAMESPACE=default
       - GATUS_PORT=9000
-      - GATUS_PATH=/api/app/about
+      - GATUS_PATH=/
