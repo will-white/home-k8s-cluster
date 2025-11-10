@@ -17,7 +17,7 @@ spec:
       kind: HelmRelease
       name: *app
       namespace: *namespace
-  interval: 1h
+  interval: 30m
   path: ./kubernetes/apps/volsync-system/kopia/app
   postBuild:
     substitute:
