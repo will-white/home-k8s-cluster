@@ -1,6 +1,6 @@
-# Copilot Instructions for Home K8s Cluster
+# AGENT Instructions for Home K8s Cluster
 
-> **Note**: This repository includes machine-parseable agent policies. See [agent-config.yaml](./agent-config.yaml) for the canonical policy configuration and the [agent-validation workflow](./.github/workflows/agent-validation.yml) for automated validation checks.
+> **Note**: This repository includes machine-parseable agent policies. See [agent-config.yaml](.github/agent-config.yaml) for the canonical policy configuration and the [agent-validation workflow](.github/workflows/agent-validation.yml) for automated validation checks.
 
 ---
 agent_policy:
@@ -32,9 +32,96 @@ agent_policy:
 
 ## Overview
 
+This is a home Kubernetes cluster managed with Flux, Renovate, and GitHub Actions. The cluster runs on Talos Linux and uses SOPS for secret encryption.
+
 This repository manages a home Kubernetes cluster using Talos Linux, Flux GitOps, and Task automation. The cluster runs on multiple Lenovo Tiny machines with CEPH storage and includes comprehensive monitoring, media services, and infrastructure applications.
 
 **Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
+
+## Repository Structure
+
+- `kubernetes/apps/` - Application manifests and Kustomizations
+- `kubernetes/flux/` - Flux system configuration
+- `kubernetes/bootstrap/` - Bootstrap configuration including Talos patches
+- `.taskfiles/` - Task definitions for cluster management
+- `scripts/` - Helper scripts including kubeconform validation
+
+### Critical Directories
+- `kubernetes/apps/`: All application manifests organized by namespace
+- `kubernetes/bootstrap/`: Cluster bootstrap configurations (Talos, Flux, Helm)
+- `kubernetes/flux/`: Flux GitOps system configuration
+- `.taskfiles/`: Modular Task definitions for automation
+- `scripts/`: Shell scripts for validation and utilities
+
+### Configuration Files
+- `config.yaml`: Main cluster configuration (created from config.sample.yaml)
+- `Taskfile.yaml`: Main task runner configuration
+- `requirements.txt`: Python dependencies for template processing
+- `.sops.yaml`: Secret encryption configuration
+- `.envrc`: Environment variables (if using direnv)
+
+## Working with this Repository
+
+### Safe Operations (Allowed for Agents)
+
+Agents can safely perform these operations:
+
+1. **Read repository contents** - Browse files, understand structure
+2. **Run local validation** - Execute kubeconform, kustomize build, yamllint
+3. **Propose changes** - Open pull requests with suggested modifications
+4. **Generate documentation** - Update README files and comments
+
+### Dangerous Operations (Human Approval Required)
+
+The following operations require explicit human approval and should be marked with `HUMAN_APPROVAL_REQUIRED:` prefix:
+
+- **HUMAN_APPROVAL_REQUIRED: task kubernetes:reconcile** - Forces Flux to pull changes from Git
+  - Dry-run alternative: `flux diff kustomization cluster --path ./kubernetes`
+  
+- **HUMAN_APPROVAL_REQUIRED: task kubernetes:apply-ks PATH=<path>** - Applies a Flux Kustomization to the cluster
+  - Dry-run alternative: `flux build ks <name> --kustomization-file <file> --path <path> --dry-run`
+  
+- **HUMAN_APPROVAL_REQUIRED: sops --encrypt** - Encrypts secrets with SOPS
+  - Validation alternative: Review the `.sops.yaml` configuration file and verify SOPS config with `sops --config .sops.yaml updatekeys --yes <file>` (Note: SOPS does not support a `--dry-run` flag)
+
+### Configuration Tasks
+
+When running configuration tasks, NEVER CANCEL (agent: run with dry-run and respect recommended_timeouts). These tasks require time to complete:
+
+- `task configure` - Renders and validates configuration files (recommended timeout: 120 seconds)
+- `task workstation:install-tools` - Installs required tools (recommended timeout: 300 seconds)
+
+### Validation Commands
+
+These commands are safe to run and should be used before proposing changes:
+
+```bash
+# Validate all Kubernetes manifests
+task kubernetes:kubeconform
+
+# Build and validate specific kustomization
+kustomize build kubernetes/apps/<app-name> | kubeconform -strict -
+
+# Validate YAML syntax
+yamllint kubernetes/
+
+# Check for unencrypted secrets
+grep -r "apiVersion.*Secret" kubernetes/ | grep -v "sops:"
+```
+
+### Secret Management
+
+- All secrets MUST be encrypted with SOPS before committing
+- The `.sops.yaml` file defines encryption rules
+- NEVER commit unencrypted secrets, API keys, or credentials
+- Encrypted files contain `sops:` metadata block
+- Always run `task configure` after editing config.yaml to re-encrypt secrets
+
+### Flux Operations
+
+- Flux automatically syncs changes from the `main` branch
+- Use `flux diff` to preview changes before applying
+- Test changes in a feature branch before merging to main
 
 ## Working Effectively
 
@@ -194,22 +281,6 @@ task kubernetes:resources
 task kubernetes:reconcile
 ```
 
-## Repository Structure
-
-### Critical Directories
-- `kubernetes/apps/`: All application manifests organized by namespace
-- `kubernetes/bootstrap/`: Cluster bootstrap configurations (Talos, Flux, Helm)
-- `kubernetes/flux/`: Flux GitOps system configuration
-- `.taskfiles/`: Modular Task definitions for automation
-- `scripts/`: Shell scripts for validation and utilities
-
-### Configuration Files
-- `config.yaml`: Main cluster configuration (created from config.sample.yaml)
-- `Taskfile.yaml`: Main task runner configuration
-- `requirements.txt`: Python dependencies for template processing
-- `.sops.yaml`: Secret encryption configuration
-- `.envrc`: Environment variables (if using direnv)
-
 ## Common Tasks
 
 ### Working with Applications
@@ -290,28 +361,6 @@ kustomize build kubernetes/apps/media/radarr | kubeconform -
 - Never commit unencrypted secrets
 - Age public key is in config.yaml, private key is in age.key (gitignored)
 - Always run `task configure` after editing config.yaml to re-encrypt secrets
-
-## Safe Operations (Allowed for Agents)
-
-Agents can safely perform these operations:
-
-1. **Read repository contents** - Browse files, understand structure
-2. **Run local validation** - Execute kubeconform, kustomize build, yamllint
-3. **Propose changes** - Open pull requests with suggested modifications
-4. **Generate documentation** - Update README files and comments
-
-## Dangerous Operations (Human Approval Required)
-
-The following operations require explicit human approval and should be marked with `HUMAN_APPROVAL_REQUIRED:` prefix:
-
-- **HUMAN_APPROVAL_REQUIRED: task kubernetes:reconcile** - Forces Flux to pull changes from Git
-  - Dry-run alternative: `flux diff kustomization cluster --path ./kubernetes`
-  
-- **HUMAN_APPROVAL_REQUIRED: task kubernetes:apply-ks PATH=<path>** - Applies a Flux Kustomization to the cluster
-  - Dry-run alternative: `flux build ks <name> --kustomization-file <file> --path <path> --dry-run`
-  
-- **HUMAN_APPROVAL_REQUIRED: sops --encrypt** - Encrypts secrets with SOPS
-  - Validation alternative: Review the `.sops.yaml` configuration file and verify SOPS config with `sops --config .sops.yaml updatekeys --yes <file>` (Note: SOPS does not support a `--dry-run` flag)
 
 ## Best Practices for Agents
 
