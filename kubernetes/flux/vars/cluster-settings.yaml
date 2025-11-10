@@ -4,7 +4,7 @@ data:
   ADGUARD_IP: 192.168.5.2
   EMQX_LB: 192.168.5.21
   GO2RTC_LB: 192.168.5.22
-  NAS_IP: truenas.internal
+  NAS_IP: 192.168.5.10
   POSTGRES_LB: 192.168.5.23
   S3_URI: http://truenas.internal:9000
   TIMEZONE: America/Denver
