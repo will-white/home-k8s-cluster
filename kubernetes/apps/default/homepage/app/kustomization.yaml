@@ -13,4 +13,4 @@ configMapGenerator:
     literals:
       - NAMESPACE=default
       - GATUS_PORT=3000
-      - GATUS_PATH=/api/ping
+      - GATUS_PATH=/
