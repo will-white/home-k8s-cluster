@@ -10,7 +10,7 @@ data:
     endpoints:
       - name: bazarr
         group: guarded
-        url: http://bazarr.media.svc.cluster.local:80/
+        url: http://bazarr.media.svc.cluster.local:6767/
         interval: 1m
         ui:
           hide-hostname: true
