@@ -34,16 +34,21 @@
   },
   "postCreateCommand": {
     "fisher": "fish -c \"curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher && fisher update && fisher install decors/fish-colored-man edc/bass jorgebucaran/autopair.fish nickeb96/puffer-fish PatrickF1/fzf.fish\"",
-    "install-direnv": "curl -sfL https://direnv.net/install.sh | bash",
+    "setup": "bash .devcontainer/setup.sh",
     "workstation-venv": "task workstation:venv"
   },
   "postStartCommand": {
     "git": "git config --global --add safe.directory ${containerWorkspaceFolder}"
   },
+  "remoteEnv": {
+    "KUBECONFIG": "${containerWorkspaceFolder}/kubeconfig",
+    "SOPS_AGE_KEY_FILE": "${containerWorkspaceFolder}/age.key"
+  },
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens"
       ]
     }
   }

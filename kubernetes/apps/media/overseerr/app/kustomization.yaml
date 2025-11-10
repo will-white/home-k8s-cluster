@@ -6,3 +6,8 @@ resources:
   - ./helmrelease.yaml
   - ../../../../templates/gatus/external
   - ../../../../templates/volsync
+configMapGenerator:
+  - name: overseerr-gatus-ep
+    behavior: merge
+    literals:
+      - GATUS_PATH=/api/v1/status

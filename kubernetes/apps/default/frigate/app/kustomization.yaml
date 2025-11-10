@@ -8,7 +8,25 @@ resources:
   - ./helmrelease.yaml
   - ../../../../templates/gatus/guarded
   - ../../../../templates/volsync
+replacements:
+  - source:
+      kind: ConfigMap
+      name: frigate-gatus-ep
+    targets:
+      - select:
+          kind: ConfigMap
+          name: frigate-gatus-ep
+        fieldPaths:
+          - data.[config.yaml]
+        options:
+          delimiter: "$"
+          index: 0
 configMapGenerator:
+  - name: frigate-gatus-ep
+    literals:
+      - NAMESPACE=default
+      - GATUS_PORT=5000
+      - GATUS_PATH=/api/version
   - name: frigate-configmap
     files:
       - config.yaml=./config/config.yaml

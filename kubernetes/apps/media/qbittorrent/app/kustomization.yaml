@@ -6,6 +6,12 @@ resources:
   - ../../../../templates/gatus/guarded
   - ../../../../templates/volsync
 configMapGenerator:
+  - name: qbittorrent-gatus-ep
+    behavior: merge
+    literals:
+      - NAMESPACE=media
+      - GATUS_PORT=80
+      - GATUS_PATH=/api/v2/app/version
   - name: qbittorrent-loki-rules
     files:
       - qbittorrent.yaml=./resources/lokirule.yaml

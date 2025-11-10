@@ -4,3 +4,10 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ../../../../templates/gatus/guarded
+configMapGenerator:
+  - name: prowlarr-gatus-ep
+    behavior: merge
+    literals:
+      - NAMESPACE=media
+      - GATUS_PORT=80
+      - GATUS_PATH=/api/v1/health

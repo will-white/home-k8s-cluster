@@ -8,6 +8,12 @@ resources:
   - ../../../../templates/gatus/guarded
   - ../../../../templates/volsync
 configMapGenerator:
+  - name: bazarr-gatus-ep
+    behavior: merge
+    literals:
+      - NAMESPACE=media
+      - GATUS_PORT=6767
+      - GATUS_PATH=/api/system/health
   - name: bazarr-scripts
     files:
       - subcleaner.sh=./resources/subcleaner.sh
