@@ -5,20 +5,22 @@ kind: HelmRelease
 metadata:
   name: kopia
 spec:
-  interval: 1h
+  interval: 30m
   chart:
     spec:
       chart: app-template
+      version: 3.7.3
       sourceRef:
         kind: HelmRepository
         name: bjw-s
         namespace: flux-system
   install:
     remediation:
-      retries: -1
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
+      strategy: rollback
       retries: 3
   values:
     controllers:
@@ -29,7 +31,7 @@ spec:
           app:
             image:
               repository: docker.io/kopia/kopia
-              tag: 0.21.1@sha256:24884f5e9e5f9c19746eddb51fb3449ceb4b6bb0ad6681e145bed53eb2d50125
+              tag: 0.21.1@sha256:c594f95b4c0888f51a89339f746db45e141d6b65567814f592955368e575da55
             envFrom:
               - secretRef:
                   name: kopia-secret

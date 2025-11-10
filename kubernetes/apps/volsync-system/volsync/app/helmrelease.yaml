@@ -5,7 +5,7 @@ kind: HelmRelease
 metadata:
   name: volsync
 spec:
-  interval: 1h
+  interval: 30m
   chart:
     spec:
       chart: volsync
@@ -16,10 +16,11 @@ spec:
         namespace: volsync-system
   install:
     remediation:
-      retries: -1
+      retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
+      strategy: rollback
       retries: 3
   dependsOn:
     - name: snapshot-controller
