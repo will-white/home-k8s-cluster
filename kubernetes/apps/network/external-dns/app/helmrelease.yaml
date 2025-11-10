@@ -28,7 +28,7 @@ spec:
   values:
     fullnameOverride: *app
     domainFilters: ["${SECRET_DOMAIN}"]
-    env: []  # Clear any existing env vars (e.g., from previous Cloudflare config)
+    env: []  # Clear any existing env vars from previous Cloudflare config
     extraArgs:
       - --ingress-class=internal
       - --managed-record-types=A
