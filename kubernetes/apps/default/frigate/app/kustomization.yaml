@@ -6,7 +6,7 @@ namespace: default
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ../../../../templates/gatus/guarded
+  - ./gatus.yaml
   - ../../../../templates/volsync
 configMapGenerator:
   - name: frigate-configmap

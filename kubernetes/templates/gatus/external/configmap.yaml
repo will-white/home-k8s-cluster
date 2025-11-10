@@ -15,5 +15,6 @@ data:
           dns-resolver: tcp://1.1.1.1:53
         conditions:
           - "[STATUS] == ${GATUS_STATUS:-200}"
+          - "[RESPONSE_TIME] < ${GATUS_RESPONSE_TIME:-10000}"
         alerts:
           - type: pushover

@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
   # - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ../../../../templates/gatus/guarded
+  - ./gatus.yaml
   - ../../../../templates/volsync
 configMapGenerator:
   - name: qbittorrent-loki-rules
