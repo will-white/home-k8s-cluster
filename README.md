@@ -6,6 +6,8 @@ _... managed with Flux, Renovate, and GitHub Actions_ 🤖
 
 </div>
 
+> **For AI Agents and Developers**: See [AGENTS.md](./AGENTS.md) for comprehensive setup, validation, and operational instructions.
+
 ## 🔧 Tools
 
 | Tool                                             | Purpose                                                            |
