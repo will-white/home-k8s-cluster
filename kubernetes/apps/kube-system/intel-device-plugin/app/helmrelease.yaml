@@ -27,3 +27,16 @@ spec:
   dependsOn:
     - name: node-feature-discovery
       namespace: kube-system
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: inteldeviceplugins-controller-manager
+            patch: |
+              - op: replace
+                path: /spec/template/spec/containers/0/readinessProbe/timeoutSeconds
+                value: 5
+              - op: replace
+                path: /spec/template/spec/containers/0/livenessProbe/timeoutSeconds
+                value: 5
