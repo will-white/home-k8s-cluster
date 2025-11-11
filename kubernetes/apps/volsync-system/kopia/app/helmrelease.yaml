@@ -93,7 +93,7 @@ spec:
                 "type": "s3",
                 "config": {
                   "bucket": "volsync-backups",
-                  "endpoint": "http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc",
+                  "endpoint": "rook-ceph-rgw-ceph-objectstore.rook-ceph.svc",
                   "doNotUseTLS": true,
                   "doNotVerifyTLS": true
                 }
