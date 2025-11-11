@@ -7,7 +7,7 @@ metadata:
 spec:
   dataFrom:
     - extract:
-        key: volsync-restic
+        key: volsync-kopia
   secretStoreRef:
     kind: ClusterSecretStore
     name: bitwarden-secrets-manager
@@ -15,10 +15,13 @@ spec:
     name: ${APP}-volsync
     template:
       data:
+        KOPIA_PASSWORD: "{{ .PASSWORD }}"
+        # Shared Kopia repository - all apps are users in the same repo
+        KOPIA_REPOSITORY: "s3://volsync-backups"
         AWS_ACCESS_KEY_ID: "{{ .ACCESS_KEY }}"
-        AWS_SECRET_ACCESS_KEY: "{{ .SECRET_ACCESS_KEY }}"
-        RESTIC_PASSWORD: "{{ .RESTIC_PASSWORD }}"
-        RESTIC_REPOSITORY: "{{ .REPOSITORY_BUCKET }}/${APP}"
+        AWS_SECRET_ACCESS_KEY: "{{ .SECRET_KEY }}"
+        AWS_S3_ENDPOINT: "http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc"
+        KOPIA_S3_DISABLE_TLS: "true"
       engineVersion: v2
 ---
 # yaml-language-server: $schema=https://kube-schemas.pages.dev/volsync.backube/replicationdestination_v1alpha1.json
@@ -27,16 +30,10 @@ kind: ReplicationDestination
 metadata:
   name: ${APP}-bootstrap
 spec:
-  restic:
+  kopia:
     accessModes: ["${VOLSYNC_SNAP_ACCESSMODES:-ReadWriteOnce}"]
-    cacheAccessModes: ["${VOLSYNC_CACHE_ACCESSMODES:-ReadWriteOnce}"]
-    cacheCapacity: ${VOLSYNC_CACHE_CAPACITY:-10Gi}
-    cacheStorageClassName: ${VOLSYNC_CACHE_SNAPSHOTCLASS:-ceph-block}
     capacity: ${VOLSYNC_CAPACITY:-2Gi}
-    cleanupCachePVC: true
-    cleanupTempPVC: true
     copyMethod: Snapshot
-    enableFileDeletion: true
     moverSecurityContext:
       fsGroup: ${VOLSYNC_PGID:-1000}
       runAsGroup: ${VOLSYNC_PGID:-1000}
@@ -53,18 +50,15 @@ kind: ReplicationSource
 metadata:
   name: ${APP}
 spec:
-  restic:
+  kopia:
     accessModes: ["${VOLSYNC_SNAP_ACCESSMODES:-ReadWriteOnce}"]
-    cacheAccessModes: ["${VOLSYNC_CACHE_ACCESSMODES:-ReadWriteOnce}"]
-    cacheCapacity: ${VOLSYNC_CACHE_CAPACITY:-10Gi}
-    cacheStorageClassName: ${VOLSYNC_CACHE_SNAPSHOTCLASS:-ceph-block}
     copyMethod: ${VOLSYNC_COPYMETHOD:-Snapshot}
     moverSecurityContext:
       fsGroup: ${VOLSYNC_PGID:-1000}
       runAsGroup: ${VOLSYNC_PGID:-1000}
       runAsUser: ${VOLSYNC_PUID:-1000}
-    pruneIntervalDays: 10
     repository: ${APP}-volsync
+    username: ${APP}
     retain:
       daily: 10
       hourly: 24
