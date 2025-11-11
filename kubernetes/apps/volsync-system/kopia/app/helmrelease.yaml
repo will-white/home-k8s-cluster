@@ -28,6 +28,8 @@ spec:
             envFrom:
               - secretRef:
                   name: kopia-secret
+            args:
+              - --without-password
             ports:
               - name: http
                 containerPort: *port
@@ -63,7 +65,6 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
-        controller: kopia
         ports:
           http:
             port: *port
@@ -98,6 +99,7 @@ spec:
                   "doNotVerifyTLS": true
                 }
               },
+              "username": "volsync",
               "description": "volsync",
               "enableActions": false
             }
