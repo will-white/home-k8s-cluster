@@ -35,11 +35,3 @@ spec:
     skipWaitForDeleteTimeout: 120
     timeout: 600
     gracePeriod: 900
-    podSelector:
-      matchExpressions:
-        - key: app.kubernetes.io/name
-          operator: NotIn
-          values:
-            - ceph-mon
-            - ceph-osd
-            - ceph-mgr
