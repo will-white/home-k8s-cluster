@@ -83,6 +83,153 @@
   - Track PVC usage growth rate
   - Create storage performance dashboard
 
+## CI/CD Pipeline Enhancements
+
+### High Priority
+
+- [ ] **Security Scanning Workflows**
+  - [ ] Container Image Vulnerability Scanning (Trivy)
+    - Scan images in HelmReleases for CVEs
+    - Run on PRs that change image tags
+    - Create security advisories for critical issues
+    - Integrate with GitHub Security tab
+    - File: `.github/workflows/trivy-scan.yaml`
+  - [ ] SOPS Secret Validation
+    - Verify all secrets are properly encrypted
+    - Check for accidentally committed unencrypted data
+    - Validate SOPS metadata integrity
+    - Ensure age keys are properly referenced
+    - File: `.github/workflows/sops-validation.yaml`
+  - [ ] Kubernetes Security Policy Scanning (Polaris/Datree)
+    - Validate security contexts, resource limits
+    - Check for deprecated API versions
+    - Enforce pod security standards
+    - Scan for misconfigurations
+    - File: `.github/workflows/k8s-security.yaml`
+
+- [ ] **Helm Chart Testing**
+  - [ ] Validate Helm values schema
+  - [ ] Test chart rendering with different values
+  - [ ] Check for required values
+  - [ ] Validate against chart JSON schemas
+  - [ ] File: `.github/workflows/helm-test.yaml`
+
+- [ ] **Link Checking & Documentation**
+  - [ ] Broken Link Checker
+    - Check for broken URLs in documentation
+    - Validate Helm chart repository URLs
+    - Check external dependencies availability
+    - Verify container registry accessibility
+    - File: `.github/workflows/link-checker.yaml`
+  - [ ] Documentation Generation
+    - Auto-generate application inventory
+    - Create cluster topology diagrams
+    - Generate resource usage reports
+    - Update README with current versions
+    - File: `.github/workflows/docs-generation.yaml`
+
+- [ ] **OPA/Kyverno Policy Validation**
+  - [ ] Enforce naming conventions
+  - [ ] Validate label requirements
+  - [ ] Check namespace isolation
+  - [ ] Verify network policies
+  - [ ] File: `.github/workflows/policy-validation.yaml`
+
+### Medium Priority
+
+- [ ] **Testing Workflows**
+  - [ ] End-to-End Smoke Tests
+    - Deploy to ephemeral test cluster (kind/k3s)
+    - Run basic health checks
+    - Test critical ingress routes
+    - Validate DNS configuration
+    - File: `.github/workflows/e2e-tests.yaml`
+  - [ ] Flux Health Checks
+    - Validate Flux source configurations
+    - Check for reconciliation issues
+    - Test Flux notification providers
+    - Validate image automation configs
+    - File: `.github/workflows/flux-health.yaml`
+
+- [ ] **Release Management**
+  - [ ] Changelog Generation
+    - Auto-generate changelogs from commits
+    - Categorize changes (apps, infra, security)
+    - Track version bumps
+    - Generate release notes
+    - File: `.github/workflows/changelog.yaml`
+  - [ ] Semantic Versioning
+    - Enforce semantic commit messages
+    - Auto-tag releases
+    - Track major/minor/patch changes
+    - Generate version badges
+
+- [ ] **Resource & Cost Analysis**
+  - [ ] Resource Recommendations (Goldilocks/VPA)
+    - Analyze resource requests/limits
+    - Suggest optimizations
+    - Track resource trends over time
+    - Detect over/under-provisioned resources
+  - [ ] Cost Estimation
+    - Calculate cluster resource costs
+    - Track changes in resource allocation
+    - Alert on significant cost increases
+
+- [ ] **Backup & Disaster Recovery**
+  - [ ] Backup Validation
+    - Verify backup configurations exist
+    - Test restore procedures (in staging)
+    - Validate VolSync configurations
+    - Check PVC backup coverage
+  - [ ] ETCD/Talos Backup Validation
+    - Verify backup schedules
+    - Test backup accessibility
+    - Validate encryption keys
+
+### Low Priority
+
+- [ ] **Performance & Observability**
+  - [ ] Manifest Size & Complexity Analysis
+    - Track manifest growth over time
+    - Detect overly complex resources
+    - Identify duplicate configurations
+    - Suggest refactoring opportunities
+  - [ ] Dependency Graph Generation
+    - Visualize service dependencies
+    - Detect circular dependencies
+    - Generate component diagrams
+    - Track dependency changes
+
+- [ ] **Integration Testing**
+  - [ ] External Service Health Checks
+    - Validate external integrations (Bitwarden, Cloudflare)
+    - Test webhook endpoints
+    - Check API rate limits
+    - Verify DNS resolution
+  - [ ] Application-Specific Tests
+    - Test media stack integration (Radarr → qBittorrent)
+    - Validate monitoring stack (Prometheus → Grafana)
+    - Check ingress routing
+    - Test cert-manager certificate issuance
+
+- [ ] **Notifications & Reporting**
+  - [ ] Slack/Discord/Email Notifications
+    - PR status summaries
+    - Deployment notifications
+    - Security alerts
+    - Failed workflow alerts
+  - [ ] Weekly/Monthly Reports
+    - Cluster health summary
+    - Resource usage trends
+    - Security findings
+    - Dependency update summary
+
+- [ ] **Configuration Drift Detection**
+  - [ ] Compare cluster state with Git
+  - [ ] Detect manual changes
+  - [ ] Alert on out-of-sync resources
+  - [ ] Generate drift reports
+
 ## Infrastructure Improvements
 
 - [ ] **Rclone RGW to Garage Migration**

@@ -18,11 +18,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup Homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+      # Cache installed tools to speed up workflow
+      - name: Cache Tools
+        id: cache-tools
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin
+          key: kubeconform-tools-${{ runner.os }}-v1
+          restore-keys: |
+            kubeconform-tools-${{ runner.os }}-
 
       - name: Setup Workflow Tools
-        run: brew install fluxcd/tap/flux kubeconform kustomize
+        if: steps.cache-tools.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          # Install kubeconform
+          KUBECONFORM_VERSION="v0.7.0"
+          curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
+          chmod +x kubeconform
+          sudo mv kubeconform /usr/local/bin/
+          
+          # Install kustomize
+          KUSTOMIZE_VERSION="v5.5.0"
+          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
+          chmod +x kustomize
+          sudo mv kustomize /usr/local/bin/
+          
+          # Install flux
+          FLUX_VERSION="2.4.0"
+          curl -sL "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" | tar xz
+          chmod +x flux
+          sudo mv flux /usr/local/bin/
+
+      - name: Verify Tools
+        run: |
+          kubeconform -v
+          kustomize version
+          flux version --client
 
       - name: Run kubeconform
         shell: bash

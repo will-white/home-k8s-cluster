@@ -1,0 +1,98 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "Setup Tools (Reusable)"
+
+on:
+  workflow_call:
+    inputs:
+      tools:
+        description: 'Comma-separated list of tools to install: kubeconform,kustomize,flux,yq,yamllint'
+        required: true
+        type: string
+      cache-key-prefix:
+        description: 'Prefix for cache key (default: tools)'
+        required: false
+        type: string
+        default: 'tools'
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse Tool Requirements
+        id: parse
+        run: |
+          TOOLS="${{ inputs.tools }}"
+          echo "Installing tools: $TOOLS"
+          
+          # Set flags for each tool
+          echo "install_kubeconform=$(echo $TOOLS | grep -q 'kubeconform' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "install_kustomize=$(echo $TOOLS | grep -q 'kustomize' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "install_flux=$(echo $TOOLS | grep -q 'flux' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "install_yq=$(echo $TOOLS | grep -q 'yq' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          echo "install_yamllint=$(echo $TOOLS | grep -q 'yamllint' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+      - name: Cache Tools
+        id: cache-tools
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin
+          key: ${{ inputs.cache-key-prefix }}-${{ runner.os }}-${{ hashFiles('.github/workflows/setup-tools.yaml') }}-${{ inputs.tools }}
+          restore-keys: |
+            ${{ inputs.cache-key-prefix }}-${{ runner.os }}-
+
+      - name: Install kubeconform
+        if: steps.parse.outputs.install_kubeconform == 'true' && steps.cache-tools.outputs.cache-hit != 'true'
+        run: |
+          KUBECONFORM_VERSION="v0.7.0"
+          curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
+          chmod +x kubeconform
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Install kustomize
+        if: steps.parse.outputs.install_kustomize == 'true' && steps.cache-tools.outputs.cache-hit != 'true'
+        run: |
+          KUSTOMIZE_VERSION="v5.5.0"
+          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
+          chmod +x kustomize
+          sudo mv kustomize /usr/local/bin/
+
+      - name: Install flux
+        if: steps.parse.outputs.install_flux == 'true' && steps.cache-tools.outputs.cache-hit != 'true'
+        run: |
+          FLUX_VERSION="2.4.0"
+          curl -sL "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" | tar xz
+          chmod +x flux
+          sudo mv flux /usr/local/bin/
+
+      - name: Install yq
+        if: steps.parse.outputs.install_yq == 'true' && steps.cache-tools.outputs.cache-hit != 'true'
+        run: |
+          YQ_VERSION="v4.44.1"
+          curl -sL "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" -o yq
+          chmod +x yq
+          sudo mv yq /usr/local/bin/
+
+      - name: Install yamllint
+        if: steps.parse.outputs.install_yamllint == 'true' && steps.cache-tools.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install -y yamllint
+
+      - name: Verify Installations
+        run: |
+          echo "Verifying tool installations..."
+          if [ "${{ steps.parse.outputs.install_kubeconform }}" = "true" ]; then
+            kubeconform -v
+          fi
+          if [ "${{ steps.parse.outputs.install_kustomize }}" = "true" ]; then
+            kustomize version
+          fi
+          if [ "${{ steps.parse.outputs.install_flux }}" = "true" ]; then
+            flux version --client
+          fi
+          if [ "${{ steps.parse.outputs.install_yq }}" = "true" ]; then
+            yq --version
+          fi
+          if [ "${{ steps.parse.outputs.install_yamllint }}" = "true" ]; then
+            yamllint --version
+          fi

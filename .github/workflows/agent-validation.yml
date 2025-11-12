@@ -28,18 +28,27 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Cache validation tools to speed up workflow
+      - name: Cache Validation Tools
+        id: cache-tools
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin
+          key: agent-validation-tools-${{ runner.os }}-v1
+          restore-keys: |
+            agent-validation-tools-${{ runner.os }}-
+
       - name: Install Validation Tools
+        if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
           set -e
           echo "Installing kubeconform..."
-          # Using latest release - in production, pin to specific version
           KUBECONFORM_VERSION="v0.7.0"
           curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
           chmod +x kubeconform
           sudo mv kubeconform /usr/local/bin/
 
           echo "Installing kustomize..."
-          # Using specific version for reproducibility
           KUSTOMIZE_VERSION="v5.5.0"
           curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
           chmod +x kustomize
@@ -48,6 +57,8 @@ jobs:
           echo "Installing yamllint..."
           sudo apt-get update && sudo apt-get install -y yamllint
 
+      - name: Verify Tool Installations
+        run: |
           echo "Verifying installations..."
           kubeconform -v
           kustomize version
