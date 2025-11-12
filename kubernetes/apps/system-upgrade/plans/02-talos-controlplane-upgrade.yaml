@@ -6,9 +6,6 @@ metadata:
   name: talos-controlplane
   namespace: system-upgrade
 spec:
-  # Wait for worker Plan to complete before starting
-  after:
-    - talos-workers
   version: v1.11.5
   serviceAccountName: system-upgrade
   concurrency: 1

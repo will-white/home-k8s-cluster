@@ -137,8 +137,6 @@ jobs:
             namespace: system-upgrade
           spec:
             # Wait for worker Plan to complete before starting
-            after:
-              - talos-workers
             version: ${VERSION}
             serviceAccountName: system-upgrade
             concurrency: 1
@@ -169,14 +167,17 @@ jobs:
           
           echo "✅ Generated Talos upgrade Plans"
           
-          # Update kustomization.yaml to include the plans
+          # Update kustomization.yaml to include only worker plan initially
+          # Control plane plan must be applied manually after workers complete
           cat > kubernetes/apps/system-upgrade/plans/kustomization.yaml <<EOF
           ---
           apiVersion: kustomize.config.k8s.io/v1beta1
           kind: Kustomization
           resources:
             - 01-talos-workers-upgrade.yaml
-            - 02-talos-controlplane-upgrade.yaml
+            # NOTE: Control plane plan should be applied AFTER workers complete
+            # Uncomment the line below once worker upgrades are finished:
+            # - 02-talos-controlplane-upgrade.yaml
           EOF
           
           echo "✅ Updated kustomization.yaml"
