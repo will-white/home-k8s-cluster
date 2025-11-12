@@ -4,44 +4,19 @@ kind: HelmRelease
 metadata:
   name: &app snmp-exporter
 spec:
-  interval: 30m
-  chart:
-    spec:
-      chart: prometheus-snmp-exporter
-      version: 5.6.0
-      sourceRef:
-        kind: HelmRepository
-        name: prometheus-community
-        namespace: flux-system
-  install:
-    remediation:
-      retries: 3
-  upgrade:
-    cleanupOnFail: true
-    remediation:
-      strategy: rollback
-      retries: 3
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: snmp-exporter
   values:
-    image:
-      repository: prom/snmp-exporter
-      tag: v0.26.0
-    
+    fullnameOverride: *app
     serviceMonitor:
       enabled: true
-      interval: 1m
-      scrapeTimeout: 30s
       params:
-        - name: apc-ups
+        - name: apcups
+          module:
+            - apcups
           target: apc9ff217.internal
-          module: 
-            - if_mib
-          interval: 1m
-          scrapeTimeout: 30s
-    
-    # Use default generator config which includes common MIBs
-    # The if_mib module should work for basic APC UPS monitoring
-    extraConfigmapMounts: []
-    
     resources:
       requests:
         cpu: 10m
