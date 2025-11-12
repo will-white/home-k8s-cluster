@@ -85,6 +85,13 @@
 
 ## Infrastructure Improvements
 
+- [ ] **Rclone RGW to Garage Migration**
+  - Configure rclone to sync from Ceph RGW to Garage instance on TrueNAS
+  - Set up Garage S3-compatible storage on TrueNAS box
+  - Create rclone configuration for both endpoints
+  - Test sync performance and reliability
+  - Document sync schedule and retention policy
+
 - [ ] **Cluster Backup Validation**
   - Verify VolSync backups are working
   - Test restoration procedures

@@ -27,6 +27,15 @@ subjects:
     name: version-checker
     namespace: system-upgrade
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-token
+  namespace: system-upgrade
+type: Opaque
+stringData:
+  token: "" # Add your GitHub PAT here or use ExternalSecret
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -55,49 +64,47 @@ spec:
                 - |
                   set -e
                   
-                  echo "=== Talos Version Checker ==="
-                  echo "Checking for new Talos versions..."
+                  echo "=== Talos Version Checker (In-Cluster) ==="
                   
-                  # Get current Talos version from a node
+                  # Get current Talos version from actual running nodes
                   CURRENT_VERSION=$(kubectl get nodes -o jsonpath='{.items[0].status.nodeInfo.osImage}' | grep -oP 'v\d+\.\d+\.\d+')
-                  echo "Current Talos version: $CURRENT_VERSION"
+                  echo "Current Talos version (from cluster): $CURRENT_VERSION"
                   
-                  # Get schematic ID from node annotation
-                  SCHEMATIC_ID=$(kubectl get nodes -o jsonpath='{.items[0].metadata.annotations.extensions\.talos\.dev/schematic}')
-                  echo "Schematic ID: $SCHEMATIC_ID"
+                  # Extract major.minor
+                  CURRENT_MAJOR_MINOR=$(echo $CURRENT_VERSION | grep -oP 'v\d+\.\d+')
+                  CURRENT_MAJOR=$(echo $CURRENT_VERSION | grep -oP 'v\d+' | grep -oP '\d+')
                   
-                  # Check for latest version in the same minor version series
-                  MINOR_VERSION=$(echo $CURRENT_VERSION | grep -oP 'v\d+\.\d+')
-                  echo "Checking for updates in ${MINOR_VERSION}.x series..."
+                  echo "Current major.minor: $CURRENT_MAJOR_MINOR"
                   
-                  # Query GitHub API for latest release in this series
-                  LATEST_VERSION=$(wget -qO- https://api.github.com/repos/siderolabs/talos/releases | \
-                    grep -oP '"tag_name": "\K'"$MINOR_VERSION"'\.\d+"' | head -1)
+                  # Check for latest version
+                  ALL_RELEASES=$(wget -qO- https://api.github.com/repos/siderolabs/talos/releases | \
+                    grep -oP '"tag_name": "\Kv[0-9]+\.[0-9]+\.[0-9]+' | grep -v '-' | sort -V)
                   
-                  if [ -z "$LATEST_VERSION" ]; then
-                    echo "Could not determine latest version"
+                  # Find latest patch in current minor version
+                  LATEST_IN_CURRENT_MINOR=$(echo "$ALL_RELEASES" | grep "^${CURRENT_MAJOR_MINOR}\." | tail -1)
+                  echo "Latest in current minor series: $LATEST_IN_CURRENT_MINOR"
+                  
+                  if [ "$CURRENT_VERSION" != "$LATEST_IN_CURRENT_MINOR" ]; then
+                    echo "⚠ Upgrade available: $CURRENT_VERSION → $LATEST_IN_CURRENT_MINOR"
+                    echo "UPGRADE_TYPE=patch_update"
+                    echo "TARGET_VERSION=$LATEST_IN_CURRENT_MINOR"
+                    # Future: Create GitHub issue or send notification
+                    # For now, just log it - maintainer will see in CronJob logs
                     exit 0
                   fi
                   
-                  echo "Latest version in series: $LATEST_VERSION"
+                  # Check for next major version
+                  NEXT_MAJOR=$((CURRENT_MAJOR + 1))
+                  FIRST_IN_NEXT_MAJOR=$(echo "$ALL_RELEASES" | grep "^v${NEXT_MAJOR}\.0\." | head -1)
                   
-                  if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
-                    echo "✓ Cluster is running the latest version"
+                  if [ -n "$FIRST_IN_NEXT_MAJOR" ]; then
+                    echo "⚠ Major upgrade available: $CURRENT_VERSION → $FIRST_IN_NEXT_MAJOR"
+                    echo "UPGRADE_TYPE=major_upgrade"
+                    echo "TARGET_VERSION=$FIRST_IN_NEXT_MAJOR"
                     exit 0
                   fi
                   
-                  echo "⚠ New version available: $LATEST_VERSION"
-                  echo ""
-                  echo "To upgrade, create a PR with the upgrade Plans:"
-                  echo "1. Update talconfig.yaml with talosVersion: $LATEST_VERSION"
-                  echo "2. Apply worker upgrade Plan first"
-                  echo "3. Apply control plane upgrade Plan after workers complete"
-                  echo ""
-                  echo "Manual upgrade command:"
-                  echo "  task talos:upgrade-node HOSTNAME=<node>"
-                  
-                  # In the future, this could create a PR automatically
-                  # For now, it just logs the information
+                  echo "✓ Already running latest available version"
               env:
                 - name: KUBERNETES_SERVICE_HOST
                   value: kubernetes.default.svc
