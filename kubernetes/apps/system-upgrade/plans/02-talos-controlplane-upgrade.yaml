@@ -23,6 +23,6 @@ spec:
     disableEviction: false
     deleteLocalData: true
     ignoreDaemonSets: true
-    skipWaitForDeleteTimeout: 120
-    timeout: 600
-    gracePeriod: 900
+    skipWaitForDeleteTimeout: 180
+    timeout: 900
+    gracePeriod: 1200

@@ -115,9 +115,9 @@ jobs:
               disableEviction: true
               deleteLocalData: true
               ignoreDaemonSets: true
-              skipWaitForDeleteTimeout: 60
-              timeout: 300
-              gracePeriod: 600
+              skipWaitForDeleteTimeout: 120
+              timeout: 600
+              gracePeriod: 900
           EOF
           
           # Generate control plane upgrade Plan
@@ -148,9 +148,9 @@ jobs:
               disableEviction: false
               deleteLocalData: true
               ignoreDaemonSets: true
-              skipWaitForDeleteTimeout: 120
-              timeout: 600
-              gracePeriod: 900
+              skipWaitForDeleteTimeout: 180
+              timeout: 900
+              gracePeriod: 1200
           EOF
           
           echo "✅ Generated Talos upgrade Plans"
