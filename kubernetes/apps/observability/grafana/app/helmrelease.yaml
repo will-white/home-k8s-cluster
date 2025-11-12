@@ -242,7 +242,6 @@ spec:
         news_feed_enabled: false
     ingress:
       annotations:
-        external-dns.alpha.kubernetes.io/target: internal.${SECRET_DOMAIN}
         gethomepage.dev/description: Monitoring Dashboards
         gethomepage.dev/enabled: 'true'
         gethomepage.dev/group: Observability
