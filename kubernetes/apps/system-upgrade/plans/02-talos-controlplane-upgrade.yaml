@@ -16,13 +16,6 @@ spec:
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
-  prepare:
-    image: ghcr.io/siderolabs/talosctl:v1.11.5
-    args:
-      - --nodes=$(NODE_NAME)
-      - --endpoints=$(NODE_NAME)
-      - health
-      - --server=false
   upgrade:
     image: ghcr.io/siderolabs/installer:v1.11.5
   drain:
