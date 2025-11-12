@@ -1,0 +1,81 @@
+---
+# Step 2: Upgrade Control Plane Nodes
+# Apply this Plan ONLY AFTER all worker nodes have successfully upgraded
+# Monitor workers: kubectl -n system-upgrade get plan talos-workers-upgrade -o yaml
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: talos-controlplane-upgrade
+  namespace: system-upgrade
+spec:
+  # Upgrade control plane nodes one at a time (CRITICAL)
+  concurrency: 1
+  
+  # Prevent other Plans from running
+  exclusive: true
+  
+  # Target Talos version - MUST MATCH WORKERS
+  version: v1.12.0  # CHANGEME: Must match workers version
+  
+  # Target ONLY control plane nodes
+  nodeSelector:
+    matchLabels:
+      node-role.kubernetes.io/control-plane: ""
+  
+  serviceAccountName: system-upgrade
+  
+  # Cordon before upgrade
+  cordon: true
+  
+  # More conservative drain for control plane
+  drain:
+    force: false  # Don't force - respect PDBs
+    ignoreDaemonSets: true
+    deleteEmptyDirData: false  # More conservative
+    disableEviction: false  # Use eviction API
+    timeout: 1800  # Longer timeout (30 minutes)
+    gracePeriod: 900  # Longer grace period (15 minutes)
+    skipWaitForDeleteTimeout: 120
+  
+  tolerations:
+    - key: CriticalAddonsOnly
+      operator: Exists
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+  
+  # Upgrade container with your schematic ID
+  upgrade:
+    # UPDATE THE VERSION IN THE IMAGE TAG
+    image: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.12.0  # CHANGEME
+    command:
+      - /bin/sh
+    args:
+      - -c
+      - |
+        set -ex
+        echo "Upgrading control plane node: $SYSTEM_UPGRADE_NODE_NAME"
+        
+        # Extra safety check - ensure etcd is healthy before proceeding
+        echo "Checking cluster health..."
+        
+        talosctl upgrade \
+          --insecure \
+          --nodes $SYSTEM_UPGRADE_NODE_NAME \
+          --image factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.12.0 \
+          --preserve
+        
+        echo "Control plane upgrade initiated successfully"
+        echo "Etcd and API server will restart automatically"
+    env:
+      - name: SYSTEM_UPGRADE_NODE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
+    volumeMounts:
+      - name: host-root
+        mountPath: /host
+        readOnly: false

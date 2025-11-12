@@ -1,0 +1,32 @@
+---
+# Automatically apply worker upgrade Plans
+# Control plane Plans (02-*) are deliberately excluded and must be manually applied
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: system-upgrade-plans
+  namespace: flux-system
+spec:
+  targetNamespace: system-upgrade
+  commonMetadata:
+    labels:
+      app.kubernetes.io/managed-by: flux
+  dependsOn:
+    - name: system-upgrade-controller
+  path: ./kubernetes/apps/system-upgrade/plans
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false  # Don't wait - upgrades take time
+  interval: 10m
+  retryInterval: 2m
+  timeout: 1h
+  # Only include worker Plans (01-*)
+  # Control plane Plans (02-*) must be manually applied
+  patches:
+    - target:
+        kind: Plan
+        name: ".*controlplane.*"
+      patch: |
+        $patch: delete

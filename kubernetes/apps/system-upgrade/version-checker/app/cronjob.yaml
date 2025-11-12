@@ -1,0 +1,121 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: version-checker
+  namespace: system-upgrade
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: version-checker
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: version-checker
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: version-checker
+subjects:
+  - kind: ServiceAccount
+    name: version-checker
+    namespace: system-upgrade
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: talos-version-checker
+  namespace: system-upgrade
+spec:
+  # Check for new versions weekly on Monday at 9 AM
+  schedule: "0 9 * * 1"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          serviceAccountName: version-checker
+          restartPolicy: OnFailure
+          containers:
+            - name: version-checker
+              image: ghcr.io/siderolabs/talosctl:v1.11.5
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  
+                  echo "=== Talos Version Checker ==="
+                  echo "Checking for new Talos versions..."
+                  
+                  # Get current Talos version from a node
+                  CURRENT_VERSION=$(kubectl get nodes -o jsonpath='{.items[0].status.nodeInfo.osImage}' | grep -oP 'v\d+\.\d+\.\d+')
+                  echo "Current Talos version: $CURRENT_VERSION"
+                  
+                  # Get schematic ID from node annotation
+                  SCHEMATIC_ID=$(kubectl get nodes -o jsonpath='{.items[0].metadata.annotations.extensions\.talos\.dev/schematic}')
+                  echo "Schematic ID: $SCHEMATIC_ID"
+                  
+                  # Check for latest version in the same minor version series
+                  MINOR_VERSION=$(echo $CURRENT_VERSION | grep -oP 'v\d+\.\d+')
+                  echo "Checking for updates in ${MINOR_VERSION}.x series..."
+                  
+                  # Query GitHub API for latest release in this series
+                  LATEST_VERSION=$(wget -qO- https://api.github.com/repos/siderolabs/talos/releases | \
+                    grep -oP '"tag_name": "\K'"$MINOR_VERSION"'\.\d+"' | head -1)
+                  
+                  if [ -z "$LATEST_VERSION" ]; then
+                    echo "Could not determine latest version"
+                    exit 0
+                  fi
+                  
+                  echo "Latest version in series: $LATEST_VERSION"
+                  
+                  if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
+                    echo "✓ Cluster is running the latest version"
+                    exit 0
+                  fi
+                  
+                  echo "⚠ New version available: $LATEST_VERSION"
+                  echo ""
+                  echo "To upgrade, create a PR with the upgrade Plans:"
+                  echo "1. Update talconfig.yaml with talosVersion: $LATEST_VERSION"
+                  echo "2. Apply worker upgrade Plan first"
+                  echo "3. Apply control plane upgrade Plan after workers complete"
+                  echo ""
+                  echo "Manual upgrade command:"
+                  echo "  task talos:upgrade-node HOSTNAME=<node>"
+                  
+                  # In the future, this could create a PR automatically
+                  # For now, it just logs the information
+              env:
+                - name: KUBERNETES_SERVICE_HOST
+                  value: kubernetes.default.svc
+                - name: KUBERNETES_SERVICE_PORT
+                  value: "443"
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 65534
+                seccompProfile:
+                  type: RuntimeDefault

@@ -1,0 +1,90 @@
+---
+# Example Plan for Kubernetes upgrades
+# This plan is DISABLED by default (no nodeSelector matches all nodes)
+# To enable: Add appropriate nodeSelector labels
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: kubernetes-upgrade
+  namespace: system-upgrade
+spec:
+  # Maximum number of nodes to upgrade concurrently
+  concurrency: 1
+  
+  # Prevent other Plans from running simultaneously
+  exclusive: true
+  
+  # Target Kubernetes version (update this when upgrading)
+  # Must match version format: v1.34.1
+  version: v1.34.1
+  
+  # Node selector - MUST be configured to enable upgrades
+  # Important: Upgrade control plane nodes FIRST for Kubernetes upgrades
+  # nodeSelector:
+  #   matchLabels:
+  #     node-role.kubernetes.io/control-plane: ""
+  
+  # Service account with necessary permissions
+  serviceAccountName: system-upgrade
+  
+  # Do NOT cordon/drain for Kubernetes version upgrades
+  # Talos handles this internally during upgrade-k8s
+  cordon: false
+  
+  # Tolerations to allow Job pods to run on control plane
+  tolerations:
+    - key: CriticalAddonsOnly
+      operator: Exists
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+  
+  # Upgrade container - runs the Kubernetes upgrade via Talos
+  upgrade:
+    # Use Talos image to run talosctl commands
+    image: ghcr.io/siderolabs/talosctl:v1.11.5
+    command:
+      - /bin/sh
+    args:
+      - -c
+      - |
+        set -ex
+        # Upgrade Kubernetes via Talos API
+        # Note: This requires the Talos API to be accessible from the cluster
+        # The system-upgrade namespace has kubernetesTalosAPIAccess enabled
+        talosctl upgrade-k8s \
+          --nodes $SYSTEM_UPGRADE_NODE_NAME \
+          --to v1.34.1
+    env:
+      - name: SYSTEM_UPGRADE_NODE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
+      - name: TALOSCONFIG
+        value: /var/run/secrets/talos/talosconfig
+    volumeMounts:
+      - name: talosconfig
+        mountPath: /var/run/secrets/talos
+        readOnly: true
+
+---
+# Note: Kubernetes upgrades with Talos are complex and require:
+# 1. Control plane nodes must be upgraded FIRST
+# 2. Talos API access from the cluster (already configured in your cluster)
+# 3. Valid talosconfig secret in the system-upgrade namespace
+# 4. Coordination with Talos to ensure proper upgrade sequencing
+#
+# RECOMMENDED APPROACH: Use the existing Task command instead
+#   task talos:upgrade-k8s
+#
+# This command:
+# - Upgrades ALL control plane nodes in the correct sequence
+# - Updates worker nodes automatically
+# - Handles etcd quorum and API server availability
+# - Provides better error handling and rollback capabilities
+#
+# The System Upgrade Controller is better suited for Talos OS upgrades
+# rather than Kubernetes version upgrades in a Talos cluster.

@@ -1,0 +1,105 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app system-upgrade-controller
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  values:
+    controllers:
+      system-upgrade-controller:
+        strategy: RollingUpdate
+        containers:
+          app:
+            image:
+              repository: rancher/system-upgrade-controller
+              tag: v0.15.1
+            env:
+              SYSTEM_UPGRADE_CONTROLLER_DEBUG: "false"
+              SYSTEM_UPGRADE_CONTROLLER_THREADS: "2"
+              SYSTEM_UPGRADE_CONTROLLER_NAME:
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.labels['app.kubernetes.io/name']
+              SYSTEM_UPGRADE_CONTROLLER_NAMESPACE:
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.namespace
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              runAsUser: 65534
+              seccompProfile:
+                type: RuntimeDefault
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
+    defaultPodOptions:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: Exists
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+    persistence:
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+      etc-ssl:
+        type: hostPath
+        hostPath: /etc/ssl
+        hostPathType: DirectoryOrCreate
+        globalMounts:
+          - path: /etc/ssl
+            readOnly: true
+      etc-pki:
+        type: hostPath
+        hostPath: /etc/pki
+        hostPathType: DirectoryOrCreate
+        globalMounts:
+          - path: /etc/pki
+            readOnly: true
+      etc-ca-certificates:
+        type: hostPath
+        hostPath: /etc/ca-certificates
+        hostPathType: DirectoryOrCreate
+        globalMounts:
+          - path: /etc/ca-certificates
+            readOnly: true
+    serviceAccount:
+      create: true
+      name: system-upgrade

@@ -1,0 +1,394 @@
+---
+name: Talos Version Check
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: "0 9 * * 1"
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-talos-version:
+    name: Check for Talos Updates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Get Current Talos Version
+        id: current
+        run: |
+          CURRENT_VERSION=$(yq '.talosVersion' kubernetes/bootstrap/talos/talconfig.yaml)
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current Talos version: $CURRENT_VERSION"
+          
+          # Extract major.minor (e.g., v1.11)
+          CURRENT_MAJOR_MINOR=$(echo $CURRENT_VERSION | grep -oP 'v\d+\.\d+')
+          echo "major_minor=$CURRENT_MAJOR_MINOR" >> $GITHUB_OUTPUT
+          
+          # Extract major version number (e.g., 1 from v1.11.5)
+          CURRENT_MAJOR=$(echo $CURRENT_VERSION | grep -oP 'v\d+' | grep -oP '\d+')
+          echo "major=$CURRENT_MAJOR" >> $GITHUB_OUTPUT
+
+      - name: Determine Upgrade Path
+        id: upgrade_path
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          CURRENT_MAJOR_MINOR="${{ steps.current.outputs.major_minor }}"
+          CURRENT_MAJOR="${{ steps.current.outputs.major }}"
+          
+          echo "=== Talos Upgrade Path Analysis ==="
+          echo "Current version: $CURRENT"
+          echo "Current major.minor: $CURRENT_MAJOR_MINOR"
+          
+          # Get all Talos releases (non-prerelease only)
+          ALL_RELEASES=$(curl -s https://api.github.com/repos/siderolabs/talos/releases | \
+            jq -r '[.[] | select(.prerelease == false) | .tag_name] | .[]')
+          
+          # Step 1: Find latest patch in current minor version
+          LATEST_IN_CURRENT_MINOR=$(echo "$ALL_RELEASES" | \
+            grep "^${CURRENT_MAJOR_MINOR}\." | \
+            sort -V | tail -1)
+          
+          echo "Latest in current minor series ($CURRENT_MAJOR_MINOR.x): $LATEST_IN_CURRENT_MINOR"
+          
+          # Check if we need to update within current minor first
+          if [ "$CURRENT" != "$LATEST_IN_CURRENT_MINOR" ]; then
+            echo "upgrade_type=minor_update" >> $GITHUB_OUTPUT
+            echo "target_version=$LATEST_IN_CURRENT_MINOR" >> $GITHUB_OUTPUT
+            echo "upgrade_needed=true" >> $GITHUB_OUTPUT
+            echo ""
+            echo "📋 Upgrade path: Update to latest patch in current minor series"
+            echo "   $CURRENT → $LATEST_IN_CURRENT_MINOR"
+            echo "   (Must be on latest minor before major upgrade)"
+            exit 0
+          fi
+          
+          # Step 2: Current minor is up to date, check for next major version
+          NEXT_MAJOR=$((CURRENT_MAJOR + 1))
+          
+          # Find first stable release (.0) in next major version
+          FIRST_IN_NEXT_MAJOR=$(echo "$ALL_RELEASES" | \
+            grep "^v${NEXT_MAJOR}\.0\." | \
+            sort -V | head -1)
+          
+          if [ -z "$FIRST_IN_NEXT_MAJOR" ]; then
+            echo "upgrade_needed=false" >> $GITHUB_OUTPUT
+            echo "✓ Already running latest available version"
+            echo "   No v${NEXT_MAJOR}.0.x releases found yet"
+            exit 0
+          fi
+          
+          echo "First stable release in next major (v${NEXT_MAJOR}.0.x): $FIRST_IN_NEXT_MAJOR"
+          
+          # For major upgrade, target the initial stable release (.0.x) of next major
+          # This follows Talos upgrade path: latest minor → next major.0 → latest minor → next major.0
+          echo "upgrade_type=major_upgrade" >> $GITHUB_OUTPUT
+          echo "target_version=$FIRST_IN_NEXT_MAJOR" >> $GITHUB_OUTPUT
+          echo "upgrade_needed=true" >> $GITHUB_OUTPUT
+          echo ""
+          echo "📋 Upgrade path: Major version upgrade"
+          echo "   $CURRENT → $FIRST_IN_NEXT_MAJOR"
+          echo "   (After upgrade, will check for latest in v${NEXT_MAJOR}.x series)"
+
+      - name: Compare Versions
+        id: compare
+        run: |
+          # Pass through the upgrade_needed flag
+          echo "upgrade_needed=${{ steps.upgrade_path.outputs.upgrade_needed }}" >> $GITHUB_OUTPUT
+          echo "target_version=${{ steps.upgrade_path.outputs.target_version }}" >> $GITHUB_OUTPUT
+          echo "upgrade_type=${{ steps.upgrade_path.outputs.upgrade_type }}" >> $GITHUB_OUTPUT
+
+      - name: Get Schematic ID
+        if: steps.compare.outputs.upgrade_needed == 'true'
+        id: schematic
+        run: |
+          # Extract schematic ID from talconfig.yaml
+          SCHEMATIC_ID=$(yq '.nodes[0].talosImageURL' kubernetes/bootstrap/talos/talconfig.yaml | \
+            grep -oP 'installer/\K[a-f0-9]{64}')
+          echo "id=$SCHEMATIC_ID" >> $GITHUB_OUTPUT
+          echo "Schematic ID: $SCHEMATIC_ID"
+
+      - name: Create Upgrade Branch
+        if: steps.compare.outputs.upgrade_needed == 'true'
+        run: |
+          TARGET="${{ steps.compare.outputs.target_version }}"
+          BRANCH_NAME="talos-upgrade-${TARGET}"
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git checkout -b "$BRANCH_NAME"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+        id: branch
+
+      - name: Update talconfig.yaml
+        if: steps.compare.outputs.upgrade_needed == 'true'
+        run: |
+          TARGET="${{ steps.compare.outputs.target_version }}"
+          
+          # Update talosVersion in talconfig.yaml
+          yq -i '.talosVersion = "'"$TARGET"'"' kubernetes/bootstrap/talos/talconfig.yaml
+          
+          echo "✓ Updated talconfig.yaml to $TARGET"
+
+      - name: Create Worker Upgrade Plan
+        if: steps.compare.outputs.upgrade_needed == 'true'
+        run: |
+          TARGET="${{ steps.compare.outputs.target_version }}"
+          SCHEMATIC="${{ steps.schematic.outputs.id }}"
+          
+          # Copy template and update version
+          cp kubernetes/apps/system-upgrade/plans/talos-workers-upgrade.yaml.template \
+             kubernetes/apps/system-upgrade/plans/01-talos-workers-upgrade.yaml
+          
+          # Replace version markers
+          sed -i "s/v1\.12\.0/$TARGET/g" kubernetes/apps/system-upgrade/plans/01-talos-workers-upgrade.yaml
+          
+          echo "✓ Created worker upgrade Plan"
+
+      - name: Create Control Plane Upgrade Plan
+        if: steps.compare.outputs.upgrade_needed == 'true'
+        run: |
+          TARGET="${{ steps.compare.outputs.target_version }}"
+          SCHEMATIC="${{ steps.schematic.outputs.id }}"
+          
+          # Copy template and update version
+          cp kubernetes/apps/system-upgrade/plans/talos-controlplane-upgrade.yaml.template \
+             kubernetes/apps/system-upgrade/plans/02-talos-controlplane-upgrade.yaml
+          
+          # Replace version markers
+          sed -i "s/v1\.12\.0/$TARGET/g" kubernetes/apps/system-upgrade/plans/02-talos-controlplane-upgrade.yaml
+          
+          echo "✓ Created control plane upgrade Plan"
+
+      - name: Create Upgrade Instructions
+        if: steps.compare.outputs.upgrade_needed == 'true'
+        run: |
+          TARGET="${{ steps.compare.outputs.target_version }}"
+          CURRENT="${{ steps.current.outputs.version }}"
+          UPGRADE_TYPE="${{ steps.compare.outputs.upgrade_type }}"
+          
+          if [ "$UPGRADE_TYPE" = "minor_update" ]; then
+            UPGRADE_DESC="Patch update within current minor series"
+            NEXT_STEPS="After this upgrade completes, the workflow will check for major version upgrades."
+          else
+            UPGRADE_DESC="Major version upgrade"
+            NEXT_STEPS="After this upgrade completes, the workflow will check for the latest patch in the new minor series."
+          fi
+          
+          cat > UPGRADE_INSTRUCTIONS.md << 'EOF'
+          # Talos Upgrade: $CURRENT → $TARGET
+          
+          ## Upgrade Type: $UPGRADE_DESC
+          
+          This PR automates the upgrade of Talos Linux from **$CURRENT** to **$TARGET**.
+          
+          ### Talos Upgrade Path
+          
+          Talos requires a specific upgrade sequence:
+          1. **Update to latest patch in current minor version** (e.g., v1.11.0 → v1.11.6)
+          2. **Then upgrade to next major** (e.g., v1.11.6 → v1.12.0)
+          3. **Repeat**: Update to latest patch in new minor, then next major
+          
+          This PR represents one step in that path. $NEXT_STEPS
+          
+          ## Upgrade Process
+          
+          The upgrade is split into two sequential phases:
+          
+          ### Phase 1: Worker Nodes (Automatic)
+          
+          When this PR is merged, Flux will apply the worker upgrade Plan:
+          - File: `kubernetes/apps/system-upgrade/plans/01-talos-workers-upgrade.yaml`
+          - Target: All worker nodes (non-control-plane)
+          - Concurrency: 1 node at a time
+          - Each worker will be: cordoned → drained → upgraded → uncordoned
+          
+          Monitor progress:
+          ```bash
+          kubectl -n system-upgrade get plan talos-workers-upgrade -w
+          kubectl -n system-upgrade get jobs
+          kubectl get nodes
+          ```
+          
+          ### Phase 2: Control Plane (Manual Trigger)
+          
+          **IMPORTANT**: Only proceed after ALL workers have successfully upgraded.
+          
+          Apply the control plane Plan:
+          ```bash
+          kubectl apply -f kubernetes/apps/system-upgrade/plans/02-talos-controlplane-upgrade.yaml
+          ```
+          
+          Monitor progress:
+          ```bash
+          kubectl -n system-upgrade get plan talos-controlplane-upgrade -w
+          kubectl -n system-upgrade get jobs
+          kubectl get nodes
+          ```
+          
+          ## Safety Features
+          
+          - ✓ Workers upgrade first (stateless, safer)
+          - ✓ Control plane upgrades one node at a time (preserves etcd quorum)
+          - ✓ Automatic cordoning and draining
+          - ✓ Health checks between upgrades
+          - ✓ Rollback capability (manual intervention)
+          
+          ## Manual Upgrade Alternative
+          
+          If you prefer manual control, you can skip the System Upgrade Controller and use Task commands:
+          
+          ```bash
+          # Upgrade workers one at a time
+          task talos:upgrade-node HOSTNAME=mj05ajfj
+          task talos:upgrade-node HOSTNAME=mj0581rw
+          task talos:upgrade-node HOSTNAME=mj04968e
+          task talos:upgrade-node HOSTNAME=mj05g4ub
+          
+          # Then upgrade control plane
+          task talos:upgrade-node HOSTNAME=mj0583jp
+          task talos:upgrade-node HOSTNAME=mj0581m7
+          task talos:upgrade-node HOSTNAME=mj0583eq
+          ```
+          
+          ## Rollback
+          
+          If issues occur:
+          1. Delete the active Plan: `kubectl -n system-upgrade delete plan <plan-name>`
+          2. Check node status: `kubectl get nodes`
+          3. Manual intervention may be required (Talos doesn't support downgrade)
+          
+          ## Release Notes
+          
+          View Talos $TARGET release notes: https://github.com/siderolabs/talos/releases/tag/$TARGET
+          
+          ## Next Steps After This Upgrade
+          
+          $NEXT_STEPS
+          
+          The automated workflow will continue monitoring and create PRs for subsequent upgrades automatically.
+          
+          EOF
+          
+          # Replace variables
+          sed -i "s/\$CURRENT/$CURRENT/g" UPGRADE_INSTRUCTIONS.md
+          sed -i "s/\$TARGET/$TARGET/g" UPGRADE_INSTRUCTIONS.md
+          sed -i "s/\$UPGRADE_DESC/$UPGRADE_DESC/g" UPGRADE_INSTRUCTIONS.md
+          sed -i "s/\$NEXT_STEPS/$NEXT_STEPS/g" UPGRADE_INSTRUCTIONS.md
+
+      - name: Commit Changes
+        if: steps.compare.outputs.upgrade_needed == 'true'
+        run: |
+          TARGET="${{ steps.compare.outputs.target_version }}"
+          UPGRADE_TYPE="${{ steps.compare.outputs.upgrade_type }}"
+          
+          if [ "$UPGRADE_TYPE" = "minor_update" ]; then
+            COMMIT_TYPE="patch update"
+          else
+            COMMIT_TYPE="major upgrade"
+          fi
+          
+          git add kubernetes/bootstrap/talos/talconfig.yaml
+          git add kubernetes/apps/system-upgrade/plans/01-talos-workers-upgrade.yaml
+          git add kubernetes/apps/system-upgrade/plans/02-talos-controlplane-upgrade.yaml
+          git add UPGRADE_INSTRUCTIONS.md
+          
+          git commit -m "chore(talos): $COMMIT_TYPE to $TARGET
+
+          - Update talconfig.yaml to Talos $TARGET
+          - Add sequential upgrade Plans (workers → control plane)
+          - Worker upgrades will start automatically after merge
+          - Control plane upgrade requires manual Plan application
+          
+          See UPGRADE_INSTRUCTIONS.md for detailed upgrade process."
+
+      - name: Push Branch
+        if: steps.compare.outputs.upgrade_needed == 'true'
+        run: |
+          BRANCH_NAME="${{ steps.branch.outputs.branch }}"
+          git push origin "$BRANCH_NAME"
+
+      - name: Create Pull Request
+        if: steps.compare.outputs.upgrade_needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TARGET="${{ steps.compare.outputs.target_version }}"
+          CURRENT="${{ steps.current.outputs.version }}"
+          BRANCH_NAME="${{ steps.branch.outputs.branch }}"
+          UPGRADE_TYPE="${{ steps.compare.outputs.upgrade_type }}"
+          
+          if [ "$UPGRADE_TYPE" = "minor_update" ]; then
+            PR_TITLE="chore(talos): patch update to $TARGET"
+          else
+            PR_TITLE="chore(talos): major upgrade to $TARGET"
+          fi
+          
+          gh pr create \
+            --base main \
+            --head "$BRANCH_NAME" \
+            --title "$PR_TITLE" \
+            --body-file UPGRADE_INSTRUCTIONS.md \
+            --label "talos" \
+            --label "upgrade" \
+            --label "automation"
+          
+          echo "✓ Pull request created successfully"
+
+      - name: Summary
+        if: steps.compare.outputs.upgrade_needed == 'true'
+        run: |
+          TARGET="${{ steps.compare.outputs.target_version }}"
+          CURRENT="${{ steps.current.outputs.version }}"
+          UPGRADE_TYPE="${{ steps.compare.outputs.upgrade_type }}"
+          
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          # 🚀 Talos Upgrade Available
+          
+          **Current Version**: $CURRENT  
+          **Target Version**: $TARGET  
+          **Upgrade Type**: $UPGRADE_TYPE
+          
+          A pull request has been created with:
+          - ✓ Updated talconfig.yaml
+          - ✓ Worker node upgrade Plan (auto-applies after merge)
+          - ✓ Control plane upgrade Plan (manual trigger required)
+          - ✓ Detailed upgrade instructions
+          
+          ## Upgrade Path
+          
+          Talos follows a strict upgrade sequence:
+          1. Latest patch in current minor series
+          2. Then next major version
+          3. Repeat for each major version
+          
+          This PR: **$CURRENT → $TARGET**
+          
+          ## Next Steps
+          
+          1. Review the pull request
+          2. Merge when ready (workers will upgrade automatically)
+          3. Monitor worker upgrades
+          4. Manually apply control plane Plan after workers complete
+          5. Wait for next automated PR if more upgrades are needed
+          
+          EOF
+
+      - name: No Upgrade Needed
+        if: steps.compare.outputs.upgrade_needed == 'false'
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          # ✓ Talos Up to Date
+          
+          Current version **$CURRENT** is the latest available.
+          
+          No action needed.
+          EOF
