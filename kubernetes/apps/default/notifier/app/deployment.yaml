@@ -1,0 +1,174 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notifier
+  namespace: default
+spec:
+  selector:
+    app.kubernetes.io/name: notifier
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifier
+  namespace: default
+  labels:
+    app.kubernetes.io/name: notifier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: notifier
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: notifier
+    spec:
+      containers:
+        - name: webhook-server
+          image: python:3.12-slim
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: APPRISE_SONARR_PUSHOVER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: notifier-secret
+                  key: APPRISE_SONARR_PUSHOVER_URL
+            - name: APPRISE_RADARR_PUSHOVER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: notifier-secret
+                  key: APPRISE_RADARR_PUSHOVER_URL
+            - name: APPRISE_JELLYSEERR_PUSHOVER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: notifier-secret
+                  key: APPRISE_JELLYSEERR_PUSHOVER_URL
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              
+              # Install dependencies
+              apt-get update && apt-get install -y jq curl
+              pip install --no-cache-dir apprise
+              
+              # Make scripts executable
+              chmod +x /scripts/*.sh
+              
+              # Create simple webhook server
+              cat > /tmp/server.py << 'EOF'
+              #!/usr/bin/env python3
+              import http.server
+              import subprocess
+              import json
+              import os
+              from urllib.parse import urlparse
+              
+              class WebhookHandler(http.server.BaseHTTPRequestHandler):
+                  def do_POST(self):
+                      path = urlparse(self.path).path
+                      
+                      # Read POST body
+                      content_length = int(self.headers['Content-Length'])
+                      post_data = self.rfile.read(content_length).decode('utf-8')
+                      
+                      # Route to appropriate script
+                      script_map = {
+                          '/sonarr': '/scripts/sonarr-pushover.sh',
+                          '/radarr': '/scripts/radarr-pushover.sh',
+                          '/jellyseerr': '/scripts/jellyseerr-pushover.sh',
+                      }
+                      
+                      script = script_map.get(path)
+                      if not script:
+                          self.send_response(404)
+                          self.end_headers()
+                          self.wfile.write(b'Not Found')
+                          return
+                      
+                      try:
+                          # Execute script with payload as argument
+                          result = subprocess.run(
+                              ['/bin/bash', script, post_data],
+                              capture_output=True,
+                              text=True,
+                              timeout=30
+                          )
+                          
+                          # Send response
+                          if result.returncode == 0:
+                              self.send_response(200)
+                              self.send_header('Content-type', 'application/json')
+                              self.end_headers()
+                              response = {
+                                  'status': 'success',
+                                  'stdout': result.stdout,
+                                  'stderr': result.stderr
+                              }
+                              self.wfile.write(json.dumps(response).encode('utf-8'))
+                          else:
+                              self.send_response(500)
+                              self.send_header('Content-type', 'application/json')
+                              self.end_headers()
+                              response = {
+                                  'status': 'error',
+                                  'stdout': result.stdout,
+                                  'stderr': result.stderr
+                              }
+                              self.wfile.write(json.dumps(response).encode('utf-8'))
+                      except subprocess.TimeoutExpired:
+                          self.send_response(504)
+                          self.end_headers()
+                          self.wfile.write(b'Script timeout')
+                      except Exception as e:
+                          self.send_response(500)
+                          self.end_headers()
+                          self.wfile.write(f'Error: {str(e)}'.encode('utf-8'))
+                  
+                  def do_GET(self):
+                      if self.path == '/health':
+                          self.send_response(200)
+                          self.send_header('Content-type', 'text/plain')
+                          self.end_headers()
+                          self.wfile.write(b'OK')
+                      else:
+                          self.send_response(404)
+                          self.end_headers()
+                          self.wfile.write(b'Not Found')
+                  
+                  def log_message(self, format, *args):
+                      print(f"[{self.log_date_time_string()}] {format % args}")
+              
+              if __name__ == '__main__':
+                  server = http.server.HTTPServer(('0.0.0.0', 8080), WebhookHandler)
+                  print('Starting webhook server on port 8080...')
+                  server.serve_forever()
+              EOF
+              
+              python3 /tmp/server.py
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: scripts
+          configMap:
+            name: notifier-scripts
+            defaultMode: 0755
