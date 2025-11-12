@@ -83,13 +83,6 @@ spec:
         external-secrets:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/external-secrets/external-secrets/main/docs/snippets/dashboard.json
-        exportarr:
-          datasource:
-            - name: DS_PROMETHEUS
-              value: Prometheus
-          # renovate: depName="Exportarr"
-          gnetId: 19817
-          revision: 2
         flux-cluster:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/main/monitoring/configs/dashboards/cluster.json
