@@ -158,6 +158,12 @@ spec:
           - path: /scripts/tba-refresher.sh
             subPath: tba-refresher.sh
             readOnly: true
+          - path: /scripts/tag-codecs.sh
+            subPath: tag-codecs.sh
+            readOnly: true
+          - path: /scripts/refresh-series.sh
+            subPath: refresh-series.sh
+            readOnly: true
       tmp:
         type: emptyDir
       media:

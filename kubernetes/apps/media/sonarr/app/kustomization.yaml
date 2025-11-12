@@ -11,6 +11,8 @@ configMapGenerator:
       - codec-tagger.sh=./resources/codec-tagger.sh
       - pushover-notifier.sh=./resources/pushover-notifier.sh
       - tba-refresher.sh=./resources/tba-refresher.sh
+      - tag-codecs.sh=./resources/tag-codecs.sh
+      - refresh-series.sh=./resources/refresh-series.sh
 generatorOptions:
   disableNameSuffixHash: true
   annotations:
