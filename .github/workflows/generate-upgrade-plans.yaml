@@ -112,6 +112,7 @@ jobs:
               image: ghcr.io/siderolabs/talosctl:${VERSION}
               args:
                 - --nodes=\$(NODE_NAME)
+                - --endpoints=\$(NODE_NAME)
                 - health
                 - --server=false
             upgrade:
@@ -151,6 +152,7 @@ jobs:
               image: ghcr.io/siderolabs/talosctl:${VERSION}
               args:
                 - --nodes=\$(NODE_NAME)
+                - --endpoints=\$(NODE_NAME)
                 - health
                 - --server=false
             upgrade:

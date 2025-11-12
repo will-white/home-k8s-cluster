@@ -21,6 +21,7 @@ spec:
     image: ghcr.io/siderolabs/talosctl:v1.11.5
     args:
       - --nodes=$(NODE_NAME)
+      - --endpoints=$(NODE_NAME)
       - health
       - --server=false
   upgrade:
