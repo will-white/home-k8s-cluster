@@ -35,3 +35,59 @@ endpoints:
       - "[STATUS] == 404"
     alerts:
       - type: pushover
+
+  - name: rook-ceph-dashboard
+    group: infrastructure
+    url: https://rook.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: ceph-object-gateway
+    group: infrastructure
+    url: https://rgw.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 404)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: grafana
+    group: observability
+    url: https://grafana.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: prometheus
+    group: observability
+    url: https://prometheus.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
