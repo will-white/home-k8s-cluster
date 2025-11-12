@@ -62,6 +62,24 @@ spec:
                 cpu: 10m
               limits:
                 memory: 1Gi
+          exportarr:
+            image:
+              repository: ghcr.io/onedr0p/exportarr
+              tag: v2.0.1
+            args:
+              - bazarr
+            env:
+              PORT: &metricsPort 9707
+              URL: http://localhost:6767
+            envFrom:
+              - secretRef:
+                  name: bazarr-secret
+            securityContext: *securityContext
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 128Mi
           subcleaner:
             image:
               repository: registry.k8s.io/git-sync/git-sync
@@ -91,6 +109,8 @@ spec:
         ports:
           http:
             port: *port
+          metrics:
+            port: *metricsPort
     ingress:
       app:
         annotations:
@@ -110,6 +130,15 @@ spec:
                 service:
                   identifier: app
                   port: http
+    serviceMonitor:
+      app:
+        serviceName: bazarr
+        endpoints:
+          - port: metrics
+            scheme: http
+            path: /metrics
+            interval: 5m
+            scrapeTimeout: 1m
     persistence:
       add-ons:
         type: emptyDir

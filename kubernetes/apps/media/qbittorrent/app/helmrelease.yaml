@@ -64,6 +64,29 @@ spec:
             resources:
               requests:
                 cpu: 100m
+          exporter:
+            image:
+              repository: ghcr.io/esanchezm/prometheus-qbittorrent-exporter
+              tag: v1.6.0
+            env:
+              QBITTORRENT_PORT: &port 80
+              QBITTORRENT_HOST: localhost
+              EXPORTER_PORT: &metricsPort 9707
+              QBITTORRENT_USER: admin
+              QBITTORRENT_PASS: 
+                valueFrom:
+                  secretKeyRef:
+                    name: qbittorrent-secret
+                    key: QBITTORRENT_PASSWORD
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 128Mi
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -85,6 +108,8 @@ spec:
             enabled: true
             port: *torrentPort
             protocol: TCP
+          metrics:
+            port: *metricsPort
     ingress:
       app:
         annotations:
@@ -105,6 +130,15 @@ spec:
                 service:
                   identifier: app
                   port: http
+    serviceMonitor:
+      app:
+        serviceName: qbittorrent
+        endpoints:
+          - port: metrics
+            scheme: http
+            path: /metrics
+            interval: 1m
+            scrapeTimeout: 30s
     persistence:
       config:
         existingClaim: *app

@@ -63,6 +63,11 @@ spec:
           # renovate: depName="Cert-manager-Kubernetes"
           gnetId: 20842
           revision: 3
+        cloudnative-pg:
+          datasource: Prometheus
+          # renovate: depName="CloudNativePG"
+          gnetId: 20417
+          revision: 3
         cloudflared:
           datasource:
             - name: DS_PROMETHEUS
@@ -78,12 +83,24 @@ spec:
         external-secrets:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/external-secrets/external-secrets/main/docs/snippets/dashboard.json
+        exportarr:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="Exportarr"
+          gnetId: 19817
+          revision: 2
         flux-cluster:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/main/monitoring/configs/dashboards/cluster.json
         flux-control-plane:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/main/monitoring/configs/dashboards/control-plane.json
+        home-assistant:
+          datasource: Prometheus
+          # renovate: depName="Home Assistant"
+          gnetId: 15309
+          revision: 2
         kubernetes-api-server:
           datasource: Prometheus
           # renovate: depName="Kubernetes / System / API Server"
@@ -141,6 +158,11 @@ spec:
           # renovate: depName="Prometheus"
           gnetId: 19105
           revision: 7
+        qbittorrent:
+          datasource: Prometheus
+          # renovate: depName="qBittorrent"
+          gnetId: 15080
+          revision: 2
         smartctl-exporter:
           datasource:
             - name: DS_PROMETHEUS

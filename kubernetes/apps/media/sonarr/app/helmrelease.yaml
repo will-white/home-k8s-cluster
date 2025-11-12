@@ -74,6 +74,25 @@ spec:
                 cpu: 100m
               limits:
                 memory: 4Gi
+          exportarr:
+            image:
+              repository: ghcr.io/onedr0p/exportarr
+              tag: v2.0.1
+            args:
+              - sonarr
+            env:
+              PORT: &metricsPort 9707
+              URL: http://localhost:80
+            envFrom: *envFrom
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 128Mi
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -88,6 +107,8 @@ spec:
         ports:
           http:
             port: *port
+          metrics:
+            port: *metricsPort
     ingress:
       app:
         annotations:
@@ -107,6 +128,15 @@ spec:
                 service:
                   identifier: app
                   port: http
+    serviceMonitor:
+      app:
+        serviceName: sonarr
+        endpoints:
+          - port: metrics
+            scheme: http
+            path: /metrics
+            interval: 5m
+            scrapeTimeout: 1m
     persistence:
       config:
         existingClaim: *app
