@@ -1,0 +1,45 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/rancher/system-upgrade-controller/master/pkg/apis/upgrade.cattle.io/v1/plan.json
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: talos-controlplane
+  namespace: system-upgrade
+spec:
+  # Wait for worker Plan to complete before starting
+  after:
+    - talos-workers
+  version: v1.11.5
+  serviceAccountName: system-upgrade
+  concurrency: 1
+  exclusive: true
+  nodeSelector:
+    matchLabels:
+      node-role.kubernetes.io/control-plane: ""
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+  prepare:
+    image: ghcr.io/siderolabs/talosctl:v1.11.5
+    args:
+      - --nodes=$(NODE_NAME)
+      - health
+      - --server=false
+  upgrade:
+    image: ghcr.io/siderolabs/installer:v1.11.5
+  drain:
+    force: false
+    disableEviction: false
+    deleteLocalData: true
+    ignoreDaemonSets: true
+    skipWaitForDeleteTimeout: 120
+    timeout: 600
+    gracePeriod: 900
+    podSelector:
+      matchExpressions:
+        - key: app.kubernetes.io/name
+          operator: NotIn
+          values:
+            - ceph-mon
+            - ceph-osd
+            - ceph-mgr
