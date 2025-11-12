@@ -44,9 +44,9 @@ spec:
             #   CROSS_SEED_PORT: 80
             #   CROSS_SEED_SLEEP_INTERVAL: 0
             #   PUSHOVER_ENABLED: true
-            # envFrom:
-            #   - secretRef:
-            #       name: qbittorrent-secret
+            envFrom:
+              - secretRef:
+                  name: qbittorrent-secret
             probes:
               liveness:
                 enabled: true
@@ -72,12 +72,9 @@ spec:
               QBITTORRENT_PORT: &port 80
               QBITTORRENT_HOST: localhost
               EXPORTER_PORT: &metricsPort 9707
-              QBITTORRENT_USER: admin
-              QBITTORRENT_PASS: 
-                valueFrom:
-                  secretKeyRef:
-                    name: qbittorrent-secret
-                    key: QBITTORRENT_PASSWORD
+            envFrom:
+              - secretRef:
+                  name: qbittorrent-secret
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
