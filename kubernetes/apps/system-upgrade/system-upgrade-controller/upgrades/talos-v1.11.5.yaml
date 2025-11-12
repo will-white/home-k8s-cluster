@@ -3,26 +3,24 @@
 apiVersion: upgrade.cattle.io/v1
 kind: Plan
 metadata:
-  name: talos-controlplane
+  name: talos-v1-11-5
   namespace: system-upgrade
 spec:
-  version: v1.11.5
+  # Set to v1.11.5 when ready to upgrade
+  version: "hold"
   serviceAccountName: system-upgrade
+  secrets:
+    - name: talos
+      path: /var/run/secrets/talos.dev
+      ignoreUpdates: true
   concurrency: 1
   exclusive: true
   nodeSelector:
-    matchLabels:
-      node-role.kubernetes.io/control-plane: ""
+    matchExpressions:
+      - key: node-role.kubernetes.io/control-plane
+        operator: DoesNotExist
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
   upgrade:
     image: ghcr.io/siderolabs/installer:v1.11.5
-  drain:
-    force: false
-    disableEviction: false
-    deleteLocalData: true
-    ignoreDaemonSets: true
-    skipWaitForDeleteTimeout: 180
-    timeout: 900
-    gracePeriod: 1200
