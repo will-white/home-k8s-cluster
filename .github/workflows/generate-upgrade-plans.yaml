@@ -24,17 +24,10 @@ jobs:
     # The 'paths:' filter above already ensures this only runs when talconfig.yaml changes
     
     steps:
-      - name: Generate Token
-        uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: "${{ secrets.BOT_APP_ID }}"
-          private-key: "${{ secrets.BOT_APP_PRIVATE_KEY }}"
-
       - name: Checkout PR Branch
         uses: actions/checkout@v4
         with:
-          token: "${{ steps.app-token.outputs.token }}"
+          token: "${{ github.token }}"
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/pull/{0}/head', inputs.pr_number) || github.event.pull_request.head.ref }}
           repository: ${{ github.event_name == 'workflow_dispatch' && github.repository || github.event.pull_request.head.repo.full_name }}
 
@@ -332,7 +325,7 @@ jobs:
           PR_NUMBER=${{ github.event_name == 'workflow_dispatch' && inputs.pr_number || github.event.pull_request.number }}
           gh pr comment $PR_NUMBER --body-file /tmp/comment.txt
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
 
       - name: Commit Generated Plans
         if: steps.detect.outputs.talos_changed == 'true'
