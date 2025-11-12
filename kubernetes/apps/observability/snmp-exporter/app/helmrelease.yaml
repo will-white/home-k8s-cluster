@@ -24,7 +24,7 @@ spec:
   values:
     image:
       repository: prom/snmp-exporter
-      tag: v0.27.1
+      tag: v0.26.0
     
     serviceMonitor:
       enabled: true
