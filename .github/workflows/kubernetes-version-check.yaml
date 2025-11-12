@@ -19,12 +19,31 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Get Current Kubernetes Version
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubeconfig
+        run: |
+          # Decode base64 kubeconfig from repository secret
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > /tmp/kubeconfig
+          chmod 600 /tmp/kubeconfig
+          echo "KUBECONFIG=/tmp/kubeconfig" >> $GITHUB_ENV
+
+      - name: Get Current Kubernetes Version from Cluster
         id: current
         run: |
-          CURRENT_VERSION=$(yq '.kubernetesVersion' kubernetes/bootstrap/talos/talconfig.yaml)
+          # Get actual running Kubernetes version from cluster nodes
+          # This is the source of truth, not the config file
+          CURRENT_VERSION=$(kubectl get nodes -o jsonpath='{.items[0].status.nodeInfo.kubeletVersion}')
+          
+          if [ -z "$CURRENT_VERSION" ]; then
+            echo "ERROR: Could not determine Kubernetes version from cluster"
+            echo "Falling back to talconfig.yaml"
+            CURRENT_VERSION=$(yq '.kubernetesVersion' kubernetes/bootstrap/talos/talconfig.yaml)
+          fi
+          
           echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "Current Kubernetes version: $CURRENT_VERSION"
+          echo "Current Kubernetes version (from cluster): $CURRENT_VERSION"
           
           # Extract major.minor (e.g., v1.34)
           CURRENT_MAJOR_MINOR=$(echo $CURRENT_VERSION | grep -oP 'v\d+\.\d+')
@@ -37,9 +56,16 @@ jobs:
       - name: Get Current Talos Version
         id: talos
         run: |
-          TALOS_VERSION=$(yq '.talosVersion' kubernetes/bootstrap/talos/talconfig.yaml)
+          # Get actual Talos version from cluster for compatibility check
+          TALOS_VERSION=$(kubectl get nodes -o jsonpath='{.items[0].status.nodeInfo.osImage}' | grep -oP 'v\d+\.\d+\.\d+')
+          
+          if [ -z "$TALOS_VERSION" ]; then
+            echo "WARNING: Could not determine Talos version from cluster"
+            TALOS_VERSION=$(yq '.talosVersion' kubernetes/bootstrap/talos/talconfig.yaml)
+          fi
+          
           echo "version=$TALOS_VERSION" >> $GITHUB_OUTPUT
-          echo "Current Talos version: $TALOS_VERSION"
+          echo "Current Talos version (from cluster): $TALOS_VERSION"
 
       - name: Determine Upgrade Path
         id: upgrade_path
