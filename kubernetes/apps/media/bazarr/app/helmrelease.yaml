@@ -71,9 +71,11 @@ spec:
             env:
               PORT: &metricsPort 9707
               URL: http://localhost:6767
-            envFrom:
-              - secretRef:
-                  name: bazarr-secret
+              API_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: bazarr-secret
+                    key: BAZARR__AUTH__APIKEY
             securityContext: *securityContext
             resources:
               requests:
