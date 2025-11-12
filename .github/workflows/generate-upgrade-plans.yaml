@@ -184,6 +184,18 @@ jobs:
           EOF
           
           echo "✅ Generated Talos upgrade Plans"
+          
+          # Update kustomization.yaml to include the plans
+          cat > kubernetes/apps/system-upgrade/plans/kustomization.yaml <<EOF
+          ---
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          resources:
+            - 01-talos-workers-upgrade.yaml
+            - 02-talos-controlplane-upgrade.yaml
+          EOF
+          
+          echo "✅ Updated kustomization.yaml"
 
       - name: Generate Kubernetes Upgrade Plan
         if: steps.detect.outputs.k8s_changed == 'true'
@@ -242,6 +254,30 @@ jobs:
           EOF
           
           echo "✅ Generated Kubernetes upgrade Plan"
+          
+          # Update kustomization.yaml to include K8s plan
+          # If Talos plans exist, include those too
+          if [ -f kubernetes/apps/system-upgrade/plans/01-talos-workers-upgrade.yaml ]; then
+            cat > kubernetes/apps/system-upgrade/plans/kustomization.yaml <<EOF
+          ---
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          resources:
+            - 01-talos-workers-upgrade.yaml
+            - 02-talos-controlplane-upgrade.yaml
+            - 03-kubernetes-upgrade.yaml
+          EOF
+          else
+            cat > kubernetes/apps/system-upgrade/plans/kustomization.yaml <<EOF
+          ---
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          resources:
+            - 03-kubernetes-upgrade.yaml
+          EOF
+          fi
+          
+          echo "✅ Updated kustomization.yaml"
 
       - name: Add Upgrade Instructions Comment
         if: steps.detect.outputs.talos_changed == 'true' || steps.detect.outputs.k8s_changed == 'true'
