@@ -1,8 +1,7 @@
 cluster:
   allowSchedulingOnControlPlanes: true
   apiServer:
-    extraArgs:
-      feature-gates: AuthorizeNodeWithSelectors=false
+    extraArgs: {}
   controllerManager:
     extraArgs:
       bind-address: 0.0.0.0
