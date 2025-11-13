@@ -1,12 +1,14 @@
 {
     "recommendations": [
-        "albert.TabOut",
-        "britesnow.vscode-toggle-quotes",
-        "fcrespo82.markdown-table-formatter",
-        "mikestead.dotenv",
-        "mitchdenny.ecdc",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "redhat.vscode-yaml",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
         "signageos.signageos-vscode-sops",
-        "will-stone.in-any-case",
+        "task.vscode-task",
+        "github.copilot",
+        "github.copilot-chat",
+        "mitchdenny.ecdc",
         "EditorConfig.editorconfig",
         "PKief.material-icon-theme",
         "Gruntfuggly.todo-tree"

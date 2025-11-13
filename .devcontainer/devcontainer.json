@@ -2,7 +2,11 @@
   "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
   "name": "Flux Cluster Template",
   "build": {
-    "dockerfile": "Dockerfile"
+    "dockerfile": "Dockerfile",
+    "cacheFrom": "ghcr.io/will-white/new-cluster-devcontainer:cache",
+    "args": {
+      "ENABLE_DIND": "true"
+    }
   },
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
@@ -16,10 +20,6 @@
     "ghcr.io/devcontainers/features/go:1": {
       "version": "1.22"
     },
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.13"
-    },
-    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "moby": "true",
       "installDockerBuildx": "true",
@@ -30,26 +30,43 @@
       "version": "latest"
     },
     "ghcr.io/nikobockerman/devcontainer-features/fish-persistent-data:2": {},
-    "ghcr.io/eitsupi/devcontainer-features/go-task:1": {}
+    "ghcr.io/eitsupi/devcontainer-features/go-task:1": {},
+    "ghcr.io/devcontainers-extra/features/direnv:1": {}
   },
-  "postCreateCommand": {
-    "fisher": "fish -c \"curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher && fisher update && fisher install decors/fish-colored-man edc/bass jorgebucaran/autopair.fish nickeb96/puffer-fish PatrickF1/fzf.fish\"",
-    "setup": "bash .devcontainer/setup.sh",
-    "workstation-venv": "task workstation:venv"
-  },
-  "postStartCommand": {
-    "git": "git config --global --add safe.directory ${containerWorkspaceFolder}"
-  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
   "remoteEnv": {
     "KUBECONFIG": "${containerWorkspaceFolder}/kubeconfig",
-    "SOPS_AGE_KEY_FILE": "${containerWorkspaceFolder}/age.key"
+    "SOPS_AGE_KEY_FILE": "${containerWorkspaceFolder}/age.key",
+    "TALOSCONFIG": "${containerWorkspaceFolder}/kubernetes/bootstrap/talos/clusterconfig/talosconfig",
+    "TASK_X_ENV_PRECEDENCE": "1",
+    "TASK_X_MAP_VARIABLES": "0",
+    "PATH": "${containerWorkspaceFolder}/.bin:${containerWorkspaceFolder}/.local/bin:${containerEnv:PATH}"
   },
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-azuretools.vscode-docker",
-        "eamodio.gitlens"
-      ]
+        "eamodio.gitlens",
+        "redhat.vscode-yaml",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "signageos.signageos-vscode-sops",
+        "task.vscode-task",
+        "github.copilot",
+        "github.copilot-chat"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "fish",
+        "yaml.schemas": {
+          "https://json.schemastore.org/kustomization.json": "**/kustomization.yaml",
+          "https://raw.githubusercontent.com/fluxcd/helm-controller/main/docs/api/v2/helmrelease.json": "**/helmrelease.yaml",
+          "https://taskfile.dev/schema.json": "**/Taskfile.yaml"
+        },
+        "yaml.customTags": [
+          "!encrypted/pkcs1-oaep scalar",
+          "!vault scalar"
+        ]
+      }
     }
   }
 }

@@ -1,0 +1,91 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Validate: Kubeconform",
+      "type": "shell",
+      "command": "task kubernetes:kubeconform",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Validate: YAML Lint",
+      "type": "shell",
+      "command": "yamllint kubernetes/",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "test"
+    },
+    {
+      "label": "Validate: Kustomize Build",
+      "type": "shell",
+      "command": "kustomize build ${fileDirname} --load-restrictor=LoadRestrictionsNone",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "test"
+    },
+    {
+      "label": "Flux: Reconcile Cluster",
+      "type": "shell",
+      "command": "flux reconcile kustomization cluster --with-source",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Flux: Diff Cluster",
+      "type": "shell",
+      "command": "flux diff kustomization cluster --path ./kubernetes",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Check: Cluster Resources",
+      "type": "shell",
+      "command": "task kubernetes:resources",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "SOPS: Encrypt File",
+      "type": "shell",
+      "command": "sops --encrypt --in-place ${file}",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "SOPS: Decrypt and Edit",
+      "type": "shell",
+      "command": "sops ${file}",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    }
+  ]
+}

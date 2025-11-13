@@ -1,26 +1,25 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# This script is run as root by the dev container postCreateCommand.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+USERNAME="${USER:-vscode}"
+USER_HOME="$(eval echo "~${USERNAME}")"
+FISH_CONFIG_DIR="${USER_HOME}/.config/fish"
+FISH_CONFIG_FILE="${FISH_CONFIG_DIR}/config.fish"
 
-# Install direnv
-# The install script will place the binary in /usr/local/bin
-curl -sfL https://direnv.net/install.sh | bash
+mkdir -p "${FISH_CONFIG_DIR}"
+touch "${FISH_CONFIG_FILE}"
 
-# The dev container user is 'vscode'
-USERNAME=vscode
+DIR_ENV_HOOK='eval "$(direnv hook fish)"'
+if ! grep -Fxq "${DIR_ENV_HOOK}" "${FISH_CONFIG_FILE}"; then
+	printf '%s\n' "${DIR_ENV_HOOK}" >> "${FISH_CONFIG_FILE}"
+fi
 
-# Create fish config directory for the user
-mkdir -p /home/${USERNAME}/.config/fish
+FISHER_CMD="if not functions -q fisher; curl -sL https://git.io/fisher | source; and fisher install jorgebucaran/fisher; end; set -l plugins decors/fish-colored-man edc/bass jorgebucaran/autopair.fish nickeb96/puffer-fish PatrickF1/fzf.fish IlanCosman/tide@v6; fisher install \$plugins; fisher update"
+fish -c "${FISHER_CMD}"
 
-# Add direnv hook to fish config
-echo 'eval "$(direnv hook fish)"' >> /home/${USERNAME}/.config/fish/config.fish
+fish -c 'tide configure --auto --style=Lean --prompt_colors="True color" --show_time="24-hour format" --lean_prompt_height="Two lines" --prompt_connection=Disconnected --prompt_spacing=Compact --icons="Many icons" --transient=No'
 
-# Allow the .envrc file in the workspace.
-# This needs to run as the container user, from the workspace directory.
-# The devcontainer `postCreateCommand` runs from the workspace root, so `.` is correct.
-su - ${USERNAME} -c "cd $(pwd) && direnv allow ."
+fish "${SCRIPT_DIR}/fish-config.fish"
 
-# Change ownership of the user's config files to the user.
-# This is important because the script runs as root.
-chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.config
+bash "${SCRIPT_DIR}/completions.sh"
