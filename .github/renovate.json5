@@ -14,6 +14,9 @@
     'prEditedNotification',
     'prIgnoreNotification',
   ],
+  reviewers: [
+    'will-white',
+  ],
   rebaseWhen: 'conflicted',
   schedule: [
     'every weekend',
@@ -69,6 +72,20 @@
         'minor',
         'patch',
       ],
+    },
+    {
+      description: [
+        'Auto merge container digest updates',
+      ],
+      matchDatasources: [
+        'docker',
+      ],
+      matchUpdateTypes: [
+        'digest',
+      ],
+      automerge: true,
+      automergeType: 'branch',
+      ignoreTests: true,
     },
     {
       description: [
