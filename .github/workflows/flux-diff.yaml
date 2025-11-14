@@ -57,9 +57,27 @@ jobs:
         id: diff
         run: |
           cat diff.patch
-          echo "diff<<EOF" >> $GITHUB_OUTPUT
-          cat diff.patch >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Check diff size and truncate if too large to avoid ARG_MAX issues
+          DIFF_SIZE=$(wc -c < diff.patch)
+          MAX_SIZE=50000  # Safe limit to avoid argument list too long errors
+          
+          if [ "$DIFF_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "Diff is too large ($DIFF_SIZE bytes), truncating..."
+            echo "diff<<EOF" >> $GITHUB_OUTPUT
+            echo "⚠️ **Diff truncated** - The full diff is too large to display ($DIFF_SIZE bytes)" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            head -c $MAX_SIZE diff.patch >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "... (truncated)" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "truncated=true" >> $GITHUB_OUTPUT
+          else
+            echo "diff<<EOF" >> $GITHUB_OUTPUT
+            cat diff.patch >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "truncated=false" >> $GITHUB_OUTPUT
+          fi
 
       - if: ${{ steps.diff.outputs.diff != '' }}
         name: Add comment
