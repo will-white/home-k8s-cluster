@@ -68,6 +68,9 @@ spec:
           # renovate: depName="CloudNativePG"
           gnetId: 20417
           revision: 3
+        dragonfly:
+          datasource: Prometheus
+          url: https://raw.githubusercontent.com/dragonflydb/dragonfly/main/tools/local/monitoring/grafana/provisioning/dashboards/dashboard.json
         cloudflared:
           datasource:
             - name: DS_PROMETHEUS
@@ -151,11 +154,6 @@ spec:
           # renovate: depName="Cilium / Agent"
           gnetId: 16612
           revision: 1
-        postgres-statistics:
-          datasource: Prometheus
-          # renovate: depName="PostgreSQL Database"
-          gnetId: 9628
-          revision: 7
         nginx-ingress:
           datasource: Prometheus
           # renovate: depName="NGINX Ingress controller"
@@ -166,11 +164,6 @@ spec:
           # renovate: depName="TrueNAS"
           gnetId: 12106
           revision: 2
-        redis:
-          datasource: Prometheus
-          # renovate: depName="Redis Dashboard for Prometheus Redis Exporter"
-          gnetId: 11835
-          revision: 1
         emqx:
           datasource: Prometheus
           # renovate: depName="EMQX"
@@ -207,9 +200,6 @@ spec:
           # renovate: depName="Node Exporter Full"
           gnetId: 1860
           revision: 37
-        node-feature-discovery:
-          datasource: Prometheus
-          url: https://raw.githubusercontent.com/kubernetes-sigs/node-feature-discovery/master/examples/grafana-dashboard.json
         prometheus:
           datasource: Prometheus
           # renovate: depName="Prometheus"
