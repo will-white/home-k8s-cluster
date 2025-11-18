@@ -267,7 +267,6 @@ spec:
       datasources.yaml:
         apiVersion: 1
         datasources:
-          datasources:
           - access: proxy
             isDefault: true
             name: Prometheus
