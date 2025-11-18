@@ -129,9 +129,73 @@ spec:
           # renovate: depName="K8s / Storage / Volumes / Cluster"
           gnetId: 11454
           revision: 14
-        miniflux:
+        etcd:
           datasource: Prometheus
-          url: https://raw.githubusercontent.com/miniflux/v2/main/contrib/grafana/dashboard.json
+          # renovate: depName="etcd"
+          gnetId: 22236
+          revision: 4
+        kubernetes-pvc:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="Kubernetes / Persistent Volumes"
+          gnetId: 23233
+          revision: 6
+        cilium-operator:
+          datasource: Prometheus
+          # renovate: depName="Cilium / Operator"
+          gnetId: 16611
+          revision: 1
+        cilium-agent:
+          datasource: Prometheus
+          # renovate: depName="Cilium / Agent"
+          gnetId: 16612
+          revision: 1
+        postgres-statistics:
+          datasource: Prometheus
+          # renovate: depName="PostgreSQL Database"
+          gnetId: 9628
+          revision: 7
+        nginx-ingress:
+          datasource: Prometheus
+          # renovate: depName="NGINX Ingress controller"
+          gnetId: 14314
+          revision: 2
+        truenas:
+          datasource: Prometheus
+          # renovate: depName="TrueNAS"
+          gnetId: 12106
+          revision: 2
+        redis:
+          datasource: Prometheus
+          # renovate: depName="Redis Dashboard for Prometheus Redis Exporter"
+          gnetId: 11835
+          revision: 1
+        emqx:
+          datasource: Prometheus
+          # renovate: depName="EMQX"
+          gnetId: 17446
+          revision: 1
+        home-assistant-advanced:
+          datasource: Prometheus
+          # renovate: depName="Home Assistant Advanced"
+          gnetId: 12675
+          revision: 3
+        talos:
+          datasource: Prometheus
+          # renovate: depName="Talos / Cluster"
+          gnetId: 15513
+          revision: 3
+        adguard-home:
+          datasource: Prometheus
+          # renovate: depName="AdGuard Home"
+          gnetId: 14371
+          revision: 2
+        opnsense:
+          datasource: Prometheus
+          # renovate: depName="OPNsense"
+          gnetId: 15857
+          revision: 4
         nginx:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/grafana/dashboards/nginx.json
@@ -199,28 +263,30 @@ spec:
           # renovate: depName="VolSync Dashboard"
           gnetId: 21356
           revision: 3
-        zfs:
-          datasource: Prometheus
-          # renovate: depName="ZFS"
-          gnetId: 7845
-          revision: 4
     datasources:
       datasources.yaml:
         apiVersion: 1
         datasources:
+          datasources:
           - access: proxy
             isDefault: true
             name: Prometheus
             type: prometheus
             uid: prometheus
-            url: http://prometheus-operated.observability.svc.cluster.local:9090
-          - access: proxy
+            url: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
             jsonData:
-              maxLines: 250
+              timeInterval: 30s
+              queryTimeout: 120s
+              httpMethod: POST
+              cacheLevel: Medium
+          - access: proxy
             name: Loki
             type: loki
             uid: loki
             url: http://loki-headless.observability.svc.cluster.local:3100
+            jsonData:
+              timeout: 300
+              maxLines: 1000
           - access: proxy
             jsonData:
               implementation: prometheus
@@ -255,6 +321,15 @@ spec:
         org_role: Viewer
       news:
         news_feed_enabled: false
+      unified_alerting:
+        enabled: true
+      alerting:
+        enabled: false
+      query_history:
+        enabled: true
+      dataproxy:
+        timeout: 300
+        keep_alive_seconds: 300
     ingress:
       annotations:
         gethomepage.dev/description: Monitoring Dashboards

@@ -1,0 +1,84 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: adguard-exporter
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  values:
+    controllers:
+      adguard-exporter:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              # renovate: datasource=docker
+              repository: ghcr.io/henrywhitaker3/adguard-exporter
+              tag: v1.2.5
+            env:
+              ADGUARD_SERVERS: "http://adguard.internal:8083"
+              ADGUARD_USERNAME:
+                valueFrom:
+                  secretKeyRef:
+                    name: adguard-exporter-secret
+                    key: ADGUARD_USERNAME
+              ADGUARD_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: adguard-exporter-secret
+                    key: ADGUARD_PASSWORD
+              ADGUARD_PORT: "9617"
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 128Mi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile: { type: RuntimeDefault }
+    service:
+      app:
+        controller: adguard-exporter
+        ports:
+          http:
+            port: 9617
+    serviceMonitor:
+      app:
+        serviceName: adguard-exporter
+        endpoints:
+          - port: http
+            scheme: http
+            path: /metrics
+            interval: 1m
+            scrapeTimeout: 10s

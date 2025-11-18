@@ -31,3 +31,15 @@ spec:
         lbipam.cilium.io/ips: "192.168.5.47"
       externalTrafficPolicy: Cluster
     watchedResources: ["Ingress", "Service"]
+    extraArgs:
+      - -conf
+      - /etc/coredns/Corefile
+    configmap:
+      enabled: true
+      config: |
+        ${SECRET_DOMAIN}:53 {
+          errors
+          log
+          prometheus 0.0.0.0:9153
+          k8s_gateway ${SECRET_DOMAIN}
+        }

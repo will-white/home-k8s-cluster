@@ -24,7 +24,9 @@ spec:
       retries: 3
   values:
     alloy:
-      enabled: false
+      enabled: true
+      serviceMonitor:
+        enabled: true
     engines:
       local:
         lvm:
