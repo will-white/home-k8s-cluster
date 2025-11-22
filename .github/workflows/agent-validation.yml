@@ -24,7 +24,7 @@ jobs:
       contents: read  # Only need to read repository contents
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
