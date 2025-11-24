@@ -28,8 +28,8 @@ spec:
         containers:
           app:
             image:
-              repository: ghcr.io/karakeep/karakeep
-              tag: latest
+              repository: ghcr.io/karakeep-app/karakeep
+              tag: 0.28.0
             env:
               TZ: ${TIMEZONE}
             resources:
