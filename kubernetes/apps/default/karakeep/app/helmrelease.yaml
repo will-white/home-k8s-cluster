@@ -4,14 +4,10 @@ metadata:
   name: &app karakeep
 spec:
   interval: 30m
-  chart:
-    spec:
-      chart: karakeep
-      version: 0.27.0
-      sourceRef:
-        kind: OCIRepository
-        name: karakeep
-        namespace: flux-system
+  chartRef:
+    kind: OCIRepository
+    name: karakeep
+    namespace: flux-system
   install:
     remediation:
       retries: 3
