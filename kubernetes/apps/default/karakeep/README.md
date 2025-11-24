@@ -128,7 +128,40 @@ The fastest way to enable AI features:
 
 ## Troubleshooting
 
-Check logs for feature status:
+### Captcha and Bot Detection
+
+Some websites may still detect and block automated scraping. Current anti-captcha measures include:
+
+✅ **Enabled:**
+- Stealth mode browser args (disabled automation flags)
+- Realistic user agent (Chrome on Windows)
+- Ad blocker (reduces page complexity)
+- Increased timeouts (45s navigate, 90s job timeout)
+- WebSocket connection via Playwright
+
+**Additional strategies if needed:**
+
+1. **Use a proxy or VPN** (if you have one):
+   ```yaml
+   # Add to Karakeep env vars
+   CRAWLER_HTTP_PROXY: "http://your-proxy:8080"
+   CRAWLER_HTTPS_PROXY: "http://your-proxy:8080"
+   ```
+
+2. **Rotate user agents randomly** - Consider adding a list of user agents to rotate
+
+3. **Add delays between requests** - Some sites track rapid-fire requests:
+   ```yaml
+   CRAWLER_NUM_WORKERS: "1"  # Reduces concurrent crawling
+   ```
+
+4. **Use cookies from authenticated sessions** - For sites where you're logged in:
+   - Export cookies from your browser
+   - Add to Karakeep via `BROWSER_COOKIE_PATH` environment variable
+
+5. **Consider browserless Enterprise** - Includes residential proxies and advanced stealth features
+
+### Check logs for feature status:
 ```bash
 kubectl logs -l app.kubernetes.io/name=karakeep -n default | grep -i "inference\|browser\|search"
 ```
