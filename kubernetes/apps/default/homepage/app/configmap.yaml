@@ -21,6 +21,10 @@ data:
         - dashboard-icons:
             - icon: github.png
               href: 'https://github.com/walkxcode/dashboard-icons/blob/main/ICONS.md'
+    - Media:
+        - Releases.moe:
+            - icon: https://releases.moe/favicon.ico
+              href: 'https://releases.moe'
   docker.yaml: ""
   kubernetes.yaml: |
     mode: cluster
