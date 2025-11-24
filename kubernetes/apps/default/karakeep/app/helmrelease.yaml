@@ -59,8 +59,8 @@ spec:
                     name: karakeep-secret
                     key: MEILI_MASTER_KEY
                     optional: true
-              # Browser for web scraping (requires browserless or Chrome deployment)
-              # BROWSER_WEBSOCKET_URL: ws://browserless.default.svc.cluster.local:3000
+              # Browser for web scraping (browserless sidecar container)
+              BROWSER_WEBSOCKET_URL: ws://localhost:3000
               CRAWLER_FULL_PAGE_SCREENSHOT: "false"
               CRAWLER_FULL_PAGE_ARCHIVE: "false"
             resources:
@@ -69,12 +69,36 @@ spec:
                 memory: 256Mi
               limits:
                 memory: 2Gi
+          browser:
+            image:
+              repository: ghcr.io/browserless/chromium
+              tag: v2.28.4
+            env:
+              # Allow concurrent sessions for parallel crawling
+              MAX_CONCURRENT_SESSIONS: "5"
+              # Keep connection open for 5 minutes
+              CONNECTION_TIMEOUT: "300000"
+              # Allow file protocol for local file access
+              ALLOW_FILE_PROTOCOL: "true"
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                memory: 2Gi
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
     service:
       app:
         controller: *app
         ports:
           http:
             port: 3000
+            targetPort: 3000
+            protocol: TCP
+        primary: true
+        type: ClusterIP
     ingress:
       app:
         annotations:
