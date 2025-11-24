@@ -44,8 +44,8 @@ spec:
               INFERENCE_LANG: english
               # Meilisearch for full-text search (requires deployment)
               # MEILI_ADDR: http://meilisearch.default.svc.cluster.local:7700
-              # Browser for web scraping (browserless sidecar container)
-              BROWSER_WEBSOCKET_URL: ws://localhost:3000
+              # Browser for web scraping (browserless sidecar on port 3001)
+              BROWSER_WEBSOCKET_URL: ws://localhost:3001
               CRAWLER_FULL_PAGE_SCREENSHOT: "false"
               CRAWLER_FULL_PAGE_ARCHIVE: "false"
             resources:
@@ -59,6 +59,8 @@ spec:
               repository: ghcr.io/browserless/chromium
               tag: latest
             env:
+              # Change default port to avoid conflict with Karakeep
+              PORT: "3001"
               # Allow concurrent sessions for parallel crawling
               MAX_CONCURRENT_SESSIONS: "5"
               # Keep connection open for 5 minutes
