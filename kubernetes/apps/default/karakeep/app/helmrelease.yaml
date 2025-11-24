@@ -45,7 +45,8 @@ spec:
               # Meilisearch for full-text search (requires deployment)
               # MEILI_ADDR: http://meilisearch.default.svc.cluster.local:7700
               # Browser for web scraping (browserless sidecar on port 3001)
-              BROWSER_WEBSOCKET_URL: ws://localhost:3001
+              # Use Playwright-specific endpoint
+              BROWSER_WEBSOCKET_URL: ws://localhost:3001/playwright/chromium
               CRAWLER_FULL_PAGE_SCREENSHOT: "false"
               CRAWLER_FULL_PAGE_ARCHIVE: "false"
             resources:
