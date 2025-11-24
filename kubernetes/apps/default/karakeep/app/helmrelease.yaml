@@ -32,6 +32,13 @@ spec:
               tag: 0.28.0
             env:
               TZ: ${TIMEZONE}
+              NEXTAUTH_URL: https://karakeep.${SECRET_DOMAIN}
+              NEXTAUTH_SECRET:
+                valueFrom:
+                  secretKeyRef:
+                    name: karakeep-secret
+                    key: NEXTAUTH_SECRET
+              DATA_DIR: /data
             resources:
               requests:
                 cpu: 100m
