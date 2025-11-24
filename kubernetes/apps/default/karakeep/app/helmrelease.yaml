@@ -44,6 +44,6 @@ spec:
 
     persistence:
       data:
-        enabled: true
-        size: 5Gi
-        accessMode: ReadWriteOnce
+        existingClaim: *app
+        globalMounts:
+          - path: /data
