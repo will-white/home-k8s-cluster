@@ -1,0 +1,49 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app karakeep
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: karakeep
+      version: 0.27.0
+      sourceRef:
+        kind: OCIRepository
+        name: karakeep
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  values:
+    applicationHost: "karakeep.${SECRET_DOMAIN}"
+    
+    ingress:
+      main:
+        enabled: true
+        className: internal
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/group: Default
+          gethomepage.dev/name: Karakeep
+          gethomepage.dev/icon: karakeep.png
+          gethomepage.dev/description: Bookmarking app
+        hosts:
+          - host: "karakeep.${SECRET_DOMAIN}"
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+
+    persistence:
+      data:
+        enabled: true
+        size: 5Gi
+        accessMode: ReadWriteOnce
