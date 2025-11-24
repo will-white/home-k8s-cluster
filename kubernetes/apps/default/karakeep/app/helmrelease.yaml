@@ -54,6 +54,10 @@ spec:
               CRAWLER_JOB_TIMEOUT_SEC: "90"
               # Enable adblocker to reduce page complexity
               CRAWLER_ENABLE_ADBLOCKER: "true"
+              # Video download configuration
+              CRAWLER_VIDEO_DOWNLOAD: "true"
+              CRAWLER_VIDEO_DOWNLOAD_MAX_SIZE: "500"
+              CRAWLER_VIDEO_DOWNLOAD_TIMEOUT_SEC: "900"
             resources:
               requests:
                 cpu: 100m
