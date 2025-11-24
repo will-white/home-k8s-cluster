@@ -6,12 +6,12 @@ Karakeep is a self-hosted bookmarking application with AI tagging, web browsing,
 
 ✅ **Basic Features**: Working
 - Bookmark saving and management
-- Basic web crawling (HTTP only, no JavaScript execution)
-- Screenshot capture (partial page only)
+- Full web crawling with JavaScript execution (browserless sidecar)
+- Screenshot capture
 
-❌ **AI Tagging**: Disabled (no API key configured)
-❌ **Full Web Browsing**: Disabled (no browser service)
-❌ **Search Engine**: Disabled (no Meilisearch)
+✅ **Full Web Browsing**: Enabled (browserless sidecar container)
+❌ **AI Tagging**: Disabled (add OPENAI_API_KEY to Bitwarden secret to enable)
+❌ **Search Engine**: Disabled (no Meilisearch deployed)
 
 ## Enabling AI Tagging
 
@@ -40,30 +40,38 @@ Karakeep is a self-hosted bookmarking application with AI tagging, web browsing,
 
 ## Enabling Full Web Browsing
 
-Web browsing enables:
-- Full page screenshots
-- JavaScript execution
-- Better content extraction from dynamic websites
+✅ **Already Enabled!** Karakeep is configured with a browserless Chromium sidecar container.
 
-### Option 1: Browserless (Recommended)
+Web browsing features include:
+- Full page screenshots with JavaScript execution
+- Better content extraction from dynamic websites (SPAs)
+- Video download support via yt-dlp
 
-1. Deploy browserless service:
-   ```bash
-   # Add browserless to your cluster
-   kubectl create deployment browserless --image=browserless/chrome:latest -n default
-   kubectl expose deployment browserless --port=3000 -n default
-   ```
+### Current Configuration
 
-2. Uncomment the `BROWSER_WEBSOCKET_URL` line in `helmrelease.yaml`:
-   ```yaml
-   BROWSER_WEBSOCKET_URL: ws://browserless.default.svc.cluster.local:3000
-   ```
+The browserless sidecar is already configured with:
+- Image: `ghcr.io/browserless/chromium:latest`
+- Port: 3001 (Karakeep uses port 3000)
+- WebSocket: `ws://localhost:3001/playwright/chromium`
+- Max concurrent sessions: 5
+- Connection timeout: 5 minutes
+- Resources: 512Mi RAM request, 2Gi limit
 
-3. Optional: Enable full-page features:
-   ```yaml
-   CRAWLER_FULL_PAGE_SCREENSHOT: "true"
-   CRAWLER_FULL_PAGE_ARCHIVE: "true"
-   ```
+### Optional: Enable Full-Page Features
+
+To store full-page screenshots and archives (uses more disk space), uncomment in `helmrelease.yaml`:
+```yaml
+CRAWLER_FULL_PAGE_SCREENSHOT: "true"
+CRAWLER_FULL_PAGE_ARCHIVE: "true"
+```
+
+## Browser-less Mode (Not Recommended)
+
+If you want to disable the browser sidecar and use HTTP-only crawling:
+
+1. Remove the `browser` container from `helmrelease.yaml`
+2. Comment out the `BROWSER_WEBSOCKET_URL` environment variable
+3. Note: You'll lose JavaScript execution, screenshots, and video downloads
 
 ## Enabling Search Engine
 
