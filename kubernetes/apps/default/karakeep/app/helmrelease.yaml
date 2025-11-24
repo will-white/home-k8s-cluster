@@ -49,6 +49,11 @@ spec:
               BROWSER_WEBSOCKET_URL: ws://localhost:3001/playwright/chromium
               CRAWLER_FULL_PAGE_SCREENSHOT: "false"
               CRAWLER_FULL_PAGE_ARCHIVE: "false"
+              # Increased timeouts for slower-loading pages and captcha handling
+              CRAWLER_NAVIGATE_TIMEOUT_SEC: "45"
+              CRAWLER_JOB_TIMEOUT_SEC: "90"
+              # Enable adblocker to reduce page complexity
+              CRAWLER_ENABLE_ADBLOCKER: "true"
             resources:
               requests:
                 cpu: 100m
@@ -68,6 +73,16 @@ spec:
               CONNECTION_TIMEOUT: "300000"
               # Allow file protocol for local file access
               ALLOW_FILE_PROTOCOL: "true"
+              # Stealth mode - launch with args to avoid bot detection
+              DEFAULT_LAUNCH_ARGS: |
+                [
+                  "--disable-blink-features=AutomationControlled",
+                  "--disable-features=IsolateOrigins,site-per-process",
+                  "--disable-web-security",
+                  "--disable-features=VizDisplayCompositor"
+                ]
+              # User agent to appear more like a real browser
+              DEFAULT_USER_AGENT: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
             resources:
               requests:
                 cpu: 100m
