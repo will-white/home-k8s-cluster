@@ -30,33 +30,20 @@ spec:
             image:
               repository: ghcr.io/karakeep-app/karakeep
               tag: 0.28.0
+            envFrom:
+              - secretRef:
+                  name: karakeep-secret
             env:
               TZ: ${TIMEZONE}
               NEXTAUTH_URL: https://karakeep.${SECRET_DOMAIN}
-              NEXTAUTH_SECRET:
-                valueFrom:
-                  secretKeyRef:
-                    name: karakeep-secret
-                    key: NEXTAUTH_SECRET
               DATA_DIR: /data
-              # AI Inference (enabled via OPENAI_API_KEY in Bitwarden secret)
-              OPENAI_API_KEY:
-                valueFrom:
-                  secretKeyRef:
-                    name: karakeep-secret
-                    key: OPENAI_API_KEY
               # Uncomment and set to use Ollama instead of OpenAI
               # OLLAMA_BASE_URL: http://ollama.llm.svc.cluster.local:11434
               INFERENCE_TEXT_MODEL: gpt-4o-mini
               INFERENCE_IMAGE_MODEL: gpt-4o-mini
               INFERENCE_LANG: english
-              # Meilisearch for full-text search (requires deployment and MEILI_MASTER_KEY in secret)
+              # Meilisearch for full-text search (requires deployment)
               # MEILI_ADDR: http://meilisearch.default.svc.cluster.local:7700
-              MEILI_MASTER_KEY:
-                valueFrom:
-                  secretKeyRef:
-                    name: karakeep-secret
-                    key: MEILI_MASTER_KEY
               # Browser for web scraping (browserless sidecar container)
               BROWSER_WEBSOCKET_URL: ws://localhost:3000
               CRAWLER_FULL_PAGE_SCREENSHOT: "false"
@@ -70,7 +57,7 @@ spec:
           browser:
             image:
               repository: ghcr.io/browserless/chromium
-              tag: v2.28.4
+              tag: latest
             env:
               # Allow concurrent sessions for parallel crawling
               MAX_CONCURRENT_SESSIONS: "5"
