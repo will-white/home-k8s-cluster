@@ -39,6 +39,14 @@ spec:
       - name: adguard-sidecar
         image: ghcr.io/will-white/adguard-external-dns-sidecar:latest
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+          capabilities:
+            drop:
+              - ALL
         env:
           - name: ADGUARD_URL
             valueFrom:
