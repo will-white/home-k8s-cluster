@@ -37,8 +37,7 @@ spec:
       - --managed-record-types=SRV
     extraContainers:
       - name: adguard-sidecar
-        image: ghcr.io/will-white/adguard-external-dns-sidecar:latest
-        imagePullPolicy: Always
+        image: ghcr.io/will-white/adguard-external-dns-sidecar:0.2.0
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -47,6 +46,18 @@ spec:
           capabilities:
             drop:
               - ALL
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
         env:
           - name: ADGUARD_URL
             valueFrom:
