@@ -35,6 +35,30 @@ spec:
       - --managed-record-types=AAAA
       - --managed-record-types=TXT
       - --managed-record-types=SRV
+    extraContainers:
+      - name: adguard-sidecar
+        image: ghcr.io/will-white/adguard-external-dns-sidecar:latest
+        imagePullPolicy: Always
+        env:
+          - name: ADGUARD_URL
+            valueFrom:
+              secretKeyRef:
+                name: adguard-dns-secret
+                key: ADGUARD_URL
+          - name: ADGUARD_USER
+            valueFrom:
+              secretKeyRef:
+                name: adguard-dns-secret
+                key: ADGUARD_USER
+          - name: ADGUARD_PASS
+            valueFrom:
+              secretKeyRef:
+                name: adguard-dns-secret
+                key: ADGUARD_PASSWORD
+          - name: TARGET_RULE
+            value: "||*.${SECRET_DOMAIN}^$dnsrewrite=NOERROR;A;192.168.5.1"
+          - name: CHECK_INTERVAL
+            value: "60"
     logLevel: debug
     podAnnotations:
       secret.reloader.stakater.com/reload: adguard-dns-secret
