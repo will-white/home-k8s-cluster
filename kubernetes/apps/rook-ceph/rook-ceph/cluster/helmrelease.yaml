@@ -196,7 +196,7 @@ spec:
         annotations:
           gethomepage.dev/enabled: "true"
           gethomepage.dev/description: Manage Rook-Ceph
-          gethomepage.dev/group: Cluster & Observability
+          gethomepage.dev/group: Storage & Infrastructure
           gethomepage.dev/icon: rook.png
           gethomepage.dev/name: Rook/Ceph
           gethomepage.dev/pod-selector: mgr=a

@@ -1,16 +1,6 @@
 apiVersion: v1
 data:
   bookmarks.yaml: |
-    - Communicate:
-        - Gmail:
-            - icon: gmail.png
-              href: 'http://gmail.com'
-        - Google Calendar:
-            - icon: google-calendar.png
-              href: 'https://calendar.google.com'
-        - Outlook:
-            - icon: https://raw.githubusercontent.com/joryirving/home-ops/main/docs/src/assets/icons/outlook.png
-              href: 'https://outlook.com'
     - Git:
         - kubesearch:
             - icon: kubernetes-dashboard.png
@@ -21,7 +11,7 @@ data:
         - dashboard-icons:
             - icon: github.png
               href: 'https://github.com/walkxcode/dashboard-icons/blob/main/ICONS.md'
-    - Media:
+    - Media Resources:
         - Releases.moe:
             - icon: https://releases.moe/favicon.ico
               href: 'https://releases.moe'
