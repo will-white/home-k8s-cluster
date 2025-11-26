@@ -11,6 +11,7 @@ resources:
   - ./homepage/ks.yaml
   - ./karakeep/ks.yaml
   - ./mealie/ks.yaml
+  - ./paperless/ks.yaml
   - ./sosse/ks.yaml
   - ./stirling-pdf/ks.yaml
   - ./unifi/ks.yaml
