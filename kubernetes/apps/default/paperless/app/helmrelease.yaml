@@ -146,12 +146,14 @@ spec:
       consume:
         type: nfs
         server: ${NAS_IP}
-        path: /mnt/main/paperless/consume
+        path: /mnt/main/paperless
         globalMounts:
           - path: /usr/src/paperless/consume
+            subPath: consume
       export:
         type: nfs
         server: ${NAS_IP}
-        path: /mnt/main/paperless/export
+        path: /mnt/main/paperless
         globalMounts:
           - path: /usr/src/paperless/export
+            subPath: export
