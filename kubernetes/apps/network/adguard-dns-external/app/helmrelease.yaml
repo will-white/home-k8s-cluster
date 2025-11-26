@@ -1,0 +1,88 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app adguard-dns-external
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: external-dns
+      version: 1.19.0
+      sourceRef:
+        kind: HelmRepository
+        name: external-dns
+        namespace: flux-system
+  install:
+    crds: CreateReplace
+    disableSchemaValidation: true # Ref: https://github.com/kubernetes-sigs/external-dns/issues/5206
+    remediation:
+      retries: -1
+  upgrade:
+    cleanupOnFail: true
+    crds: CreateReplace
+    disableSchemaValidation: true # Ref: https://github.com/kubernetes-sigs/external-dns/issues/5206
+    remediation:
+      strategy: rollback
+      retries: 3
+  values:
+    fullnameOverride: *app
+    domainFilters: ["${SECRET_DOMAIN}"]
+    env: []
+    extraArgs:
+      - --ingress-class=external
+      - --managed-record-types=A
+      - --managed-record-types=AAAA
+      - --managed-record-types=TXT
+      - --managed-record-types=SRV
+    logLevel: debug
+    podAnnotations:
+      secret.reloader.stakater.com/reload: adguard-dns-secret
+    policy: sync
+    provider:
+      name: webhook
+      webhook:
+        image:
+          repository: ghcr.io/muhlba91/external-dns-provider-adguard
+          tag: v11.0.0@sha256:7bc1d6b3d4590f8fbb6f8452d98aecb47b4ea0a19c09ce44a6f2f0a4c2b162d4
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http-webhook
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http-webhook
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        env:
+          - name: LOG_LEVEL
+            value: debug
+          - name: ADGUARD_URL
+            valueFrom:
+              secretKeyRef:
+                name: adguard-dns-secret
+                key: ADGUARD_URL
+          - name: ADGUARD_USER
+            valueFrom:
+              secretKeyRef:
+                name: adguard-dns-secret
+                key: ADGUARD_USER
+          - name: ADGUARD_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: adguard-dns-secret
+                key: ADGUARD_PASSWORD
+          - name: DRY_RUN
+            value: "false"
+    registry: txt
+    sources:
+      - ingress
+      - service
+    triggerLoopOnEvent: true
+    txtOwnerId: external
+    txtPrefix: k8s-ext.
+    serviceMonitor:
+      enabled: true

@@ -2,14 +2,16 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app external-dns
+  name: &app adguard-dns-external
   namespace: flux-system
 spec:
   targetNamespace: network
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: ./kubernetes/apps/network/external-dns/app
+  dependsOn:
+    - name: adguard-dns-internal
+  path: ./kubernetes/apps/network/adguard-dns-external/app
   prune: true
   sourceRef:
     kind: GitRepository
