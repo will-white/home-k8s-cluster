@@ -49,16 +49,18 @@ spec:
         livenessProbe:
           httpGet:
             path: /healthz
-            port: 8080
+            port: 8081
           initialDelaySeconds: 10
           periodSeconds: 30
         readinessProbe:
           httpGet:
             path: /healthz
-            port: 8080
+            port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
         env:
+          - name: HEALTH_PORT
+            value: "8081"
           - name: ADGUARD_URL
             valueFrom:
               secretKeyRef:
