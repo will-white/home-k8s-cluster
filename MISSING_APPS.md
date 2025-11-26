@@ -143,17 +143,20 @@ This document lists all applications found in [joryirving/home-ops](https://gith
     - Alternative to TeamViewer/AnyDesk
     - Self-hosted remote desktop
 
-34. **Manyfold** - `self-hosted/manyfold`
-    - 3D model and print file organizer
-    - Manage STL files for 3D printing
+~~34. **Manyfold** - `self-hosted/manyfold`~~
+    ~~- 3D model and print file organizer~~
+    ~~- Manage STL files for 3D printing~~
+    - ✅ **DEPLOYED** - `default/manyfold`
 
-35. **Spoolman** - `self-hosted/spoolman`
-    - 3D printing filament management
-    - Track spool inventory and usage
+~~35. **Spoolman** - `self-hosted/spoolman`~~
+    ~~- 3D printing filament management~~
+    ~~- Track spool inventory and usage~~
+    - ✅ **DEPLOYED** - `default/spoolman`
 
-37. **ConvertX** - `self-hosted/convertx`
-    - Media conversion tool
-    - Video/audio format conversion
+~~37. **ConvertX** - `self-hosted/convertx`~~
+    ~~- Media conversion tool~~
+    ~~- Video/audio format conversion~~
+    - ✅ **DEPLOYED** - `default/convertx`
 
 ### 🏡 Home Automation
 

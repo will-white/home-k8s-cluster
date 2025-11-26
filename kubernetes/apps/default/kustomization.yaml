@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./ambientweather2mqtt/ks.yaml
+  - ./convertx/ks.yaml
   - ./dahua-companion/ks.yaml
   - ./frigate/ks.yaml
   - ./go2rtc/ks.yaml
@@ -10,9 +11,11 @@ resources:
   - ./homebox/ks.yaml
   - ./homepage/ks.yaml
   - ./karakeep/ks.yaml
+  - ./manyfold/ks.yaml
   - ./mealie/ks.yaml
   - ./paperless/ks.yaml
   - ./sosse/ks.yaml
+  - ./spoolman/ks.yaml
   - ./stirling-pdf/ks.yaml
   - ./unifi/ks.yaml
   - ./zigbee2mqtt/ks.yaml
