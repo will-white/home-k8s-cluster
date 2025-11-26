@@ -8,4 +8,3 @@ resources:
   - ./adguard-dns-internal/ks.yaml
   - ./cloudflare-dns/ks.yaml
   - ./ingress-nginx/ks.yaml
-  - ./k8s-gateway/ks.yaml
