@@ -32,7 +32,7 @@ spec:
           app:
             image:
               repository: ghcr.io/c4illin/convertx
-              tag: 1.3.0@sha256:7e85a82c78b99edaa0bc49a6a3be0cef2b83fb7db3753bf2ca3a68749c9bde3e
+              tag: v0.15.1@sha256:0038216e239d3fdfb2788d97f44d7765c4d7fa9c3d70696b30302c256171ac9c
               pullPolicy: IfNotPresent
             env:
               TZ: ${TIMEZONE}
