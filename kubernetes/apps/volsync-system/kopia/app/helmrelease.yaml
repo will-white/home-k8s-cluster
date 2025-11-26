@@ -72,7 +72,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Infrastructure
+          gethomepage.dev/group: Storage & Infrastructure
           gethomepage.dev/name: Kopia
           gethomepage.dev/icon: kopia.png
           gethomepage.dev/description: Backup Repository Browser

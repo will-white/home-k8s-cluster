@@ -92,7 +92,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Home
+          gethomepage.dev/group: Smart Home
           gethomepage.dev/name: Home Assistant
           gethomepage.dev/icon: home-assistant.png
           gethomepage.dev/description: Home Automation Software

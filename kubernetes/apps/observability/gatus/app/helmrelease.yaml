@@ -113,7 +113,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Observability
+          gethomepage.dev/group: Cluster & Observability
           gethomepage.dev/name: Gatus
           gethomepage.dev/icon: gatus.png
           gethomepage.dev/description: DNS Status Page

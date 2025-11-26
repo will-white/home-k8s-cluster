@@ -62,7 +62,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Home
+          gethomepage.dev/group: Productivity
           gethomepage.dev/name: Homebox
           gethomepage.dev/icon: homebox.png
           gethomepage.dev/description: Self hosted inventory management

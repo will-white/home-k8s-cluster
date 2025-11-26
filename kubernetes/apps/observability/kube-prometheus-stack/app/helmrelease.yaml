@@ -150,7 +150,7 @@ spec:
           gethomepage.dev/app: alertmanager
           gethomepage.dev/description: Alerting service
           gethomepage.dev/enabled: 'true'
-          gethomepage.dev/group: Observability
+          gethomepage.dev/group: Cluster & Observability
           gethomepage.dev/icon: alertmanager.png
           gethomepage.dev/name: Alertmanager
         enabled: true
@@ -203,7 +203,7 @@ spec:
           gethomepage.dev/app: prometheus
           gethomepage.dev/description: Monitoring Scrape Service
           gethomepage.dev/enabled: 'true'
-          gethomepage.dev/group: Observability
+          gethomepage.dev/group: Cluster & Observability
           gethomepage.dev/icon: prometheus.png
           gethomepage.dev/name: Prometheus
           gethomepage.dev/widget.type: prometheus

@@ -85,7 +85,7 @@ spec:
         annotations:
           gethomepage.dev/description: Ultimate camera streaming application
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Infrastructure
+          gethomepage.dev/group: Smart Home
           gethomepage.dev/icon: go2rtc
           gethomepage.dev/name: go2rtc
         className: internal

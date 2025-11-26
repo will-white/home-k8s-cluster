@@ -58,7 +58,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Home
+          gethomepage.dev/group: Productivity
           gethomepage.dev/name: Mealie
           gethomepage.dev/icon: mealie.png
           gethomepage.dev/description: Self hosted recipe manager, meal planner and shopping list

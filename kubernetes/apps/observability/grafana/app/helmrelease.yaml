@@ -323,7 +323,7 @@ spec:
       annotations:
         gethomepage.dev/description: Monitoring Dashboards
         gethomepage.dev/enabled: 'true'
-        gethomepage.dev/group: Observability
+        gethomepage.dev/group: Cluster & Observability
         gethomepage.dev/icon: grafana.png
         gethomepage.dev/name: Grafana
         gethomepage.dev/widget.type: grafana

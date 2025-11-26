@@ -68,7 +68,7 @@ spec:
           gethomepage.dev/enabled: "true"
           gethomepage.dev/icon: mdi-file-swap
           gethomepage.dev/name: ConvertX
-          gethomepage.dev/group: Home
+          gethomepage.dev/group: Tools
           gethomepage.dev/description: Media File Converter
         hosts:
           - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"

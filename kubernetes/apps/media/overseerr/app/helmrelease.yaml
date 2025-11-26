@@ -75,7 +75,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Downloads
+          gethomepage.dev/group: Media
           gethomepage.dev/name: Overseerr
           gethomepage.dev/icon: overseerr.png
           gethomepage.dev/description: Application for managing requests for the media library

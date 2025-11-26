@@ -110,7 +110,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Default
+          gethomepage.dev/group: Productivity
           gethomepage.dev/name: Karakeep
           gethomepage.dev/icon: karakeep.png
           gethomepage.dev/description: Bookmarking app

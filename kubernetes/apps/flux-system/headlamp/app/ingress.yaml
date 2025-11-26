@@ -5,7 +5,7 @@ metadata:
   name: headlamp
   annotations:
     gethomepage.dev/enabled: "true"
-    gethomepage.dev/group: Observability
+    gethomepage.dev/group: Cluster & Observability
     gethomepage.dev/name: Headlamp
     gethomepage.dev/icon: headlamp.png
     gethomepage.dev/description: Kubernetes Web UI
