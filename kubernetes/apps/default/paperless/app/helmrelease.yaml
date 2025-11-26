@@ -50,6 +50,9 @@ spec:
                   secretKeyRef:
                     name: paperless-secret
                     key: PAPERLESS_SECRET_KEY
+              # User mapping - match NFS ownership
+              USERMAP_UID: "1000"
+              USERMAP_GID: "1000"
               # Database
               PAPERLESS_DBENGINE: postgresql
               PAPERLESS_DBHOST:
