@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/rancher/system-upgrade-controller/master/pkg/apis/upgrade.cattle.io/v1/plan.json
+apiVersion: upgrade.cattle.io/v1
+kind: Plan
+metadata:
+  name: talos-workers
+  namespace: system-upgrade
+spec:
+  version: v1.12.0
+  serviceAccountName: system-upgrade
+  concurrency: 1
+  exclusive: true
+  nodeSelector:
+    matchExpressions:
+      - key: node-role.kubernetes.io/control-plane
+        operator: DoesNotExist
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+  upgrade:
+    image: ghcr.io/siderolabs/installer:v1.12.0
+  drain:
+    force: true
+    disableEviction: true
+    deleteLocalData: true
+    ignoreDaemonSets: true
+    skipWaitForDeleteTimeout: 120
+    timeout: 600
+    gracePeriod: 900
