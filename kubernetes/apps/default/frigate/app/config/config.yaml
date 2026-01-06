@@ -52,10 +52,36 @@ objects:
       threshold: 0.75
       min_score: 0.70
 
+review:
+  alerts:
+    labels:
+      - person
+      - dog
+  detections:
+    labels:
+      - bark
+      - speech
+      - shatter
+      - fire_alarm
+      - scream
+
+audio:
+  enabled: false
+  listen:
+    - bark
+    - fire_alarm
+    - scream
+    - speech
+    - yell
+    - shatter
+
 cameras:
   doorbell:
     detect:
       enabled: true
+      width: 1280
+      height: 720
+      fps: 5
     ffmpeg:
       output_args:
         record: preset-record-generic-audio-copy
@@ -76,6 +102,13 @@ cameras:
           roles:
             - record
   mechanical:
+    audio:
+      enabled: true
+      listen:
+        - shatter
+        - fire_alarm
+        - scream
+        - yell
     ffmpeg:
       inputs:
         - path: rtsp://go2rtc.default.svc.cluster.local:8554/mechanical?mp4
