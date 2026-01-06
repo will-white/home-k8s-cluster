@@ -60,10 +60,10 @@ spec:
     repository: ${APP}-volsync
     username: ${APP}
     retain:
-      daily: ${VOLSYNC_RETAIN_DAILY:-10}
-      hourly: ${VOLSYNC_RETAIN_HOURLY:-24}
-      monthly: ${VOLSYNC_RETAIN_MONTHLY:-3}
-      weekly: ${VOLSYNC_RETAIN_WEEKLY:-5}
+      daily: ${VOLSYNC_RETAIN_DAILY:-3}
+      hourly: ${VOLSYNC_RETAIN_HOURLY:-6}
+      monthly: ${VOLSYNC_RETAIN_MONTHLY:-1}
+      weekly: ${VOLSYNC_RETAIN_WEEKLY:-2}
     storageClassName: ${VOLSYNC_STORAGECLASS:-ceph-block}
     volumeSnapshotClassName: ${VOLSYNC_SNAPSHOTCLASS:-csi-ceph-blockpool}
   sourcePVC: ${CLAIM:-${APP}}
