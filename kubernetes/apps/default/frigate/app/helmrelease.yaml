@@ -33,6 +33,7 @@ spec:
         intel.feature.node.kubernetes.io/gpu: "true"
     controllers:
       frigate:
+        strategy: Recreate
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
