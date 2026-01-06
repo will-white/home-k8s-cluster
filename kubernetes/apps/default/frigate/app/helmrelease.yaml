@@ -31,20 +31,11 @@ spec:
       nodeSelector:
         coral.feature.node.kubernetes.io/tpu: "true"
         intel.feature.node.kubernetes.io/gpu: "true"
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  app.kubernetes.io/name: frigate
-              topologyKey: kubernetes.io/hostname
     controllers:
       frigate:
-        strategy: RollingUpdate
+        strategy: Recreate
         annotations:
           reloader.stakater.com/auto: "true"
-        pod:
-          terminationGracePeriodSeconds: 30
         containers:
           app:
             image:
