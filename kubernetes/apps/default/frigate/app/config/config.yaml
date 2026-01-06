@@ -54,6 +54,8 @@ objects:
 
 cameras:
   doorbell:
+    detect:
+      enabled: true
     ffmpeg:
       output_args:
         record: preset-record-generic-audio-copy
