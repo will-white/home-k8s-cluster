@@ -90,6 +90,13 @@ birdseye:
 
 cameras:
   doorbell:
+    mqtt:
+      enabled: true
+      timestamp: true
+      bounding_box: true
+      crop: true
+      height: 175
+      quality: 70
     detect:
       enabled: true
       width: 1280
