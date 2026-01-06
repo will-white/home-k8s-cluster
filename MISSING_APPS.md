@@ -29,11 +29,6 @@ This document lists all applications found in [joryirving/home-ops](https://gith
    - Alternative/complement to qBittorrent
    - Includes custom scripts for cross-seed integration
 
-7. **Cross-seed** - `downloads/cross-seed`
-   - Automated cross-seeding for torrents
-   - Maximizes ratio and community contribution
-   - Integrates with qBittorrent and SABnzbd
-
 8. **FlareSolverr** - `downloads/flaresolverr`
    - Proxy server to bypass Cloudflare protection
    - Required for some indexers in Prowlarr/Sonarr/Radarr
@@ -79,38 +74,11 @@ This document lists all applications found in [joryirving/home-ops](https://gith
     - Aggregates results from multiple search engines
     - No tracking or profiling
 
-### 💾 Storage & Backup
-
-18. **Democratic-CSI** - `storage/democratic-csi`
-    - CSI driver for TrueNAS/FreeNAS
-    - Provides dynamic storage provisioning
-    - NFS and iSCSI support
-
-19. **CSI Driver NFS** - `storage/csi-driver-nfs`
-    - NFS volumes for Kubernetes
-    - Dynamic provisioning of NFS shares
-
 ---
 
 ## 🟢 NICE TO HAVE Priority
 
 ### 🎮 Gaming Servers
-
-24. **Minecraft** - `games/minecraft`
-    - Minecraft server for multiplayer gaming
-    - Various modpack support
-
-25. **Palworld** - `games/palworld`
-    - Palworld dedicated server
-    - Multiplayer open-world survival crafting
-
-26. **Core Keeper** - `games/core-keeper`
-    - Core Keeper dedicated server
-    - Multiplayer survival sandbox
-
-27. **V Rising** - `games/vrising`
-    - V Rising dedicated server
-    - Vampire survival multiplayer
 
 28. **RomM** - `games/romm`
     - ROM library manager
@@ -119,44 +87,14 @@ This document lists all applications found in [joryirving/home-ops](https://gith
 
 ### 🏠 Self-Hosted Applications
 
-29. **Paperless** - `self-hosted/paperless`
-    - Document management system
-    - OCR, full-text search, tagging
-    - SSO integration via Authentik
-
 30. **Actual Budget** - `self-hosted/actual`
     - Privacy-focused budgeting application
     - Local-first with sync capabilities
-
-31. **Atuin** - `self-hosted/atuin`
-    - Magical shell history sync
-    - Encrypted sync across machines
-    - Better search and organization
 
 32. **IT-Tools** - `self-hosted/it-tools`
     - Collection of handy developer tools
     - Encoding, hashing, formatting, etc.
     - All client-side, privacy-focused
-
-33. **MeshCentral** - `self-hosted/meshcentral`
-    - Remote management and monitoring
-    - Alternative to TeamViewer/AnyDesk
-    - Self-hosted remote desktop
-
-~~34. **Manyfold** - `self-hosted/manyfold`~~
-    ~~- 3D model and print file organizer~~
-    ~~- Manage STL files for 3D printing~~
-    - ✅ **DEPLOYED** - `default/manyfold`
-
-~~35. **Spoolman** - `self-hosted/spoolman`~~
-    ~~- 3D printing filament management~~
-    ~~- Track spool inventory and usage~~
-    - ✅ **DEPLOYED** - `default/spoolman`
-
-~~37. **ConvertX** - `self-hosted/convertx`~~
-    ~~- Media conversion tool~~
-    ~~- Video/audio format conversion~~
-    - ✅ **DEPLOYED** - `default/convertx`
 
 ### 🏡 Home Automation
 
@@ -204,7 +142,6 @@ This document lists all applications found in [joryirving/home-ops](https://gith
 The reference repo includes several custom scripts:
 - **Sonarr codec tagging** - Automatically tag series by video codec
 - **Sonarr series refresh** - Auto-refresh series with TBA/TBD episodes
-- **SABnzbd cross-seed** - Trigger cross-seed after downloads
 - **Certificate extraction** - Extract certs for external services (Caddy, UniFi, PiKVM)
 
 Consider adapting these for your own use cases.

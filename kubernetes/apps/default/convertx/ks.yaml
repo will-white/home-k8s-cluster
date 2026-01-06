@@ -23,3 +23,8 @@ spec:
     substitute:
       APP: *app
       VOLSYNC_CAPACITY: 10Gi
+      # Reduced retention - low priority backup
+      VOLSYNC_RETAIN_HOURLY: "6"
+      VOLSYNC_RETAIN_DAILY: "3"
+      VOLSYNC_RETAIN_WEEKLY: "1"
+      VOLSYNC_RETAIN_MONTHLY: "0"
