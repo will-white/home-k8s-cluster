@@ -43,7 +43,7 @@ record:
       days: 7
 
 objects:
-  track: [person, dog]
+  track: [person, dog, car, package]
   filters:
     person:
       threshold: 0.75
@@ -51,12 +51,20 @@ objects:
     dog:
       threshold: 0.75
       min_score: 0.70
+    car:
+      threshold: 0.75
+      min_score: 0.70
+    package:
+      threshold: 0.6
+      min_score: 0.50
 
 review:
   alerts:
     labels:
       - person
       - dog
+      - car
+      - package
   detections:
     labels:
       - bark
@@ -75,13 +83,23 @@ audio:
     - yell
     - shatter
 
+birdseye:
+  enabled: true
+  mode: continuous
+
 cameras:
   doorbell:
     detect:
       enabled: true
       width: 1280
-      height: 720
-      fps: 5
+      height: 960
+      fps: 10
+    audio:
+      enabled: true
+      listen:
+        - bark
+        - speech
+        - yell
     ffmpeg:
       output_args:
         record: preset-record-generic-audio-copy
@@ -91,7 +109,7 @@ cameras:
           roles:
             - record
             - detect
-            # - audio # <- only necessary if audio detection is enabled
+            - audio
     motion:
       mask: 0.68,0.302,1,0.095,1,0,0.803,0,0.681,0.262
   camera1:
