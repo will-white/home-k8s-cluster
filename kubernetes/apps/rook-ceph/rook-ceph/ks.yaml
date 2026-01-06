@@ -42,3 +42,28 @@ spec:
   targetNamespace: rook-ceph
   timeout: 15m
   wait: false
+# ---
+# # Uncomment to enable RGW backup to Garage
+# # Requires: rclone-rgw-backup secret in Bitwarden Secrets Manager
+# # See: backup/DISASTER-RECOVERY.md for setup instructions
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: rook-ceph-backup
+#   namespace: flux-system
+# spec:
+#   commonMetadata:
+#     labels:
+#       app.kubernetes.io/name: rook-ceph-backup
+#   dependsOn:
+#     - name: rook-ceph-cluster
+#     - name: external-secrets-stores
+#   interval: 30m
+#   path: ./kubernetes/apps/rook-ceph/rook-ceph/backup
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: home-kubernetes
+#   targetNamespace: rook-ceph
+#   timeout: 5m
+#   wait: false

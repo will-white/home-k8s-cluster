@@ -1,0 +1,85 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/batch/cronjob_v1.json
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rclone-rgw-backup
+spec:
+  # Run daily at 3 AM
+  schedule: "0 3 * * *"
+  # Temporarily suspended - set to false when ready to enable
+  suspend: true
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: rclone
+              image: rclone/rclone:1.68
+              args:
+                - sync
+                - --config=/config/rclone.conf
+                - --verbose
+                - --transfers=4
+                - --checkers=8
+                - --fast-list
+                - ceph:
+                - garage:
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 1Gi
+              volumeMounts:
+                - name: rclone-config
+                  mountPath: /config
+                  readOnly: true
+          volumes:
+            - name: rclone-config
+              secret:
+                secretName: rclone-rgw-backup
+---
+# One-time job for initial sync or disaster recovery hydration
+# Uncomment and apply manually when needed
+# apiVersion: batch/v1
+# kind: Job
+# metadata:
+#   name: rclone-rgw-restore
+# spec:
+#   ttlSecondsAfterFinished: 86400
+#   template:
+#     spec:
+#       restartPolicy: OnFailure
+#       containers:
+#         - name: rclone
+#           image: rclone/rclone:1.68
+#           args:
+#             - sync
+#             - --config=/config/rclone.conf
+#             - --verbose
+#             - --transfers=4
+#             - --checkers=8
+#             - --fast-list
+#             # NOTE: Reverse direction - Garage to Ceph for restore
+#             - garage:
+#             - ceph:
+#           resources:
+#             requests:
+#               cpu: 100m
+#               memory: 256Mi
+#             limits:
+#               memory: 1Gi
+#           volumeMounts:
+#             - name: rclone-config
+#               mountPath: /config
+#               readOnly: true
+#       volumes:
+#         - name: rclone-config
+#           secret:
+#             secretName: rclone-rgw-backup
