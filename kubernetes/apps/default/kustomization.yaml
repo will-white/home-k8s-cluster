@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./namespace.yaml
-  - ./convertx/ks.yaml
+  # Removed: convertx, manyfold, sosse, spoolman (unused apps)
   - ./dahua-companion/ks.yaml
   - ./frigate/ks.yaml
   - ./go2rtc/ks.yaml
@@ -10,11 +10,8 @@ resources:
   - ./homebox/ks.yaml
   - ./homepage/ks.yaml
   - ./karakeep/ks.yaml
-  - ./manyfold/ks.yaml
   - ./mealie/ks.yaml
   - ./paperless/ks.yaml
-  - ./sosse/ks.yaml
-  - ./spoolman/ks.yaml
   - ./stirling-pdf/ks.yaml
   - ./unifi/ks.yaml
   - ./zigbee2mqtt/ks.yaml

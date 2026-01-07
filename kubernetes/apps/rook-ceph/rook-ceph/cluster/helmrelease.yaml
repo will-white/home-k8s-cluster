@@ -34,7 +34,7 @@ spec:
         spec:
           failureDomain: host
           replicated:
-            size: 3
+            size: 2
         storageClass:
           allowVolumeExpansion: true
           enabled: true
@@ -104,10 +104,10 @@ spec:
             - failureDomain: host
               name: data0
               replicated:
-                size: 3
+                size: 2
           metadataPool:
             replicated:
-              size: 3
+              size: 2
           metadataServer:
             activeCount: 1
             activeStandby: true
@@ -177,7 +177,7 @@ spec:
           metadataPool:
             failureDomain: host
             replicated:
-              size: 3
+              size: 2
           preservePoolsOnDelete: true
         storageClass:
           enabled: true
