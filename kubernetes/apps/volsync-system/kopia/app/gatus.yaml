@@ -9,7 +9,7 @@ data:
     endpoints:
       - name: kopia
         group: guarded
-        url: http://kopia.volsync-system.svc.cluster.local:80/
+        url: http://kopia.volsync-system.svc.cluster.local:51515/
         interval: 1m
         ui:
           hide-hostname: true
