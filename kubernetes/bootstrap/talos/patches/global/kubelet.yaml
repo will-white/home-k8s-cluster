@@ -2,6 +2,10 @@ machine:
   kubelet:
     extraArgs:
       rotate-server-certificates: true
+    extraConfig:
+      # Graceful node shutdown settings for better pod eviction during upgrades
+      shutdownGracePeriod: 60s
+      shutdownGracePeriodCriticalPods: 20s
     nodeIP:
       validSubnets:
         - 192.168.5.0/24

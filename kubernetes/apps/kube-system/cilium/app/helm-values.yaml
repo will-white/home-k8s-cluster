@@ -28,6 +28,12 @@ kubeProxyReplacement: true
 kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256
 l2announcements:
   enabled: true
+  # Reduce lease duration for faster failover during node drains
+  leaseDuration: 3s
+  leaseRenewDeadline: 1s
+  leaseRetryPeriod: 500ms
+l2NeighDiscovery:
+  enabled: true
 loadBalancer:
   algorithm: maglev
   mode: "dsr"
