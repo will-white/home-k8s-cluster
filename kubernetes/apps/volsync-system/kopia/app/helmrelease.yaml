@@ -14,6 +14,15 @@ spec:
       kopia:
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          init-config:
+            image:
+              repository: busybox
+              tag: latest
+            command:
+              - sh
+              - -c
+              - cp /config-readonly/repository.config /config/repository.config
         containers:
           app:
             image:
@@ -119,8 +128,16 @@ spec:
         type: configMap
         identifier: config
         globalMounts:
-          - path: /config/repository.config
+          - path: /config-readonly/repository.config
             subPath: repository.config
+      config:
+        type: emptyDir
+        advancedMounts:
+          kopia:
+            init-config:
+              - path: /config
+            app:
+              - path: /config
       tmpfs:
         type: emptyDir
         advancedMounts:
