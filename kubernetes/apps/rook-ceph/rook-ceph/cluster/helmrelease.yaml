@@ -69,6 +69,12 @@ spec:
         prometheusEndpoint: http://prometheus-operated.observability.svc.cluster.local:9090
         ssl: false
         urlPrefix: /
+      # Prevent node drains from causing data unavailability
+      disruptionManagement:
+        managePodBudgets: true
+        osdMaintenanceTimeout: 30
+        pgHealthCheckTimeout: 0
+        manageMachineDisruptionBudgets: false
       mgr:
         modules:
           - enabled: true
