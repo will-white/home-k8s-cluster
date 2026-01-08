@@ -26,6 +26,27 @@ spec:
   values:
     fullnameOverride: ingress-nginx-external
     controller:
+      replicaCount: 2
+      updateStrategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 1
+      minAvailable: 1
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+              app.kubernetes.io/instance: ingress-nginx-external
+              app.kubernetes.io/component: controller
+      lifecycle:
+        preStop:
+          exec:
+            command:
+              - /wait-shutdown
+      terminationGracePeriodSeconds: 30
       service:
         annotations:
           external-dns.alpha.kubernetes.io/hostname: "external.${SECRET_DOMAIN}"
