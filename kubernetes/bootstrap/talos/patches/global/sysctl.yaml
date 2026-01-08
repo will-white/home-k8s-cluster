@@ -1,7 +1,39 @@
 machine:
   sysctls:
+    # Filesystem watches (for tools like Watchdog, IDE file watchers)
     fs.inotify.max_user_watches: "1048576"
     fs.inotify.max_user_instances: "8192"
-    net.core.rmem_max: "7500000"
-    net.core.wmem_max: "7500000"
+
+    # Network buffer sizes (64MB for high throughput)
+    net.core.rmem_max: "67108864"
+    net.core.wmem_max: "67108864"
+
+    # Packet processing queue depth (helps prevent drops on busy NICs)
+    net.core.netdev_max_backlog: "10000"
+    net.core.netdev_budget: "600"
+    net.core.netdev_budget_usecs: "4000"
+
+    # Queue discipline and congestion control (BBR for better throughput)
+    net.core.default_qdisc: fq
+    net.ipv4.tcp_congestion_control: bbr
+
+    # ARP cache sizing (prevents overflows with many containers/pods)
+    net.ipv4.neigh.default.gc_thresh1: "4096"
+    net.ipv4.neigh.default.gc_thresh2: "8192"
+    net.ipv4.neigh.default.gc_thresh3: "16384"
+
+    # TCP tuning for high throughput
+    net.ipv4.tcp_rmem: 4096 87380 33554432
+    net.ipv4.tcp_wmem: 4096 65536 33554432
+    net.ipv4.tcp_fastopen: "3"
+    net.ipv4.tcp_slow_start_after_idle: "0"
+    net.ipv4.tcp_window_scaling: "1"
+
+    # Allow ping from any group
+    net.ipv4.ping_group_range: 0 2147483647
+
+    # User namespaces (for rootless containers)
+    user.max_user_namespaces: "11255"
+
+    # PostgreSQL huge pages
     vm.nr_hugepages: "1024"

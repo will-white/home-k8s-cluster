@@ -1,0 +1,10 @@
+# EthernetConfig to maximize NIC ring buffers
+# Intel I219-LM on Lenovo M900 Tiny supports up to 4096 RX/TX descriptors
+# Default is 256, which causes packet drops under heavy load (Ceph, etc.)
+---
+apiVersion: v1alpha1
+kind: EthernetConfig
+name: eno1
+rings:
+  rx: 4096
+  tx: 4096
