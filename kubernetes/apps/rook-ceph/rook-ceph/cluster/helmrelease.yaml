@@ -149,50 +149,49 @@ spec:
           pool: data0
           reclaimPolicy: Delete
           volumeBindingMode: Immediate
-    cephObjectStores: []
-    # cephObjectStores:
-    #   - ingress:
-    #       annotations:
-    #         nginx.ingress.kubernetes.io/proxy-body-size: "0"
-    #         nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
-    #       enabled: true
-    #       host:
-    #         name: rgw.${SECRET_DOMAIN}
-    #         path: /
-    #       ingressClassName: internal
-    #     name: ceph-objectstore
-    #     spec:
-    #       dataPool:
-    #         erasureCoded:
-    #           codingChunks: 1
-    #           dataChunks: 2
-    #         failureDomain: host
-    #       gateway:
-    #         hostNetwork: false
-    #         instances: 2
-    #         port: 80
-    #         priorityClassName: system-cluster-critical
-    #         resources:
-    #           limits:
-    #             memory: 2Gi
-    #           requests:
-    #             cpu: 100m
-    #             memory: 1Gi
-    #       healthCheck:
-    #         bucket:
-    #           interval: 60s
-    #       metadataPool:
-    #         failureDomain: host
-    #         replicated:
-    #           size: 3
-    #       preservePoolsOnDelete: true
-    #     storageClass:
-    #       enabled: true
-    #       name: ceph-bucket
-    #       parameters:
-    #         region: us-west-1
-    #       reclaimPolicy: Delete
-    #       volumeBindingMode: Immediate
+    cephObjectStores:
+      - ingress:
+          annotations:
+            nginx.ingress.kubernetes.io/proxy-body-size: "0"
+            nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+          enabled: true
+          host:
+            name: rgw.${SECRET_DOMAIN}
+            path: /
+          ingressClassName: internal
+        name: ceph-objectstore
+        spec:
+          dataPool:
+            erasureCoded:
+              codingChunks: 1
+              dataChunks: 2
+            failureDomain: host
+          gateway:
+            hostNetwork: false
+            instances: 2
+            port: 80
+            priorityClassName: system-cluster-critical
+            resources:
+              limits:
+                memory: 2Gi
+              requests:
+                cpu: 100m
+                memory: 1Gi
+          healthCheck:
+            bucket:
+              interval: 60s
+          metadataPool:
+            failureDomain: host
+            replicated:
+              size: 3
+          preservePoolsOnDelete: true
+        storageClass:
+          enabled: true
+          name: ceph-bucket
+          parameters:
+            region: us-west-1
+          reclaimPolicy: Delete
+          volumeBindingMode: Immediate
     configOverride: |
       [global]
       bdev_enable_discard = true
