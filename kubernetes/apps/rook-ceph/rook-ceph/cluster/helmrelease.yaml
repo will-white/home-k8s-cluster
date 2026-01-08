@@ -179,7 +179,7 @@ spec:
                 memory: 1Gi
           healthCheck:
             bucket:
-              interval: 60s
+              interval: 65s
           metadataPool:
             failureDomain: host
             replicated:
