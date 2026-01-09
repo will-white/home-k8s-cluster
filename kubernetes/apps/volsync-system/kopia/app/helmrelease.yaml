@@ -23,6 +23,37 @@ spec:
               - sh
               - -c
               - cp /config-readonly/repository.config /config/repository.config
+          init-repository:
+            image:
+              repository: ghcr.io/home-operations/kopia
+              tag: 0.22.3@sha256:eeebd12fd4b3a9c25b9f711fff32454f62e2d5e2d431ab6806ad21c52f414807
+            env:
+              KOPIA_S3_DISABLE_TLS: "true"
+            envFrom:
+              - secretRef:
+                  name: kopia-bucket
+              - secretRef:
+                  name: kopia-password
+            command:
+              - sh
+              - -c
+              - |
+                kopia repository connect s3 \
+                  --bucket=volsync-backups \
+                  --endpoint=rook-ceph-rgw-ceph-objectstore.rook-ceph.svc \
+                  --access-key=$AWS_ACCESS_KEY_ID \
+                  --secret-access-key=$AWS_SECRET_ACCESS_KEY \
+                  --disable-tls \
+                  --password=$KOPIA_PASSWORD \
+                  --config-file=/config/repository.config || \
+                kopia repository create s3 \
+                  --bucket=volsync-backups \
+                  --endpoint=rook-ceph-rgw-ceph-objectstore.rook-ceph.svc \
+                  --access-key=$AWS_ACCESS_KEY_ID \
+                  --secret-access-key=$AWS_SECRET_ACCESS_KEY \
+                  --disable-tls \
+                  --password=$KOPIA_PASSWORD \
+                  --config-file=/config/repository.config
         containers:
           app:
             image:
