@@ -4,5 +4,4 @@ resources:
   - ./helmrelease.yaml
   - ./objectstore-user.yaml
   - ./buckets.yaml
-  - ./volsync-push-secret.yaml
   - ./cloudnative-pg-push-secret.yaml

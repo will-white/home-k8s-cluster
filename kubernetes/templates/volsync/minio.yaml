@@ -5,9 +5,6 @@ kind: ExternalSecret
 metadata:
   name: ${APP}-volsync
 spec:
-  dataFrom:
-    - extract:
-        key: volsync-kopia
   secretStoreRef:
     kind: ClusterSecretStore
     name: bitwarden-secrets-manager
@@ -15,14 +12,23 @@ spec:
     name: ${APP}-volsync
     template:
       data:
-        KOPIA_PASSWORD: "{{ .PASSWORD }}"
-        # Shared Kopia repository - all apps are users in the same repo
+        KOPIA_PASSWORD: "{{ .password }}"
         KOPIA_REPOSITORY: "s3://volsync-backups"
-        AWS_ACCESS_KEY_ID: "{{ .ACCESS_KEY }}"
-        AWS_SECRET_ACCESS_KEY: "{{ .SECRET_KEY }}"
+        AWS_ACCESS_KEY_ID: "{{ .accessKey }}"
+        AWS_SECRET_ACCESS_KEY: "{{ .secretKey }}"
         AWS_S3_ENDPOINT: "http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc"
         KOPIA_S3_DISABLE_TLS: "true"
       engineVersion: v2
+  data:
+    - secretKey: password
+      remoteRef:
+        key: kopia-restic-password
+    - secretKey: accessKey
+      remoteRef:
+        key: volsync-bucket-key
+    - secretKey: secretKey
+      remoteRef:
+        key: volsync-bucket-secret
 ---
 # yaml-language-server: $schema=https://kube-schemas.pages.dev/volsync.backube/replicationdestination_v1alpha1.json
 apiVersion: volsync.backube/v1alpha1

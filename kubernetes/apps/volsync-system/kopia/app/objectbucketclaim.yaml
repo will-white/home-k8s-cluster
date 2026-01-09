@@ -2,8 +2,8 @@
 apiVersion: objectbucket.io/v1alpha1
 kind: ObjectBucketClaim
 metadata:
-  name: cloudnative-pg
-  namespace: rook-ceph
+  name: kopia-bucket
+  namespace: volsync-system
 spec:
-  bucketName: cloudnative-pg
+  bucketName: volsync-backups
   storageClassName: ceph-bucket
