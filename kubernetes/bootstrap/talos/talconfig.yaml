@@ -23,19 +23,18 @@ cniConfig:
   name: none
 
 # Talos Image Factory Schematic Extensions (factory.talos.dev)
-# Schematic ID: f3350e61fcd45fab42c5b71062eae42982131a4dcbc7ad83bf86d793121607d0
+# Schematic ID: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
 # Included extensions:
 #   - siderolabs/gasket-driver  : Google Coral TPU support (PCIe/M.2 accelerators)
 #   - siderolabs/i915           : Intel GPU drivers and firmware
 #   - siderolabs/intel-ucode    : Intel CPU microcode updates
 #   - siderolabs/mei            : Intel Management Engine Interface (required for AMT/vPro)
-#   - siderolabs/nut-client     : Network UPS Tools client for graceful shutdown on power loss
 
 nodes:
   - hostname: "mj0583jp"
     ipAddress: "192.168.5.40"
     installDisk: "/dev/sda"
-    talosImageURL: factory.talos.dev/installer/f3350e61fcd45fab42c5b71062eae42982131a4dcbc7ad83bf86d793121607d0
+    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
     controlPlane: true
     networkInterfaces:
       - deviceSelector:
@@ -52,7 +51,7 @@ nodes:
   - hostname: "mj0581m7"
     ipAddress: "192.168.5.41"
     installDisk: "/dev/sda"
-    talosImageURL: factory.talos.dev/installer/f3350e61fcd45fab42c5b71062eae42982131a4dcbc7ad83bf86d793121607d0
+    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
     controlPlane: true
     networkInterfaces:
       - deviceSelector:
@@ -69,7 +68,7 @@ nodes:
   - hostname: "mj0583eq"
     ipAddress: "192.168.5.42"
     installDisk: "/dev/sda"
-    talosImageURL: factory.talos.dev/installer/f3350e61fcd45fab42c5b71062eae42982131a4dcbc7ad83bf86d793121607d0
+    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
     controlPlane: true
     networkInterfaces:
       - deviceSelector:
@@ -86,7 +85,7 @@ nodes:
   - hostname: "mj05ajfj"
     ipAddress: "192.168.5.50"
     installDisk: "/dev/sda"
-    talosImageURL: factory.talos.dev/installer/f3350e61fcd45fab42c5b71062eae42982131a4dcbc7ad83bf86d793121607d0
+    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
     controlPlane: false
     networkInterfaces:
       - deviceSelector:
@@ -101,7 +100,7 @@ nodes:
   - hostname: "mj04ew44"
     ipAddress: "192.168.5.51"
     installDisk: "/dev/sda"
-    talosImageURL: factory.talos.dev/installer/f3350e61fcd45fab42c5b71062eae42982131a4dcbc7ad83bf86d793121607d0
+    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
     controlPlane: false
     networkInterfaces:
       - deviceSelector:
@@ -116,7 +115,7 @@ nodes:
   - hostname: "mj0581rw"
     ipAddress: "192.168.5.52"
     installDisk: "/dev/sda"
-    talosImageURL: factory.talos.dev/installer/f3350e61fcd45fab42c5b71062eae42982131a4dcbc7ad83bf86d793121607d0
+    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
     controlPlane: false
     networkInterfaces:
       - deviceSelector:
@@ -131,7 +130,7 @@ nodes:
   - hostname: "mj04968e"
     ipAddress: "192.168.5.53"
     installDisk: "/dev/sda"
-    talosImageURL: factory.talos.dev/installer/f3350e61fcd45fab42c5b71062eae42982131a4dcbc7ad83bf86d793121607d0
+    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
     controlPlane: false
     networkInterfaces:
       - deviceSelector:
@@ -146,7 +145,7 @@ nodes:
   - hostname: "mj05g4ub"
     ipAddress: "192.168.5.54"
     installDisk: "/dev/sda"
-    talosImageURL: factory.talos.dev/installer/f3350e61fcd45fab42c5b71062eae42982131a4dcbc7ad83bf86d793121607d0
+    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
     controlPlane: false
     networkInterfaces:
       - deviceSelector:

@@ -11,7 +11,7 @@ machine:
     # Packet processing queue depth (helps prevent drops on busy NICs)
     net.core.netdev_max_backlog: "10000"
     net.core.netdev_budget: "600"
-    net.core.netdev_budget_usecs: "4000"
+    # net.core.netdev_budget_usecs removed - not supported on all hardware
 
     # Queue discipline and congestion control (BBR for better throughput)
     net.core.default_qdisc: fq
