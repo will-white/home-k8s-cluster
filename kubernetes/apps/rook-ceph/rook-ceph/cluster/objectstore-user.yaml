@@ -7,3 +7,9 @@ metadata:
 spec:
   store: ceph-objectstore
   displayName: "Backup User for PostgreSQL and Kopia"
+  capabilities:
+    user: "*"
+    bucket: "*"
+    metadata: "*"
+    usage: "*"
+    zone: "*"

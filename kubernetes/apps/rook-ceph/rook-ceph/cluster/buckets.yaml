@@ -1,0 +1,18 @@
+---
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  name: volsync-backups
+  namespace: rook-ceph
+spec:
+  bucketName: volsync-backups
+  storageClassName: ceph-bucket
+---
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  name: cloudnative-pg
+  namespace: rook-ceph
+spec:
+  bucketName: cloudnative-pg
+  storageClassName: ceph-bucket

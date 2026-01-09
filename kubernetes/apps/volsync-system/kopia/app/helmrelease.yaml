@@ -31,9 +31,7 @@ spec:
               KOPIA_S3_DISABLE_TLS: "true"
             envFrom:
               - secretRef:
-                  name: kopia-bucket
-              - secretRef:
-                  name: kopia-password
+                  name: kopia-secret
             command:
               - sh
               - -c
@@ -67,9 +65,7 @@ spec:
               KOPIA_S3_DISABLE_TLS: "true"
             envFrom:
               - secretRef:
-                  name: kopia-bucket
-              - secretRef:
-                  name: kopia-password
+                  name: kopia-secret
             args:
               - --without-password
             ports:
