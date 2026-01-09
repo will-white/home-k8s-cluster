@@ -36,6 +36,137 @@ spec:
       provisionerTolerations:
         - key: node-role.kubernetes.io/control-plane
           effect: NoSchedule
+      # Reduce CSI plugin resource requests for home cluster
+      csiRBDPluginResource: |
+        - name: driver-registrar
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+        - name: csi-rbdplugin
+          resource:
+            requests:
+              memory: 128Mi
+              cpu: 25m
+            limits:
+              memory: 512Mi
+        - name: liveness-prometheus
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+      csiCephFSPluginResource: |
+        - name: driver-registrar
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+        - name: csi-cephfsplugin
+          resource:
+            requests:
+              memory: 128Mi
+              cpu: 25m
+            limits:
+              memory: 512Mi
+        - name: liveness-prometheus
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+      csiRBDProvisionerResource: |
+        - name: csi-provisioner
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+        - name: csi-resizer
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+        - name: csi-attacher
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+        - name: csi-snapshotter
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+        - name: csi-rbdplugin
+          resource:
+            requests:
+              memory: 128Mi
+              cpu: 25m
+            limits:
+              memory: 512Mi
+        - name: liveness-prometheus
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+      csiCephFSProvisionerResource: |
+        - name: csi-provisioner
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+        - name: csi-resizer
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+        - name: csi-attacher
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+        - name: csi-snapshotter
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
+        - name: csi-cephfsplugin
+          resource:
+            requests:
+              memory: 128Mi
+              cpu: 25m
+            limits:
+              memory: 512Mi
+        - name: liveness-prometheus
+          resource:
+            requests:
+              memory: 64Mi
+              cpu: 10m
+            limits:
+              memory: 128Mi
     discover:
       tolerations:
         - key: node-role.kubernetes.io/control-plane
