@@ -1,0 +1,9 @@
+---
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  name: kopia-bucket
+  namespace: volsync-system
+spec:
+  bucketName: volsync-backups
+  storageClassName: ceph-bucket

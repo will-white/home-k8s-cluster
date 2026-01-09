@@ -36,7 +36,9 @@ spec:
               KOPIA_S3_DISABLE_TLS: "true"
             envFrom:
               - secretRef:
-                  name: kopia-secret
+                  name: kopia-bucket
+              - secretRef:
+                  name: kopia-password
             args:
               - --without-password
             ports:
