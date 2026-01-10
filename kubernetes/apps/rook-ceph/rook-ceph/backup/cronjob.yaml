@@ -20,7 +20,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: rclone
-              image: rclone/rclone:1.68
+              image: rclone/rclone:1.72
               args:
                 - sync
                 - --config=/config/rclone.conf
