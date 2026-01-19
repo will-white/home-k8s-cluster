@@ -76,8 +76,10 @@ spec:
               secretKeyRef:
                 name: adguard-dns-secret
                 key: ADGUARD_PASSWORD
-          - name: TARGET_RULE
-            value: "|*.${SECRET_DOMAIN}^$dnsrewrite=NOERROR;A;192.168.5.1,important"
+          - name: ROOT_DOMAIN
+            value: "${SECRET_DOMAIN}"
+          - name: FALLBACK_IP
+            value: "192.168.5.1"
           - name: CHECK_INTERVAL
             value: "60"
     logLevel: debug
