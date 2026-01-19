@@ -44,7 +44,7 @@ record:
       days: 7
 
 objects:
-  track: [person, dog, car, package]
+  track: [person, dog, car]
   filters:
     person:
       threshold: 0.75
@@ -55,9 +55,6 @@ objects:
     car:
       threshold: 0.75
       min_score: 0.70
-    package:
-      threshold: 0.6
-      min_score: 0.50
 
 review:
   alerts:
@@ -65,7 +62,6 @@ review:
       - person
       - dog
       - car
-      - package
   detections:
     labels:
       - bark

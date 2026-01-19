@@ -131,13 +131,13 @@ spec:
       cache:
         type: emptyDir
         medium: Memory
-        sizeLimit: 1Gi
+        sizeLimit: 2Gi
         globalMounts:
           - path: /tmp/cache
       shm:
         type: emptyDir
         medium: Memory
-        sizeLimit: 1Gi
+        sizeLimit: 2Gi
         globalMounts:
           - path: /dev/shm
       coral:
