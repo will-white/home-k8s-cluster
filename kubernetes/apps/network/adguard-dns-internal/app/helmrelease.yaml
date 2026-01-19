@@ -37,7 +37,7 @@ spec:
       - --managed-record-types=SRV
     extraContainers:
       - name: adguard-sidecar
-        image: ghcr.io/will-white/adguard-external-dns-sidecar:v0.2.4
+        image: ghcr.io/will-white/adguard-external-dns-sidecar:v0.3.11
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
