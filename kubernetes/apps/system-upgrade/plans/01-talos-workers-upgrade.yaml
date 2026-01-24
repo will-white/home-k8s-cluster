@@ -6,7 +6,7 @@ metadata:
   name: talos-workers
   namespace: system-upgrade
 spec:
-  version: v1.12.1
+  version: v1.12.2
   serviceAccountName: system-upgrade
   concurrency: 1
   exclusive: true
