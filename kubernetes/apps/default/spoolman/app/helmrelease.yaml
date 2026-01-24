@@ -32,7 +32,7 @@ spec:
           app:
             image:
               repository: ghcr.io/donkie/spoolman
-              tag: 0.22.1@sha256:d6d59da2fa6fdc543169dbda4fe1aa393817c196073c76cbdd0e9be1b7582955
+              tag: 0.23.0@sha256:191787ae38b6accf9a82e84907c14801a5e782292547a577ca19cb6fed4b02bc
               pullPolicy: IfNotPresent
             env:
               TZ: ${TIMEZONE}
