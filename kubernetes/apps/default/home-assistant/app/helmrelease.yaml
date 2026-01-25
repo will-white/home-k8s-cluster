@@ -103,6 +103,9 @@ spec:
           gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_HASS_TOKEN}}` }}"
           gethomepage.dev/pod-selector: app.kubernetes.io/name=home-assistant
           external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+          nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-buffering: "off"
         className: external
         hosts:
           - host: hass.${SECRET_DOMAIN}
