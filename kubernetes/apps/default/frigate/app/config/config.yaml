@@ -108,7 +108,7 @@ cameras:
       output_args:
         record: preset-record-generic-audio-copy
       inputs:
-        - path: rtsp://go2rtc.default.svc.cluster.local:8554/doorbell?mp4
+        - path: rtsp://go2rtc.default.svc.cluster.local:8554/doorbell
           input_args: preset-rtsp-restream-low-latency
           roles:
             - record
@@ -119,7 +119,7 @@ cameras:
   camera1:
     ffmpeg:
       inputs:
-        - path: rtsp://go2rtc.default.svc.cluster.local:8554/camera1?mp4
+        - path: rtsp://go2rtc.default.svc.cluster.local:8554/camera1
           input_args: preset-rtsp-restream
           roles:
             - record
@@ -133,7 +133,7 @@ cameras:
         - yell
     ffmpeg:
       inputs:
-        - path: rtsp://go2rtc.default.svc.cluster.local:8554/mechanical?mp4
+        - path: rtsp://go2rtc.default.svc.cluster.local:8554/mechanical
           input_args: preset-rtsp-restream
           roles:
             - record
