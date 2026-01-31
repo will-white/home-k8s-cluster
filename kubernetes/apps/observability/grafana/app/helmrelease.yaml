@@ -132,6 +132,11 @@ spec:
           # renovate: depName="K8s / Storage / Volumes / Cluster"
           gnetId: 11454
           revision: 14
+        loki-kubernetes-logs:
+          datasource: Loki
+          # renovate: depName="Kubernetes Service Logs"
+          gnetId: 15141
+          revision: 1
         etcd:
           datasource: Prometheus
           # renovate: depName="etcd"
