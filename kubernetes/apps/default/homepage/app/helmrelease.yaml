@@ -29,7 +29,7 @@ spec:
           app:
             image:
               repository: ghcr.io/gethomepage/homepage
-              tag: v1.9.0
+              tag: v1.10.1
             env:
               TZ: ${TIMEZONE}
               HOMEPAGE_ALLOWED_HOSTS: &host dash.${SECRET_DOMAIN}
