@@ -73,7 +73,7 @@ kubernetes/apps/<namespace>/<app-name>/
     ├── pvc.yaml
     ├── configmap.yaml
     ├── servicemonitor.yaml
-    └── networkpolicy.yaml
+    └── network-policy.yaml
 ```
 
 **Next steps after generation:**
