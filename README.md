@@ -6,7 +6,11 @@ _... managed with Flux, Renovate, and GitHub Actions_ 🤖
 
 </div>
 
-> **For AI Agents and Developers**: See [AGENTS.md](./AGENTS.md) for comprehensive setup, validation, and operational instructions.
+> **For AI Agents and Developers**: 
+> - 🚀 **Quick Start**: [QUICK_START.md](./QUICK_START.md) - Step-by-step guides for common tasks
+> - 🤖 **Agent Guide**: [AGENTS.md](./AGENTS.md) - Agent personas, roles, and boundaries
+> - 📋 **Conventions**: [CONVENTIONS.md](./CONVENTIONS.md) - Standards and best practices
+> - 💡 **Hints**: [.agent-hints/](./.agent-hints/) - Quick references and troubleshooting
 
 ## 🔧 Tools
 
