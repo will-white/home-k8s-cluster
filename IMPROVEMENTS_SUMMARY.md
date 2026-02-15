@@ -2,10 +2,15 @@
 
 **Date**: 2026-02-15
 **PR**: Improve repository for agents and agentic workflows
+**Updated**: 2026-02-15 (Phase 2 additions)
 
 ## Overview
 
-This document summarizes the improvements made to make the home-k8s-cluster repository more accessible and efficient for AI agents and agentic workflows.
+This document summarizes the comprehensive improvements made to make the home-k8s-cluster repository significantly more accessible and efficient for AI agents and agentic workflows.
+
+The improvements were implemented in two phases:
+1. **Phase 1**: Core documentation, templates, and scripts
+2. **Phase 2**: GitHub integration, automation, and contributing guide
 
 ## New Documentation
 
@@ -293,6 +298,96 @@ Possible next steps to further improve agent workflows:
    - Working examples for each pattern
    - Reference implementations
 
+## Phase 2: GitHub Integration & Automation (2026-02-15)
+
+### GitHub Templates (6 files)
+
+Added comprehensive issue and PR templates for structured collaboration:
+
+1. **.github/ISSUE_TEMPLATE/add-application.md** (1.7KB)
+   - Template for requesting new application additions
+   - Includes agent implementation checklist
+   - Prompts for all necessary information
+
+2. **.github/ISSUE_TEMPLATE/bug-report.md** (1.5KB)
+   - Structured bug reporting
+   - Agent investigation checklist
+   - Debugging command references
+
+3. **.github/ISSUE_TEMPLATE/feature-request.md** (1.3KB)
+   - Feature proposal template
+   - Impact assessment section
+   - Agent implementation guide
+
+4. **.github/ISSUE_TEMPLATE/documentation.md** (947 bytes)
+   - Documentation improvement requests
+   - Consistency checking guide
+   - Cross-reference validation
+
+5. **.github/ISSUE_TEMPLATE/agent-workflow.md** (1.1KB)
+   - Agent-specific workflow improvements
+   - Self-assessment checklist
+   - Integration with existing docs
+
+6. **.github/PULL_REQUEST_TEMPLATE.md** (2.6KB)
+   - Comprehensive PR checklist
+   - Validation requirements
+   - Agent workflow compliance section
+   - Security and review guidelines
+
+### Automation Configuration (3 files)
+
+7. **.pre-commit-config.yaml** (3.6KB)
+   - Automated pre-commit validation
+   - YAML linting and formatting
+   - Secret detection
+   - Shell script checking
+   - Markdown linting
+   - Custom Kubernetes validation hooks
+   - Configurable with skip options
+
+8. **.yamllint** (682 bytes)
+   - YAML linting rules
+   - Reasonable defaults
+   - Excludes templates directory
+   - Consistent with repository style
+
+9. **Makefile** (2.9KB)
+   - Convenient command wrappers
+   - Help command for discoverability
+   - Shortcuts for common operations
+   - Setup automation
+
+### Documentation (2 files)
+
+10. **CONTRIBUTING.md** (10.1KB)
+    - Comprehensive contribution guide
+    - Separate sections for humans and agents
+    - Security guidelines
+    - Git workflow best practices
+    - Agent persona guidelines
+    - Tool installation instructions
+    - Testing procedures
+    - External resources
+
+11. **scripts/README.md** (5.7KB)
+    - Complete scripts documentation
+    - Usage examples for each script
+    - Workflow examples
+    - Integration guides (Task, Make, pre-commit)
+    - Requirements and installation
+    - Troubleshooting section
+
+### Updates
+
+12. **.gitignore** (enhanced)
+    - Added build artifacts patterns
+    - Editor and IDE directories
+    - OS-specific files
+    - Agent working files
+    - Test output directories
+    - Pre-commit cache
+
 ## Conclusion
 
 These improvements significantly enhance the repository's accessibility for both AI agents and human developers by:
@@ -302,11 +397,51 @@ These improvements significantly enhance the repository's accessibility for both
 - **Accelerating development** with scaffolding tools
 - **Improving understanding** with dependency maps and guides
 - **Enabling self-service** problem resolution
+- **Streamlining onboarding** with structured templates
+- **Automating validation** with pre-commit hooks
+- **Standardizing contributions** with comprehensive guidelines
 
-The repository now provides a complete toolkit for agentic workflows, from initial exploration through deployment and troubleshooting.
+## Complete File Inventory
+
+### Phase 1 (Initial Implementation)
+- QUICK_START.md (9.5KB)
+- CONVENTIONS.md (13.4KB)
+- .agent-hints/common-tasks.md (6.1KB)
+- .agent-hints/dependency-map.md (8.4KB)
+- .agent-hints/troubleshooting.md (10.9KB)
+- .agent-hints/README.md (3.9KB)
+- kubernetes/templates/app-scaffold/* (9 files, ~12KB)
+- scripts/validate-before-commit.sh (3.6KB)
+- scripts/validate-app.sh (4.3KB)
+- scripts/generate-app-scaffold.sh (2.9KB)
+- scripts/generate-repo-map.sh (3.4KB)
+- README.md (updated)
+- IMPROVEMENTS_SUMMARY.md (8.3KB)
+
+### Phase 2 (GitHub Integration & Automation)
+- .github/ISSUE_TEMPLATE/add-application.md (1.7KB)
+- .github/ISSUE_TEMPLATE/bug-report.md (1.5KB)
+- .github/ISSUE_TEMPLATE/feature-request.md (1.3KB)
+- .github/ISSUE_TEMPLATE/documentation.md (947 bytes)
+- .github/ISSUE_TEMPLATE/agent-workflow.md (1.1KB)
+- .github/PULL_REQUEST_TEMPLATE.md (2.6KB)
+- .pre-commit-config.yaml (3.6KB)
+- .yamllint (682 bytes)
+- CONTRIBUTING.md (10.1KB)
+- scripts/README.md (5.7KB)
+- Makefile (2.9KB)
+- .gitignore (enhanced)
+
+### Total Impact
+- **Files Added**: 32
+- **Documentation**: ~80KB
+- **Templates**: ~12KB
+- **Scripts**: ~14KB
+- **Configuration**: ~7KB
+- **Total Content**: ~113KB
 
 ---
 
 **Implemented by**: GitHub Copilot Agent
 **Date**: 2026-02-15
-**Status**: Complete
+**Status**: Complete (Phases 1 & 2)
