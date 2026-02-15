@@ -1,0 +1,61 @@
+---
+# ServiceMonitor - Enables Prometheus to scrape metrics
+# Use this for applications that expose Prometheus metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: <APP-NAME>
+spec:
+  # Select the service to monitor
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: <APP-NAME>
+
+  # Endpoints to scrape
+  endpoints:
+    - port: metrics  # Port name from the Service
+      scheme: http
+      path: /metrics  # Metrics endpoint path
+      interval: 1m    # How often to scrape
+      scrapeTimeout: 30s
+
+      # Optional: Relabeling (uncomment if needed)
+      # relabelings:
+      #   - sourceLabels: [__meta_kubernetes_pod_name]
+      #     targetLabel: pod
+      #   - sourceLabels: [__meta_kubernetes_namespace]
+      #     targetLabel: namespace
+
+---
+# NOTES:
+# 1. Common metrics paths:
+#    - Prometheus exporters: /metrics
+#    - Home Assistant: /api/prometheus
+#    - Custom apps: /metrics, /api/metrics, /prometheus
+#
+# 2. The Service must have a port named 'metrics' (or match spec.endpoints[].port)
+#
+# 3. In HelmRelease, add the metrics port:
+#    service:
+#      app:
+#        controller: <APP-NAME>
+#        ports:
+#          http:
+#            port: 8080
+#          metrics:
+#            port: 9090  # Metrics port
+#
+# 4. For apps using bjw-s app-template, you can also use:
+#    serviceMonitor:
+#      app:
+#        serviceName: <APP-NAME>
+#        endpoints:
+#          - port: metrics
+#            scheme: http
+#            path: /metrics
+#            interval: 1m
+#            scrapeTimeout: 30s
+#
+# 5. Verify metrics are being scraped:
+#    - Check Prometheus targets: Status > Targets
+#    - Search for your app's metrics in Prometheus

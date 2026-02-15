@@ -1,0 +1,99 @@
+# Pre-commit hooks configuration for home-k8s-cluster
+# See https://pre-commit.com for more information
+# Install: pip install pre-commit
+# Setup: pre-commit install
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+        exclude: 'kubernetes/templates/'  # Templates may have placeholders
+      - id: check-added-large-files
+        args: ['--maxkb=1024']
+      - id: check-merge-conflict
+      - id: detect-private-key
+        exclude: '\.sample$'
+
+  # YAML formatting
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.10.0
+    hooks:
+      - id: yamlfmt
+        exclude: 'kubernetes/templates/'  # Exclude templates with placeholders
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        args: [-c=.yamllint, -s]
+        exclude: 'kubernetes/templates/'  # Templates may have intentional issues
+
+  # Shell script checks
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        args: [-x]  # Follow sourced files
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        args: [--fix]
+
+  # Secret detection
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: 'kubernetes/templates/'
+
+  # Custom local hooks
+  - repo: local
+    hooks:
+      # Validate Kubernetes manifests with kubeconform
+      - id: kubeconform
+        name: Validate Kubernetes manifests
+        entry: bash -c 'if command -v kubeconform &> /dev/null; then task kubernetes:kubeconform; else echo "⚠️  kubeconform not installed, skipping"; fi'
+        language: system
+        pass_filenames: false
+        files: 'kubernetes/.*\.yaml$'
+        exclude: 'kubernetes/templates/'
+      
+      # Check for unencrypted secrets
+      - id: check-secrets
+        name: Check for unencrypted secrets
+        entry: bash -c 'for file in $(git diff --cached --name-only | grep -E "secret\.yaml$|.*-secret\.yaml$"); do if [ -f "$file" ] && ! grep -q "kind: ExternalSecret\|kind: PushSecret" "$file" && ! grep -q "sops:" "$file"; then echo "❌ Unencrypted secret detected: $file"; echo "   Use ExternalSecret or encrypt with SOPS"; exit 1; fi; done; exit 0'
+        language: system
+        pass_filenames: false
+        files: 'secret\.yaml$|.*-secret\.yaml$'
+      
+      # Validate SOPS encrypted files
+      - id: sops-validate
+        name: Validate SOPS encrypted files
+        entry: bash -c 'for file in $(git diff --cached --name-only | grep "sops:"); do if [ -f "$file" ] && ! grep -q "sops:" "$file"; then echo "❌ SOPS metadata missing: $file"; exit 1; fi; done; exit 0'
+        language: system
+        pass_filenames: false
+      
+      # Check for TODO/FIXME/XXX in staged files
+      - id: check-todos
+        name: Check for TODO/FIXME markers
+        entry: bash -c 'if git diff --cached | grep -E "^\+.*TODO:|^\+.*FIXME:|^\+.*XXX:"; then echo "ℹ️  TODO/FIXME markers found in staged changes"; fi; exit 0'
+        language: system
+        pass_filenames: false
+        stages: [commit]
+        always_run: true
+
+# Configuration
+default_stages: [commit]
+fail_fast: false
+minimum_pre_commit_version: '3.0.0'

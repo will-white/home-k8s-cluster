@@ -1,0 +1,48 @@
+---
+# ConfigMap - Stores non-sensitive configuration data
+# Use for application configs, scripts, or small data files
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: <APP-NAME>-config
+data:
+  # Simple key-value pairs
+  SETTING_1: "value1"
+  SETTING_2: "value2"
+
+  # Multi-line configuration file
+  config.yaml: |
+    server:
+      port: 8080
+      host: 0.0.0.0
+    logging:
+      level: info
+
+---
+# NOTES:
+# 1. DO NOT store sensitive data (use ExternalSecret instead)
+# 2. ConfigMaps can be used for:
+#    - Application settings
+#    - Configuration files
+#    - Scripts
+#    - Small static data
+#
+# 3. Reference in HelmRelease (as environment variables):
+#    envFrom:
+#      - configMapRef:
+#          name: <APP-NAME>-config
+#
+# 4. Reference in HelmRelease (as files):
+#    persistence:
+#      config:
+#        type: configMap
+#        name: <APP-NAME>-config
+#        globalMounts:
+#          - path: /app/config.yaml
+#            subPath: config.yaml
+#
+# 5. Auto-reload on changes (add to HelmRelease):
+#    controllers:
+#      <APP-NAME>:
+#        annotations:
+#          reloader.stakater.com/auto: "true"
