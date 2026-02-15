@@ -1,0 +1,41 @@
+---
+# PersistentVolumeClaim - Requests persistent storage
+# Use this for applications that need to persist data across restarts
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: &app <APP-NAME>
+spec:
+  # Access mode
+  accessModes:
+    - ReadWriteOnce  # Use ReadWriteMany for shared storage
+  
+  # Storage class
+  # Options: ceph-block, ceph-filesystem, openebs-hostpath
+  storageClassName: ceph-block
+  
+  # Storage size
+  resources:
+    requests:
+      storage: 10Gi  # Adjust based on needs
+
+---
+# NOTES:
+# 1. Storage Classes:
+#    - ceph-block: Single-pod block storage (RWO)
+#    - ceph-filesystem: Multi-pod shared storage (RWX)
+#    - openebs-hostpath: Node-local storage (RWO)
+#
+# 2. Access Modes:
+#    - ReadWriteOnce (RWO): Single pod on single node
+#    - ReadWriteMany (RWX): Multiple pods across nodes
+#    - ReadOnlyMany (ROX): Multiple pods read-only
+#
+# 3. Reference in HelmRelease:
+#    persistence:
+#      config:
+#        existingClaim: *app
+#        globalMounts:
+#          - path: /config
+#
+# 4. Consider adding VolSync backup for important data

@@ -1,0 +1,106 @@
+---
+# NetworkPolicy - Controls network traffic to/from the application
+# Use this to implement network segmentation and security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: <APP-NAME>
+spec:
+  # Apply to pods with these labels
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: <APP-NAME>
+  
+  # Policy types to enforce
+  policyTypes:
+    - Ingress  # Control incoming traffic
+    - Egress   # Control outgoing traffic
+  
+  # Ingress rules - What can connect TO this app
+  ingress:
+    # Allow traffic from ingress controller (for external access)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+      ports:
+        - protocol: TCP
+          port: 8080  # App's HTTP port
+    
+    # Allow traffic from monitoring namespace (for Prometheus)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090  # Metrics port
+    
+    # Allow traffic from within the same namespace
+    - from:
+        - podSelector: {}
+  
+  # Egress rules - Where this app can connect TO
+  egress:
+    # Allow DNS queries
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    
+    # Allow HTTPS to external services (internet)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    
+    # Allow HTTP to external services (if needed)
+    # - to:
+    #     - namespaceSelector: {}
+    #   ports:
+    #     - protocol: TCP
+    #       port: 80
+    
+    # Allow traffic within same namespace
+    - to:
+        - podSelector: {}
+
+---
+# NOTES:
+# 1. Network policies are additive - multiple policies combine
+# 2. If no NetworkPolicy exists, all traffic is allowed
+# 3. Once a NetworkPolicy is applied, it's deny-by-default
+#
+# 4. Common use cases:
+#    - Isolate databases (only allow from app namespace)
+#    - Restrict external access
+#    - Segment by environment (dev/staging/prod)
+#
+# 5. Testing:
+#    - Deploy without NetworkPolicy first
+#    - Verify app works correctly
+#    - Add NetworkPolicy and test connectivity
+#    - Check for blocked traffic in logs
+#
+# 6. Cilium-specific features (if using Cilium):
+#    - Layer 7 policies (HTTP, gRPC)
+#    - DNS-based policies
+#    - Identity-based policies
+#
+# 7. Default allow patterns:
+#    Ingress:
+#    - Ingress controller (for web apps)
+#    - Monitoring (for Prometheus)
+#    - Same namespace (for microservices)
+#    
+#    Egress:
+#    - DNS (for name resolution)
+#    - HTTPS (for external APIs)
+#    - Same namespace (for microservices)
