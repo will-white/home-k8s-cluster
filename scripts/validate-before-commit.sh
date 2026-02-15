@@ -31,12 +31,23 @@ run_check() {
 
 # 1. Check for required tools
 echo -e "${YELLOW}▶ Checking required tools...${NC}"
-REQUIRED_TOOLS=("task" "kustomize" "kubeconform" "yamllint")
+# Note: 'task' is project-specific but required for validation workflows
+REQUIRED_TOOLS=("kustomize" "kubeconform")
+OPTIONAL_TOOLS=("task" "yamllint")
+
 for tool in "${REQUIRED_TOOLS[@]}"; do
     if ! command -v "$tool" &> /dev/null; then
         echo -e "${RED}✗ Required tool not found: ${tool}${NC}"
         echo "  Install it before continuing."
         VALIDATION_PASSED=false
+    else
+        echo -e "${GREEN}  ✓ ${tool} found${NC}"
+    fi
+done
+
+for tool in "${OPTIONAL_TOOLS[@]}"; do
+    if ! command -v "$tool" &> /dev/null; then
+        echo -e "${YELLOW}  ⚠ Optional tool not found: ${tool}${NC}"
     else
         echo -e "${GREEN}  ✓ ${tool} found${NC}"
     fi

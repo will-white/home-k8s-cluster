@@ -125,7 +125,7 @@ echo "Application structure:"
 tree -L 2 "$APP_DIR" 2>/dev/null || find "$APP_DIR" -type f
 
 # Test with Flux (if flux is available and cluster is accessible)
-if command -v flux &> /dev/null && [ -f "${KUBECONFIG:-}" ]; then
+if command -v flux &> /dev/null && [ -n "${KUBECONFIG:-}" ] && [ -f "${KUBECONFIG}" ]; then
     echo ""
     echo -e "${YELLOW}▶ Testing with Flux (dry-run)...${NC}"
     if flux build ks "${APP_NAME}" \

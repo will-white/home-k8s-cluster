@@ -55,7 +55,9 @@ spec:
           app:
             image:
               repository: ghcr.io/org/<APP-NAME>
-              tag: 1.0.0@sha256:...  # Pin with SHA256 for security
+              # IMPORTANT: Replace with actual version and SHA256 digest
+              # Find digest: docker pull <image>:<tag> && docker inspect <image>:<tag> | grep -A 1 RepoDigests
+              tag: 1.0.0@sha256:REPLACE_WITH_ACTUAL_SHA256_DIGEST
             
             # Environment variables
             env:

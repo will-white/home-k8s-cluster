@@ -24,7 +24,7 @@ for namespace_dir in kubernetes/apps/*/; do
         fi
         
         # Count apps (directories with ks.yaml)
-        app_count=$(find "$namespace_dir" -maxdepth 2 -name "ks.yaml" 2>/dev/null | wc -l)
+        app_count=$(find "$namespace_dir" -maxdepth 2 -name "ks.yaml" 2>/dev/null | grep -c . || echo "0")
         
         # List apps
         apps=$(find "$namespace_dir" -maxdepth 2 -name "ks.yaml" -exec dirname {} \; 2>/dev/null | xargs -I {} basename {} | sort | tr '\n' ', ' | sed 's/,$//')
