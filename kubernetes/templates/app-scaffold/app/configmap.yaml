@@ -9,7 +9,7 @@ data:
   # Simple key-value pairs
   SETTING_1: "value1"
   SETTING_2: "value2"
-  
+
   # Multi-line configuration file
   config.yaml: |
     server:

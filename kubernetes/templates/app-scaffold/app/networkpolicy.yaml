@@ -10,12 +10,12 @@ spec:
   podSelector:
     matchLabels:
       app.kubernetes.io/name: <APP-NAME>
-  
+
   # Policy types to enforce
   policyTypes:
     - Ingress  # Control incoming traffic
     - Egress   # Control outgoing traffic
-  
+
   # Ingress rules - What can connect TO this app
   ingress:
     # Allow traffic from ingress controller (for external access)
@@ -26,7 +26,7 @@ spec:
       ports:
         - protocol: TCP
           port: 8080  # App's HTTP port
-    
+
     # Allow traffic from monitoring namespace (for Prometheus)
     - from:
         - namespaceSelector:
@@ -35,11 +35,11 @@ spec:
       ports:
         - protocol: TCP
           port: 9090  # Metrics port
-    
+
     # Allow traffic from within the same namespace
     - from:
         - podSelector: {}
-  
+
   # Egress rules - Where this app can connect TO
   egress:
     # Allow DNS queries
@@ -53,21 +53,21 @@ spec:
       ports:
         - protocol: UDP
           port: 53
-    
+
     # Allow HTTPS to external services (internet)
     - to:
         - namespaceSelector: {}
       ports:
         - protocol: TCP
           port: 443
-    
+
     # Allow HTTP to external services (if needed)
     # - to:
     #     - namespaceSelector: {}
     #   ports:
     #     - protocol: TCP
     #       port: 80
-    
+
     # Allow traffic within same namespace
     - to:
         - podSelector: {}
@@ -99,7 +99,7 @@ spec:
 #    - Ingress controller (for web apps)
 #    - Monitoring (for Prometheus)
 #    - Same namespace (for microservices)
-#    
+#
 #    Egress:
 #    - DNS (for name resolution)
 #    - HTTPS (for external APIs)

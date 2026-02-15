@@ -56,7 +56,12 @@ echo ""
 
 # 2. Check for unencrypted secrets
 echo -e "${YELLOW}▶ Checking for unencrypted secrets...${NC}"
-UNENCRYPTED_SECRETS=$(find kubernetes/apps -name "secret.yaml" -o -name "*secret*.yaml" | while read -r file; do
+UNENCRYPTED_SECRETS=$(find kubernetes/apps -type f \( -name "secret.yaml" -o -name "*-secret.yaml" \) | while read -r file; do
+    # Skip ExternalSecret and PushSecret files - they're not plain secrets
+    if grep -q "kind: ExternalSecret\|kind: PushSecret" "$file" 2>/dev/null; then
+        continue
+    fi
+    # Check if file has SOPS encryption
     if ! grep -q "sops:" "$file" 2>/dev/null; then
         echo "$file"
     fi

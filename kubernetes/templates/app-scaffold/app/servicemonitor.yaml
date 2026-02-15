@@ -10,7 +10,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: <APP-NAME>
-  
+
   # Endpoints to scrape
   endpoints:
     - port: metrics  # Port name from the Service
@@ -18,7 +18,7 @@ spec:
       path: /metrics  # Metrics endpoint path
       interval: 1m    # How often to scrape
       scrapeTimeout: 30s
-      
+
       # Optional: Relabeling (uncomment if needed)
       # relabelings:
       #   - sourceLabels: [__meta_kubernetes_pod_name]

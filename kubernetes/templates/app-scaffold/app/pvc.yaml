@@ -9,11 +9,11 @@ spec:
   # Access mode
   accessModes:
     - ReadWriteOnce  # Use ReadWriteMany for shared storage
-  
+
   # Storage class
   # Options: ceph-block, ceph-filesystem, openebs-hostpath
   storageClassName: ceph-block
-  
+
   # Storage size
   resources:
     requests:

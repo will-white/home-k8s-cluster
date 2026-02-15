@@ -9,42 +9,42 @@ metadata:
 spec:
   # Target namespace where the application will be deployed
   targetNamespace: <NAMESPACE>
-  
+
   # Common labels applied to all resources
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  
+
   # Dependencies (uncomment and customize as needed)
   # dependsOn:
   #   - name: external-secrets-stores  # Required if using ExternalSecrets
   #   - name: rook-ceph-cluster        # Required if using Ceph storage
   #     namespace: rook-ceph
-  
+
   # Path to the application manifests in the repository
   path: ./kubernetes/apps/<NAMESPACE>/<APP-NAME>/app
-  
+
   # Remove resources when they're deleted from Git
   prune: true
-  
+
   # Source repository reference
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
-  
+
   # Wait for resources to be ready before proceeding
   # Set to 'true' for critical dependencies, 'false' for most apps
   wait: false
-  
+
   # How often Flux checks for changes
   interval: 30m
-  
+
   # How long to wait before retrying after a failure
   retryInterval: 1m
-  
+
   # Maximum time to wait for resources to become ready
   timeout: 5m
-  
+
   # Optional: Variable substitution (uncomment if needed)
   # postBuild:
   #   substitute:
