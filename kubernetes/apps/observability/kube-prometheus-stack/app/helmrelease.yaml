@@ -12,7 +12,7 @@ spec:
         kind: HelmRepository
         name: prometheus-community
         namespace: flux-system
-      version: 82.0.0
+      version: 82.2.0
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
