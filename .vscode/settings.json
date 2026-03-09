@@ -8,10 +8,10 @@
         "Kubernetes": "./kubernetes/*.yaml"
     },
     "vs-kubernetes": {
-        "vs-kubernetes.kubeconfig": "./kubeconfig",
+        "vs-kubernetes.kubeconfig": "/workspaces/new-cluster/kubeconfig",
         "vs-kubernetes.knownKubeconfigs": [
-          "./kubeconfig"
-      ]
+            "/workspaces/new-cluster/kubeconfig"
+        ]
     },
     "terminal.integrated.defaultProfile.linux": "fish",
     "terminal.integrated.profiles.linux": {
