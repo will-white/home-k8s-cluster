@@ -8,18 +8,18 @@ plex:
   db_cache: 40
 
 trakt:
-  client_id: <<env.KOMETA_TRAKT_CLIENT_ID>>
-  client_secret: <<env.KOMETA_TRAKT_CLIENT_SECRET>>
+  client_id: <<KOMETA_TRAKT_CLIENT_ID>>
+  client_secret: <<KOMETA_TRAKT_CLIENT_SECRET>>
   authorization:
-    access_token: <<env.KOMETA_TRAKT_ACCESS_TOKEN>>
+    access_token: <<KOMETA_TRAKT_ACCESS_TOKEN>>
     token_type: Bearer
     expires_in: 604800
-    refresh_token: <<env.KOMETA_TRAKT_REFRESH_TOKEN>>
+    refresh_token: <<KOMETA_TRAKT_REFRESH_TOKEN>>
     scope: public
-    created_at: <<env.KOMETA_TRAKT_CREATED_AT>>
+    created_at: <<KOMETA_TRAKT_CREATED_AT>>
 
 tmdb:
-  apikey: <<env.KOMETA_TMDB_API_KEY>>
+  apikey: <<KOMETA_TMDB_API_KEY>>
   language: en
 
 settings:
