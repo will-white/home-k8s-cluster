@@ -1,0 +1,46 @@
+## Kometa Configuration
+## https://kometa.wiki/en/latest/config/configuration/
+
+plex:
+  url: http://plex.internal
+  token: <<env.KOMETA_PLEX_TOKEN>>
+  timeout: 60
+  db_cache: 40
+
+settings:
+  cache: true
+  cache_expiration: 60
+  asset_directory:
+    - config/assets
+  create_asset_folders: false
+  sync_mode: sync
+  minimum_items: 1
+  playlist_sync_to_users: all
+  playlist_report: false
+  verify_ssl: true
+
+libraries:
+  # Required section - leave empty if only using playlists
+  # Add library names matching your Plex libraries to manage collections
+
+playlists:
+  # "Recently Added Movies" - movies added in the last 30 days, newest first
+  Recently Added Movies:
+    sync_to_users: all
+    plex_search:
+      all:
+        added: 30d
+      sort_by: added.desc
+      limit: 50
+
+  # "Recently Added Shows" - TV episodes added in the last 30 days
+  Recently Added Shows:
+    sync_to_users: all
+    plex_search:
+      all:
+        added: 30d
+        type: show
+      sort_by: added.desc
+      limit: 50
+
+  # Add additional playlists below following the same pattern

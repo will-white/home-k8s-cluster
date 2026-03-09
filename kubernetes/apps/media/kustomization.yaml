@@ -4,11 +4,14 @@ resources:
   - ./namespace.yaml
   - ./autobrr/ks.yaml
   - ./bazarr/ks.yaml
+  - ./kavita/ks.yaml
+  - ./kometa/ks.yaml
   - ./omegabrr/ks.yaml
   - ./overseerr/ks.yaml
   - ./prowlarr/ks.yaml
   - ./qbittorrent/ks.yaml
   - ./radarr/ks.yaml
+  - ./readarr/ks.yaml
   - ./recyclarr/ks.yaml
   - ./sonarr/ks.yaml
   - ./unpackerr/ks.yaml

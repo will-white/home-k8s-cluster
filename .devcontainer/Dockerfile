@@ -30,6 +30,11 @@ RUN curl -L https://github.com/yannh/kubeconform/releases/latest/download/kubeco
 RUN curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.5.0/kustomize_v5.5.0_linux_amd64.tar.gz | tar xz -C /usr/local/bin && chmod +x /usr/local/bin/kustomize
 RUN curl -L https://github.com/siderolabs/talos/releases/latest/download/talosctl-linux-amd64 -o /usr/local/bin/talosctl && chmod +x /usr/local/bin/talosctl
 RUN curl -L https://github.com/budimanjojo/talhelper/releases/latest/download/talhelper_linux_amd64 -o /usr/local/bin/talhelper && chmod +x /usr/local/bin/talhelper
+RUN curl -L https://github.com/bitwarden/sdk-sm/releases/download/bws-v2.0.0/bws-x86_64-unknown-linux-gnu-2.0.0.zip -o /tmp/bws.zip \
+    && unzip /tmp/bws.zip -d /tmp/bws \
+    && mv /tmp/bws/bws /usr/local/bin/bws \
+    && chmod +x /usr/local/bin/bws \
+    && rm -rf /tmp/bws.zip /tmp/bws
 
 # Install fish shell (latest version)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \

@@ -6,12 +6,22 @@ agent_policy:
     - run_local_validation
     - open_pull_request
     - propose_changes
+    - push_bitwarden_secrets_via_bws_cli
   forbidden_actions:
     - apply_to_cluster
     - edit_secrets
-    - push_secrets
+    - push_secrets_to_git
     - run_sudo
     - exfiltrate_data
+  carve_outs:
+    - action: push_bitwarden_secrets_via_bws_cli
+      tool: bws
+      scope: Bitwarden Secrets Manager only
+      conditions:
+        - BWS_ACCESS_TOKEN must be set in environment
+        - Only create or update secrets in the project associated with the token
+        - Never print or log secret values; only confirm creation success
+        - Only push secrets when explicitly requested by the user for a specific app
   requires_human_approval:
     - task kubernetes:reconcile
     - task kubernetes:apply-ks
@@ -19,6 +29,7 @@ agent_policy:
   env_required:
     - KUBECONFIG
     - SOPS_AGE_KEY_FILE
+    - BWS_ACCESS_TOKEN
   recommended_timeouts_seconds:
     configure: 120
     install_tools: 300
@@ -94,9 +105,13 @@ You are responsible for maintaining a Home Kubernetes cluster running on Talos L
 - **Key Commands:**
   - Encrypt file: `sops --encrypt --in-place <file>`
   - Force Sync: `task kubernetes:reconcile` (Requires Approval)
+  - Create secret: `bws secret create --key <KEY> --value <VALUE> --project-id <ID>`
+  - List secrets: `bws secret list`
+  - Get secret: `bws secret get <ID>`
 
 ## Global Boundaries
 1.  **Secrets:** NEVER commit unencrypted secrets. All secrets must be encrypted with SOPS. Check for `sops:` metadata in secret files.
-2.  **Validation:** ALWAYS run `task kubernetes:kubeconform` before proposing changes.
-3.  **Safety:** Do not execute `apply` commands directly against the cluster without explicit user request and approval. Use `--dry-run` whenever possible.
-4.  **Structure:** Respect the directory structure: `kubernetes/apps/<namespace>/<app>/`.
+2.  **Bitwarden:** Agents MAY use the `bws` CLI to create/update secrets in Bitwarden Secrets Manager when explicitly requested. Never log, print, or echo raw secret values. Confirm only with the key name and a success/failure status.
+3.  **Validation:** ALWAYS run `task kubernetes:kubeconform` before proposing changes.
+4.  **Safety:** Do not execute `apply` commands directly against the cluster without explicit user request and approval. Use `--dry-run` whenever possible.
+5.  **Structure:** Respect the directory structure: `kubernetes/apps/<namespace>/<app>/`.

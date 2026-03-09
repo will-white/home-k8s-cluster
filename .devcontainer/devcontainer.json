@@ -41,6 +41,7 @@
     "TALOSCONFIG": "${containerWorkspaceFolder}/kubernetes/bootstrap/talos/clusterconfig/talosconfig",
     "TASK_X_ENV_PRECEDENCE": "1",
     "TASK_X_MAP_VARIABLES": "0",
+    "BWS_ACCESS_TOKEN": "${localEnv:BWS_ACCESS_TOKEN}",
     "PATH": "${containerWorkspaceFolder}/.bin:${containerWorkspaceFolder}/.local/bin:${containerEnv:PATH}"
   },
   "customizations": {
