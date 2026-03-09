@@ -68,12 +68,6 @@ spec:
             port: 8085
     ingress:
       app:
-        annotations:
-          gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Media
-          gethomepage.dev/name: Komf
-          gethomepage.dev/icon: komf.png
-          gethomepage.dev/description: Manga Metadata
         className: internal
         hosts:
           - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
