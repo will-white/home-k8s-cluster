@@ -18,6 +18,10 @@ trakt:
     scope: public
     created_at: <<env.KOMETA_TRAKT_CREATED_AT>>
 
+tmdb:
+  apikey: <<env.KOMETA_TMDB_API_KEY>>
+  language: en
+
 settings:
   cache: true
   cache_expiration: 60
