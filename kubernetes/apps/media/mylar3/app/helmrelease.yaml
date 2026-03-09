@@ -1,0 +1,88 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app mylar3
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+  values:
+    controllers:
+      mylar3:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: lscr.io/linuxserver/mylar3
+              tag: ca1d3425-ls244@sha256:6c426d648a46ec158fc795445309af46222dff4f95d88a358f09ed9f5156cabc
+            env:
+              PUID: "1000"
+              PGID: "1000"
+              TZ: ${TIMEZONE}
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+            securityContext:
+              readOnlyRootFilesystem: false
+            resources:
+              requests:
+                cpu: 100m
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      securityContext:
+        seccompProfile: { type: RuntimeDefault }
+    service:
+      app:
+        controller: mylar3
+        ports:
+          http:
+            port: &port 8090
+    ingress:
+      app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/group: Downloads
+          gethomepage.dev/name: Mylar3
+          gethomepage.dev/icon: mylar3.png
+          gethomepage.dev/description: Comic & Manga Downloads
+          gethomepage.dev/widget.type: mylar
+          gethomepage.dev/widget.url: http://mylar3.media
+          gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_MYLAR3_API_KEY}}` }}"
+        className: internal
+        hosts:
+          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+    persistence:
+      config:
+        existingClaim: *app
+      media:
+        type: nfs
+        server: ${NAS_IP}
+        path: /mnt/main/media
+        globalMounts:
+          - path: /media
