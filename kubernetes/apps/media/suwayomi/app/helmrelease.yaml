@@ -69,7 +69,7 @@ spec:
           gethomepage.dev/enabled: "true"
           gethomepage.dev/group: Media
           gethomepage.dev/name: Suwayomi
-          gethomepage.dev/icon: tachidesk.png
+          gethomepage.dev/icon: suwayomi.png
           gethomepage.dev/description: Manga Downloads
         className: internal
         hosts:
