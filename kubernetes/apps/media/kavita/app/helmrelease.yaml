@@ -50,7 +50,7 @@ spec:
               readiness: *probes
             securityContext:
               allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
+              readOnlyRootFilesystem: false
               capabilities: { drop: ["ALL"] }
             resources:
               requests:
@@ -95,8 +95,6 @@ spec:
         existingClaim: *app
         globalMounts:
           - path: /kavita/config
-      tmp:
-        type: emptyDir
       media:
         type: nfs
         server: ${NAS_IP}
