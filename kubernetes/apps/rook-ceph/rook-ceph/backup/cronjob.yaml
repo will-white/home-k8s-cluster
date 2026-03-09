@@ -28,8 +28,8 @@ spec:
                 - --transfers=4
                 - --checkers=8
                 - --fast-list
-                - ceph:
-                - garage:
+                - "ceph:"
+                - "garage:"
               resources:
                 requests:
                   cpu: 100m
