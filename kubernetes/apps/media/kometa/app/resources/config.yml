@@ -7,6 +7,17 @@ plex:
   timeout: 60
   db_cache: 40
 
+trakt:
+  client_id: <<env.KOMETA_TRAKT_CLIENT_ID>>
+  client_secret: <<env.KOMETA_TRAKT_CLIENT_SECRET>>
+  authorization:
+    access_token: <<env.KOMETA_TRAKT_ACCESS_TOKEN>>
+    token_type: Bearer
+    expires_in: 604800
+    refresh_token: <<env.KOMETA_TRAKT_REFRESH_TOKEN>>
+    scope: public
+    created_at: <<env.KOMETA_TRAKT_CREATED_AT>>
+
 settings:
   cache: true
   cache_expiration: 60
@@ -44,3 +55,7 @@ playlists:
       limit: 50
 
   # Add additional playlists below following the same pattern
+
+  One Piece Canon:
+    sync_to_users: all
+    trakt_list: https://trakt.tv/users/heyitsbea/lists/one-piece-canon-updated-8-2025
