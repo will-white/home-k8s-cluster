@@ -5,6 +5,7 @@ resources:
   - ./autobrr/ks.yaml
   - ./bazarr/ks.yaml
   - ./kavita/ks.yaml
+  - ./komf/ks.yaml
   - ./kometa/ks.yaml
   - ./mylar3/ks.yaml
   - ./omegabrr/ks.yaml
@@ -14,4 +15,5 @@ resources:
   - ./radarr/ks.yaml
   - ./recyclarr/ks.yaml
   - ./sonarr/ks.yaml
+  - ./suwayomi/ks.yaml
   - ./unpackerr/ks.yaml
