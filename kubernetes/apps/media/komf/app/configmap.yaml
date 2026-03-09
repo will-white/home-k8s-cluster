@@ -7,7 +7,6 @@ data:
     komf:
       kavita:
         baseUri: "http://kavita.media.svc.cluster.local:5000"
-        apiKey: ""
       metadataProviders:
         defaultProviders:
           - aniList

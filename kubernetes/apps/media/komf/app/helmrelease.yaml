@@ -35,7 +35,6 @@ spec:
               tag: latest@sha256:8c2034ad712e2a7097cab6a3783107ac53b72efff56e8995ee2970f7892a747f
             env:
               TZ: ${TIMEZONE}
-              KOMF_KAVITA_BASE_URI: http://kavita.media.svc.cluster.local:5000
               KOMF_LOG_LEVEL: INFO
               JAVA_TOOL_OPTIONS: -Xmx512m
             envFrom:
@@ -66,7 +65,7 @@ spec:
         controller: komf
         ports:
           http:
-            port: &port 8085
+            port: 8085
     ingress:
       app:
         annotations:
