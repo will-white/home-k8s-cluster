@@ -88,3 +88,10 @@ spec:
         existingClaim: *app
         globalMounts:
           - path: /config
+      application-config:
+        type: configMap
+        name: komf-config
+        globalMounts:
+          - path: /config/application.yml
+            subPath: application.yml
+            readOnly: true

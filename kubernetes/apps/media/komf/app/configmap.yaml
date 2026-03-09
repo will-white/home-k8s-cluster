@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: komf-config
+data:
+  application.yml: |
+    komf:
+      kavita:
+        baseUri: "http://kavita.media.svc.cluster.local:5000"
+        apiKey: ""
+      metadataProviders:
+        defaultProviders:
+          - aniList
+          - mangaUpdates
+      discord:
+        webhooks: []
+    server:
+      port: 8085
+    logLevel: INFO
