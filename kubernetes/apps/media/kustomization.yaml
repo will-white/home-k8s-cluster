@@ -7,7 +7,6 @@ resources:
   - ./kavita/ks.yaml
   - ./komf/ks.yaml
   - ./kometa/ks.yaml
-  - ./mylar3/ks.yaml
   - ./omegabrr/ks.yaml
   - ./overseerr/ks.yaml
   - ./prowlarr/ks.yaml
