@@ -3,40 +3,48 @@ FROM mcr.microsoft.com/devcontainers/base:bookworm
 ARG ENABLE_DIND=true
 ENV ENABLE_DIND=${ENABLE_DIND}
 
-# Install common packages
+# --- Pinned tool versions (update these for upgrades) ---
+# renovate: datasource=github-releases depName=getsops/sops
+ARG SOPS_VERSION=v3.12.1
+# renovate: datasource=github-releases depName=FiloSottile/age
+ARG AGE_VERSION=v1.3.1
+# renovate: datasource=github-releases depName=yannh/kubeconform
+ARG KUBECONFORM_VERSION=v0.7.0
+# renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.+)$
+ARG KUSTOMIZE_VERSION=v5.5.0
+# renovate: datasource=github-releases depName=siderolabs/talos
+ARG TALOSCTL_VERSION=v1.12.5
+# renovate: datasource=github-releases depName=budimanjojo/talhelper
+ARG TALHELPER_VERSION=v3.1.5
+# renovate: datasource=github-releases depName=mikefarah/yq
+ARG YQ_VERSION=v4.52.4
+# renovate: datasource=github-releases depName=bitwarden/sdk-sm extractVersion=^bws-(?<version>.+)$
+ARG BWS_VERSION=v2.0.0
+# renovate: datasource=github-tags depName=kubernetes/kubernetes
+ARG KUBECTL_VERSION=v1.35.1
+# renovate: datasource=github-releases depName=helm/helm
+ARG HELM_VERSION=v3.17.3
+# renovate: datasource=github-releases depName=stern/stern
+ARG STERN_VERSION=v1.33.1
+
+# Install system packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
     build-essential \
     curl \
-    direnv \
     git \
     gnupg2 \
     jq \
+    moreutils \
     procps \
     sudo \
     unzip \
     yamllint \
     zip
 
-# Install yq
-RUN curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq && chmod +x /usr/local/bin/yq
-
-# Install critical CLI tools
-RUN curl -L https://github.com/getsops/sops/releases/download/v3.9.1/sops-v3.9.1.linux.amd64 -o /usr/local/bin/sops && chmod +x /usr/local/bin/sops
-RUN curl -L https://github.com/FiloSottile/age/releases/download/v1.2.0/age-v1.2.0-linux-amd64.tar.gz | tar xz -C /tmp && mv /tmp/age/age /usr/local/bin/ && mv /tmp/age/age-keygen /usr/local/bin/ && chmod +x /usr/local/bin/age*
-RUN curl -L https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz -C /usr/local/bin && chmod +x /usr/local/bin/kubeconform
-RUN curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.5.0/kustomize_v5.5.0_linux_amd64.tar.gz | tar xz -C /usr/local/bin && chmod +x /usr/local/bin/kustomize
-RUN curl -L https://github.com/siderolabs/talos/releases/latest/download/talosctl-linux-amd64 -o /usr/local/bin/talosctl && chmod +x /usr/local/bin/talosctl
-RUN curl -L https://github.com/budimanjojo/talhelper/releases/latest/download/talhelper_linux_amd64 -o /usr/local/bin/talhelper && chmod +x /usr/local/bin/talhelper
-RUN curl -L https://github.com/bitwarden/sdk-sm/releases/download/bws-v2.0.0/bws-x86_64-unknown-linux-gnu-2.0.0.zip -o /tmp/bws.zip \
-    && unzip /tmp/bws.zip -d /tmp/bws \
-    && mv /tmp/bws/bws /usr/local/bin/bws \
-    && chmod +x /usr/local/bin/bws \
-    && rm -rf /tmp/bws.zip /tmp/bws
-
-# Install fish shell (latest version)
+# Install fish shell
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && export DEBIAN_FRONTEND=noninteractive \
@@ -46,19 +54,53 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update \
     && apt-get -y install --no-install-recommends fish
 
-# The vscode user is already created in the base image.
+# Install CLI tools (single layer for efficiency)
+RUN set -eux \
+    # sops
+    && curl -fsSL "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64" -o /usr/local/bin/sops \
+    && chmod +x /usr/local/bin/sops \
+    # age
+    && curl -fsSL "https://github.com/FiloSottile/age/releases/download/${AGE_VERSION}/age-${AGE_VERSION}-linux-amd64.tar.gz" | tar xz -C /tmp \
+    && mv /tmp/age/age /tmp/age/age-keygen /usr/local/bin/ \
+    && chmod +x /usr/local/bin/age /usr/local/bin/age-keygen \
+    && rm -rf /tmp/age \
+    # kubeconform
+    && curl -fsSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz -C /usr/local/bin \
+    && chmod +x /usr/local/bin/kubeconform \
+    # kustomize
+    && curl -fsSL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz -C /usr/local/bin \
+    && chmod +x /usr/local/bin/kustomize \
+    # talosctl
+    && curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOSCTL_VERSION}/talosctl-linux-amd64" -o /usr/local/bin/talosctl \
+    && chmod +x /usr/local/bin/talosctl \
+    # talhelper
+    && curl -fsSL "https://github.com/budimanjojo/talhelper/releases/download/${TALHELPER_VERSION}/talhelper_linux_amd64.tar.gz" | tar xz -C /usr/local/bin talhelper \
+    && chmod +x /usr/local/bin/talhelper \
+    # yq
+    && curl -fsSL "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" -o /usr/local/bin/yq \
+    && chmod +x /usr/local/bin/yq \
+    # kubectl
+    && curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl \
+    && chmod +x /usr/local/bin/kubectl \
+    # helm
+    && curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" | tar xz --strip-components=1 -C /usr/local/bin linux-amd64/helm \
+    && chmod +x /usr/local/bin/helm \
+    # stern
+    && curl -fsSL "https://github.com/stern/stern/releases/download/${STERN_VERSION}/stern_${STERN_VERSION#v}_linux_amd64.tar.gz" | tar xz -C /usr/local/bin stern \
+    && chmod +x /usr/local/bin/stern \
+    # bws (Bitwarden Secrets Manager)
+    && curl -fsSL "https://github.com/bitwarden/sdk-sm/releases/download/bws-${BWS_VERSION}/bws-x86_64-unknown-linux-gnu-${BWS_VERSION#v}.zip" -o /tmp/bws.zip \
+    && unzip -o /tmp/bws.zip -d /usr/local/bin/ \
+    && chmod +x /usr/local/bin/bws \
+    && rm -f /tmp/bws.zip
 
-# Create .bin directory for local tools and fish completions as root
+# Create directories and set fish as default shell
 RUN mkdir -p /home/vscode/.bin /home/vscode/.config/fish/completions \
-    && chown -R vscode:vscode /home/vscode/.bin /home/vscode/.config
+    && chown -R vscode:vscode /home/vscode/.bin /home/vscode/.config \
+    && usermod -s /usr/bin/fish vscode || true
 
-# Set fish as default login shell for the vscode user (use usermod; fallback to no-op)
-RUN usermod -s /usr/bin/fish vscode || true
-
-# Set environment variable for shell
 ENV SHELL=/usr/bin/fish
 
-# Switch to the vscode user for subsequent steps
 USER vscode
 
 COPY --chown=vscode:vscode setup.sh /tmp/devcontainer/setup.sh

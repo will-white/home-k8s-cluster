@@ -20,4 +20,8 @@ if command -v direnv >/dev/null 2>&1 && [ -f "${WORKSPACE_DIR}/.envrc" ]; then
   direnv allow "${WORKSPACE_DIR}" || true
 fi
 
+# Validate all tools are available
+echo "Validating installed tools..."
+bash "$(dirname "$0")/validate-tools.sh" || true
+
 echo "Post-create script finished."

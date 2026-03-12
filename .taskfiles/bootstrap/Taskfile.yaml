@@ -99,6 +99,91 @@ tasks:
       - test -f {{.SOPS_CONFIG_FILE}}
       - which sops
 
+  secrets-push:
+    desc: Push bootstrap secrets to Bitwarden Secrets Manager
+    summary: |
+      Uploads age.key, github-deploy.key, and config.yaml to Bitwarden Secrets Manager.
+      Requires BWS_ACCESS_TOKEN to be set in the environment.
+      Set BWS_PROJECT_ID or pass it as a variable: task bootstrap:secrets-push BWS_PROJECT_ID=<id>
+    vars:
+      BWS_PROJECT_ID: '{{.BWS_PROJECT_ID}}'
+    cmds:
+      - for:
+          matrix:
+            KEY: [CLUSTER_AGE_KEY, CLUSTER_GITHUB_DEPLOY_KEY, CLUSTER_CONFIG_YAML]
+        cmd: |
+          FILE=""
+          case "{{.ITEM.KEY}}" in
+            CLUSTER_AGE_KEY) FILE="{{.SOPS_AGE_KEY_FILE}}" ;;
+            CLUSTER_GITHUB_DEPLOY_KEY) FILE="{{.ROOT_DIR}}/github-deploy.key" ;;
+            CLUSTER_CONFIG_YAML) FILE="{{.BOOTSTRAP_CONFIG_FILE}}" ;;
+          esac
+          EXISTING_ID=$(bws secret list --output json | jq -r '.[] | select(.key == "{{.ITEM.KEY}}") | .id' 2>/dev/null || true)
+          if [ -n "${EXISTING_ID}" ]; then
+            bws secret edit "${EXISTING_ID}" --value "$(cat "${FILE}")" > /dev/null
+            echo "Updated {{.ITEM.KEY}}"
+          else
+            bws secret create "{{.ITEM.KEY}}" "$(cat "${FILE}")" "{{.BWS_PROJECT_ID}}" > /dev/null
+            echo "Created {{.ITEM.KEY}}"
+          fi
+    preconditions:
+      - msg: BWS_ACCESS_TOKEN must be set
+        sh: test -n "${BWS_ACCESS_TOKEN}"
+      - msg: BWS_PROJECT_ID must be set
+        sh: test -n "{{.BWS_PROJECT_ID}}"
+      - test -f {{.SOPS_AGE_KEY_FILE}}
+      - test -f {{.ROOT_DIR}}/github-deploy.key
+      - test -f {{.BOOTSTRAP_CONFIG_FILE}}
+      - which bws jq
+
+  secrets-pull:
+    desc: Pull bootstrap secrets from Bitwarden Secrets Manager
+    summary: |
+      Restores age.key, github-deploy.key, config.yaml, and github-deploy.key.pub
+      from Bitwarden Secrets Manager. Requires BWS_ACCESS_TOKEN to be set.
+      Optionally regenerates kubeconfig if talosctl is available and the cluster is reachable.
+    cmds:
+      - for:
+          matrix:
+            KEY: [CLUSTER_AGE_KEY, CLUSTER_GITHUB_DEPLOY_KEY, CLUSTER_CONFIG_YAML]
+        cmd: |
+          FILE=""
+          case "{{.ITEM.KEY}}" in
+            CLUSTER_AGE_KEY) FILE="{{.SOPS_AGE_KEY_FILE}}" ;;
+            CLUSTER_GITHUB_DEPLOY_KEY) FILE="{{.ROOT_DIR}}/github-deploy.key" ;;
+            CLUSTER_CONFIG_YAML) FILE="{{.BOOTSTRAP_CONFIG_FILE}}" ;;
+          esac
+          SECRET_ID=$(bws secret list --output json | jq -r '.[] | select(.key == "{{.ITEM.KEY}}") | .id')
+          if [ -z "${SECRET_ID}" ]; then
+            echo "ERROR: Secret {{.ITEM.KEY}} not found in Bitwarden" >&2
+            exit 1
+          fi
+          bws secret get "${SECRET_ID}" --output json | jq -r '.value' > "${FILE}"
+          echo "Restored {{.ITEM.KEY}} -> ${FILE}"
+      # Derive public key from private key
+      - ssh-keygen -y -f {{.ROOT_DIR}}/github-deploy.key > {{.ROOT_DIR}}/github-deploy.key.pub
+      - echo "Derived github-deploy.key.pub"
+      # Set correct permissions
+      - chmod 600 {{.SOPS_AGE_KEY_FILE}} {{.ROOT_DIR}}/github-deploy.key
+      - chmod 644 {{.ROOT_DIR}}/github-deploy.key.pub
+      # Optionally regenerate kubeconfig
+      - |
+        if command -v talosctl &>/dev/null; then
+          echo "Attempting to regenerate kubeconfig from cluster..."
+          talosctl -n {{.CONTROL_PLANE_IP}} kubeconfig {{.ROOT_DIR}}/kubeconfig --force 2>/dev/null \
+            && echo "Restored kubeconfig" \
+            || echo "WARN: Could not reach cluster to regenerate kubeconfig (expected on fresh setup)"
+        else
+          echo "SKIP: talosctl not found, kubeconfig must be generated after cluster bootstrap"
+        fi
+    vars:
+      CONTROL_PLANE_IP:
+        sh: yq '.bootstrap_node_inventory[] | select(.controller == true) | .address' {{.BOOTSTRAP_CONFIG_FILE}} 2>/dev/null | head -1 || echo "192.168.5.40"
+    preconditions:
+      - msg: BWS_ACCESS_TOKEN must be set
+        sh: test -n "${BWS_ACCESS_TOKEN}"
+      - which bws jq ssh-keygen
+
   clean:
     desc: Clean files and directories no longer needed after cluster bootstrap
     cmds:

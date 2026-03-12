@@ -16,5 +16,10 @@ generate_completion kubectl kubectl.fish
 generate_completion flux flux.fish
 generate_completion helm helm.fish
 generate_completion talosctl talosctl.fish
+generate_completion talhelper talhelper.fish
+generate_completion stern stern.fish
+generate_completion kustomize kustomize.fish
+generate_completion task task.fish
+generate_completion yq yq.fish
 
 echo "Shell completions installed successfully"

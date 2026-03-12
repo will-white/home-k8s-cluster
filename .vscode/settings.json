@@ -4,22 +4,24 @@
         "./kubernetes/**/*.sops.toml": "plaintext"
     },
     "sops.defaults.ageKeyFile": "age.key",
-    "yaml.schemas": {
-        "Kubernetes": "./kubernetes/*.yaml"
-    },
     "vs-kubernetes": {
         "vs-kubernetes.kubeconfig": "/workspaces/new-cluster/kubeconfig",
         "vs-kubernetes.knownKubeconfigs": [
             "/workspaces/new-cluster/kubeconfig"
         ]
     },
-    "terminal.integrated.defaultProfile.linux": "fish",
     "terminal.integrated.profiles.linux": {
         "fish": {
             "path": "/usr/bin/fish",
             "args": [
                 "-l"
             ]
+        }
+    },
+    "chat.tools.terminal.autoApprove": {
+        "/^which bws 2>/dev/null && bws --version 2>/dev/null; echo \"---\"; which sops 2>/dev/null && sops --version 2>/dev/null$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

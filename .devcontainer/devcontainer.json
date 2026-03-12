@@ -18,7 +18,7 @@
       "userGid": "1000"
     },
     "ghcr.io/devcontainers/features/go:1": {
-      "version": "1.22"
+      "version": "1.24"
     },
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "moby": "true",
@@ -54,13 +54,21 @@
         "signageos.signageos-vscode-sops",
         "task.vscode-task",
         "github.copilot",
-        "github.copilot-chat"
+        "github.copilot-chat",
+        "mitchdenny.ecdc",
+        "EditorConfig.editorconfig",
+        "PKief.material-icon-theme",
+        "Gruntfuggly.todo-tree"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "fish",
         "yaml.schemas": {
           "https://json.schemastore.org/kustomization.json": "**/kustomization.yaml",
-          "https://raw.githubusercontent.com/fluxcd/helm-controller/main/docs/api/v2/helmrelease.json": "**/helmrelease.yaml",
+          "https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json": "**/helmrelease.yaml",
+          "https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json": "**/ks.yaml",
+          "https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrepository-source-v1.json": "**/helmrepository.yaml",
+          "https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/gitrepository-source-v1.json": "**/gitrepository.yaml",
+          "https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/ocirepository-source-v1beta2.json": "**/ocirepository.yaml",
           "https://taskfile.dev/schema.json": "**/Taskfile.yaml"
         },
         "yaml.customTags": [

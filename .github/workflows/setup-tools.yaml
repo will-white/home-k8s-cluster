@@ -44,6 +44,7 @@ jobs:
       - name: Install kubeconform
         if: steps.parse.outputs.install_kubeconform == 'true' && steps.cache-tools.outputs.cache-hit != 'true'
         run: |
+          # renovate: datasource=github-releases depName=yannh/kubeconform
           KUBECONFORM_VERSION="v0.7.0"
           curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
           chmod +x kubeconform
@@ -52,6 +53,7 @@ jobs:
       - name: Install kustomize
         if: steps.parse.outputs.install_kustomize == 'true' && steps.cache-tools.outputs.cache-hit != 'true'
         run: |
+          # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.+)$
           KUSTOMIZE_VERSION="v5.5.0"
           curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
           chmod +x kustomize
@@ -60,6 +62,7 @@ jobs:
       - name: Install flux
         if: steps.parse.outputs.install_flux == 'true' && steps.cache-tools.outputs.cache-hit != 'true'
         run: |
+          # renovate: datasource=github-releases depName=fluxcd/flux2
           FLUX_VERSION="2.4.0"
           curl -sL "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" | tar xz
           chmod +x flux
@@ -68,6 +71,7 @@ jobs:
       - name: Install yq
         if: steps.parse.outputs.install_yq == 'true' && steps.cache-tools.outputs.cache-hit != 'true'
         run: |
+          # renovate: datasource=github-releases depName=mikefarah/yq
           YQ_VERSION="v4.44.1"
           curl -sL "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" -o yq
           chmod +x yq

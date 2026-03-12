@@ -32,19 +32,19 @@ jobs:
         if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
           set -e
-          # Install kubeconform
+          # renovate: datasource=github-releases depName=yannh/kubeconform
           KUBECONFORM_VERSION="v0.7.0"
           curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
           chmod +x kubeconform
           sudo mv kubeconform /usr/local/bin/
           
-          # Install kustomize
+          # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.+)$
           KUSTOMIZE_VERSION="v5.5.0"
           curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
           chmod +x kustomize
           sudo mv kustomize /usr/local/bin/
           
-          # Install flux
+          # renovate: datasource=github-releases depName=fluxcd/flux2
           FLUX_VERSION="2.4.0"
           curl -sL "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" | tar xz
           chmod +x flux

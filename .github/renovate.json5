@@ -325,6 +325,20 @@
     {
       customType: 'regex',
       description: [
+        'Process Devcontainer Dockerfile tool versions',
+      ],
+      managerFilePatterns: [
+        '/(^|/).devcontainer/Dockerfile$/',
+        '/(^|/).github/workflows/.+\\.ya?ml$/',
+      ],
+      matchStrings: [
+        '# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( extractVersion=(?<extractVersion>.+?))?\\nARG \\w+_VERSION=(?<currentValue>\\S+)',
+      ],
+      datasourceTemplate: '{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}',
+    },
+    {
+      customType: 'regex',
+      description: [
         'Process custom dependencies',
       ],
       managerFilePatterns: [

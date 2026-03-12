@@ -1,0 +1,25 @@
+---
+extends: default
+
+rules:
+  comments:
+    # Allow inline comments without preceding space (common in Helm values)
+    min-spaces-from-content: 1
+  comments-indentation: disable
+  document-start: disable
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+  line-length:
+    max: 200
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  truthy:
+    allowed-values: ["true", "false", "yes", "no"]
+
+ignore:
+  - "**/*.sops.*"
+  - "**/secret*.yaml"
