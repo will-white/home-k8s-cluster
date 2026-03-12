@@ -4,16 +4,23 @@ kind: Gateway
 metadata:
   name: internal
   annotations:
-    lbipam.cilium.io/ips: "192.168.5.46"
+    # NOTE: Using temporary IP during migration. Switch to 192.168.5.46 after ingress-nginx removal.
+    lbipam.cilium.io/ips: "192.168.5.49"
 spec:
   gatewayClassName: cilium
   listeners:
     - name: http
       protocol: HTTP
       port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
     - name: https
       protocol: HTTPS
       port: 443
+      allowedRoutes:
+        namespaces:
+          from: All
       tls:
         mode: Terminate
         certificateRefs:
@@ -21,24 +28,30 @@ spec:
             name: "${SECRET_DOMAIN/./-}-gateway-tls"
   infrastructure:
     annotations:
-      lbipam.cilium.io/ips: "192.168.5.46"
+      lbipam.cilium.io/ips: "192.168.5.49"
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: external
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: "external.${SECRET_DOMAIN}"
-    lbipam.cilium.io/ips: "192.168.5.48"
+    # NOTE: Using temporary IP during migration. Switch to 192.168.5.48 after ingress-nginx removal.
+    lbipam.cilium.io/ips: "192.168.5.50"
 spec:
   gatewayClassName: cilium
   listeners:
     - name: http
       protocol: HTTP
       port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
     - name: https
       protocol: HTTPS
       port: 443
+      allowedRoutes:
+        namespaces:
+          from: All
       tls:
         mode: Terminate
         certificateRefs:
@@ -46,5 +59,4 @@ spec:
             name: "${SECRET_DOMAIN/./-}-gateway-tls"
   infrastructure:
     annotations:
-      lbipam.cilium.io/ips: "192.168.5.48"
-      external-dns.alpha.kubernetes.io/hostname: "external.${SECRET_DOMAIN}"
+      lbipam.cilium.io/ips: "192.168.5.50"
