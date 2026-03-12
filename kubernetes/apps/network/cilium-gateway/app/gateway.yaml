@@ -1,0 +1,50 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: internal
+  annotations:
+    lbipam.cilium.io/ips: "192.168.5.46"
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: "${SECRET_DOMAIN/./-}-gateway-tls"
+  infrastructure:
+    annotations:
+      lbipam.cilium.io/ips: "192.168.5.46"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: external
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: "external.${SECRET_DOMAIN}"
+    lbipam.cilium.io/ips: "192.168.5.48"
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: "${SECRET_DOMAIN/./-}-gateway-tls"
+  infrastructure:
+    annotations:
+      lbipam.cilium.io/ips: "192.168.5.48"
+      external-dns.alpha.kubernetes.io/hostname: "external.${SECRET_DOMAIN}"

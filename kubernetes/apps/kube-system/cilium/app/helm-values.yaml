@@ -16,7 +16,9 @@ cni:
 endpointRoutes:
   enabled: true
 envoy:
-  enabled: false
+  enabled: true
+gatewayAPI:
+  enabled: true
 hubble:
   enabled: false
 ipam:

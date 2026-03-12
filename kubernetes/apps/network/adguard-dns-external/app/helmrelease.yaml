@@ -82,6 +82,7 @@ spec:
     registry: txt
     sources:
       - ingress
+      - gateway-httproute
       - service
     triggerLoopOnEvent: true
     txtOwnerId: external
