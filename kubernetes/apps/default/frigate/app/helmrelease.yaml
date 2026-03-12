@@ -14,14 +14,18 @@ spec:
         kind: HelmRepository
         name: bjw-s
         namespace: flux-system
+  timeout: 10m
   install:
     remediation:
       retries: 3
   upgrade:
+    force: true
     cleanupOnFail: true
     remediation:
       strategy: rollback
       retries: 3
+  uninstall:
+    keepHistory: false
   dependsOn:
     - name: emqx
       namespace: database
@@ -33,9 +37,19 @@ spec:
       namespace: volsync-system
   values:
     defaultPodOptions:
+      terminationGracePeriodSeconds: 10
       nodeSelector:
         coral.feature.node.kubernetes.io/tpu: "true"
         intel.feature.node.kubernetes.io/gpu: "true"
+      tolerations:
+        - key: node.kubernetes.io/not-ready
+          operator: Exists
+          effect: NoExecute
+          tolerationSeconds: 60
+        - key: node.kubernetes.io/unreachable
+          operator: Exists
+          effect: NoExecute
+          tolerationSeconds: 60
     controllers:
       frigate:
         strategy: Recreate
@@ -53,26 +67,43 @@ spec:
               - secretRef:
                   name: frigate-secret
             probes:
-              liveness: &probes
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/stats
+                    port: &port 5000
+                  periodSeconds: 15
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
                 enabled: true
                 custom: true
                 spec:
                   httpGet:
                     path: /api/version
-                    port: &port 5000
-                  initialDelaySeconds: 30
-                  periodSeconds: 20
-                  timeoutSeconds: 10
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
                   failureThreshold: 3
-              readiness: *probes
               startup:
-                enabled: false
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/version
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 30
             resources:
               requests:
                 cpu: 10m
                 memory: 8000Mi
                 gpu.intel.com/i915: 1
               limits:
+                memory: 12Gi
                 gpu.intel.com/i915: 1
             securityContext:
               privileged: true
