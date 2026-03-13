@@ -25,6 +25,71 @@ connectivity:
     target: 1.1.1.1:53
     interval: 1m
 endpoints:
+  - name: node-mj0583jp
+    group: kubernetes-nodes
+    url: tcp://192.168.5.40:10250
+    interval: 30s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: pushover
+  - name: node-mj0581m7
+    group: kubernetes-nodes
+    url: tcp://192.168.5.41:10250
+    interval: 30s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: pushover
+  - name: node-mj0583eq
+    group: kubernetes-nodes
+    url: tcp://192.168.5.42:10250
+    interval: 30s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: pushover
+  - name: node-mj05ajfj
+    group: kubernetes-nodes
+    url: tcp://192.168.5.50:10250
+    interval: 30s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: pushover
+  - name: node-mj04ew44
+    group: kubernetes-nodes
+    url: tcp://192.168.5.51:10250
+    interval: 30s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: pushover
+  - name: node-mj0581rw
+    group: kubernetes-nodes
+    url: tcp://192.168.5.52:10250
+    interval: 30s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: pushover
+  - name: node-mj04968e
+    group: kubernetes-nodes
+    url: tcp://192.168.5.53:10250
+    interval: 30s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: pushover
+  - name: node-mj05g4ub
+    group: kubernetes-nodes
+    url: tcp://192.168.5.54:10250
+    interval: 30s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: pushover
+
   - name: flux-webhook
     group: external
     url: https://flux-webhook.${SECRET_DOMAIN}

@@ -1,0 +1,58 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cilium-rules
+spec:
+  groups:
+    - name: cilium.rules
+      rules:
+        - alert: CiliumAgentUnreachableHealthEndpoint
+          annotations:
+            summary: Cilium agent on {{ $labels.node }} cannot reach health endpoints
+            description: >-
+              Cilium agent on node {{ $labels.node }} has unreachable nodes for more than 5 minutes.
+              This may indicate network partitioning or a failed CNI on that node.
+          expr: cilium_unreachable_nodes > 0
+          for: 5m
+          labels:
+            severity: warning
+        - alert: CiliumAgentUnhealthy
+          annotations:
+            summary: Cilium agent on {{ $labels.node }} is not running
+            description: >-
+              The Cilium agent pod on node {{ $labels.node }} has not been healthy for more than 3 minutes.
+          expr: cilium_agent_api_process_time_seconds_count == 0
+          for: 3m
+          labels:
+            severity: critical
+        - alert: CiliumEndpointNotReady
+          annotations:
+            summary: Cilium endpoints not ready on {{ $labels.node }}
+            description: >-
+              Node {{ $labels.node }} has {{ $value }} Cilium endpoints stuck in a not-ready state
+              for more than 10 minutes.
+          expr: cilium_endpoint_state{endpoint_state="not-ready"} > 0
+          for: 10m
+          labels:
+            severity: warning
+        - alert: CiliumEndpointRegenerationFailures
+          annotations:
+            summary: Cilium endpoint regeneration failures on {{ $labels.node }}
+            description: >-
+              Cilium on node {{ $labels.node }} has experienced endpoint regeneration
+              failures in the last 15 minutes.
+          expr: rate(cilium_endpoint_regenerations_total{outcome="fail"}[15m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+        - alert: CiliumIdentityAllocationFailures
+          annotations:
+            summary: Cilium identity allocation failures on {{ $labels.node }}
+            description: >-
+              Cilium on node {{ $labels.node }} is failing to allocate identities,
+              which may impact network policy enforcement.
+          expr: rate(cilium_identity_count{type="error"}[5m]) > 0
+          for: 5m
+          labels:
+            severity: warning

@@ -77,6 +77,26 @@ spec:
                 expr: node_zfs_zpool_state{state!="online"} > 0
                 labels:
                   severity: critical
+      node-rules:
+        groups:
+          - name: node.rules
+            rules:
+              - alert: NodeNotReady
+                annotations:
+                  summary: Node {{ $labels.node }} is not ready
+                  description: Node {{ $labels.node }} has been in a non-ready state for more than 2 minutes.
+                expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+                for: 2m
+                labels:
+                  severity: critical
+              - alert: NodeUnreachable
+                annotations:
+                  summary: Node {{ $labels.node }} is unreachable
+                  description: Node {{ $labels.node }} is unreachable and has been unschedulable for more than 2 minutes.
+                expr: (kube_node_spec_taint{key="node.kubernetes.io/unreachable",effect="NoSchedule"}) == 1
+                for: 2m
+                labels:
+                  severity: critical
       storage-rules:
         groups:
           - name: storage
