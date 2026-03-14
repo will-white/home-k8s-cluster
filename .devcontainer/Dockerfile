@@ -23,7 +23,7 @@ ARG BWS_VERSION=v2.0.0
 # renovate: datasource=github-tags depName=kubernetes/kubernetes
 ARG KUBECTL_VERSION=v1.35.1
 # renovate: datasource=github-releases depName=helm/helm
-ARG HELM_VERSION=v3.17.3
+ARG HELM_VERSION=v3.20.1
 # renovate: datasource=github-releases depName=stern/stern
 ARG STERN_VERSION=v1.33.1
 
