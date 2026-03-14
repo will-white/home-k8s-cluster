@@ -97,6 +97,11 @@ spec:
           # renovate: depName="Frigate Monitoring Dashboard"
           gnetId: 24165
           revision: 1
+        gatus:
+          datasource: Prometheus
+          # renovate: depName="Gatus"
+          gnetId: 24379
+          revision: 1
         home-assistant:
           datasource: Prometheus
           # renovate: depName="Home Assistant"
@@ -142,6 +147,11 @@ spec:
           # renovate: depName="Kubernetes Service Logs"
           gnetId: 15141
           revision: 1
+        loki-stack-monitoring:
+          datasource: Prometheus
+          # renovate: depName="Loki stack monitoring (Promtail, Loki)"
+          gnetId: 14055
+          revision: 5
         etcd:
           datasource: Prometheus
           # renovate: depName="etcd"
@@ -220,6 +230,21 @@ spec:
           # renovate: depName="qBittorrent"
           gnetId: 15080
           revision: 2
+        radarr:
+          datasource: Prometheus
+          # renovate: depName="Radarr v3"
+          gnetId: 12896
+          revision: 1
+        sonarr:
+          datasource: Prometheus
+          # renovate: depName="Sonarr v3"
+          gnetId: 12530
+          revision: 2
+        spegel:
+          datasource: Prometheus
+          # renovate: depName="Spegel"
+          gnetId: 18089
+          revision: 1
         smartctl-exporter:
           datasource:
             - name: DS_PROMETHEUS
