@@ -18,7 +18,7 @@ spec:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
   upgrade:
-    image: ghcr.io/siderolabs/installer:v1.12.1
+    image: factory.talos.dev/installer/4ac502d0fe0dcee313870d79c8005e6b99ac55872533f873c704080f035dc6e8:v1.12.1
   drain:
     force: true
     disableEviction: true
