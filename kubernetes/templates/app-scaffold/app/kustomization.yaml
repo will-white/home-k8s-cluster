@@ -1,0 +1,21 @@
+---
+# Kustomize configuration - Defines which resources to include
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: <NAMESPACE>
+
+# Resources to include in the deployment
+# Comment out any files you're not using
+resources:
+  - ./helmrelease.yaml
+  # - ./externalsecret.yaml  # Uncomment if using ExternalSecrets
+  # - ./pvc.yaml             # Uncomment if using persistent storage
+  # - ./configmap.yaml       # Uncomment if using ConfigMaps
+  # - ./networkpolicy.yaml   # Uncomment if using network policies
+  # - ./servicemonitor.yaml  # Uncomment if using Prometheus monitoring
+
+# Common labels applied to all resources (optional)
+# labels:
+#   - pairs:
+#       app.kubernetes.io/name: <APP-NAME>
+#       app.kubernetes.io/instance: <APP-NAME>

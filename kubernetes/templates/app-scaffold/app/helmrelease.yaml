@@ -1,0 +1,144 @@
+---
+# HelmRelease - Defines how to deploy the Helm chart
+# This is the main configuration file for your application
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app <APP-NAME>
+spec:
+  # How often to check for new chart versions
+  interval: 30m
+
+  # Helm chart configuration
+  chart:
+    spec:
+      # Chart name from the Helm repository
+      chart: <CHART-NAME>
+
+      # Chart version (use semantic versioning)
+      version: <CHART-VERSION>
+
+      # Helm repository reference
+      sourceRef:
+        kind: HelmRepository
+        name: <REPO-NAME>
+        namespace: flux-system
+
+  # Installation behavior
+  install:
+    remediation:
+      retries: 3  # Retry 3 times on installation failure
+
+  # Upgrade behavior
+  upgrade:
+    cleanupOnFail: true  # Remove failed resources on upgrade failure
+    remediation:
+      strategy: rollback  # Rollback to previous version on failure
+      retries: 3
+
+  # Dependencies (uncomment and customize as needed)
+  # dependsOn:
+  #   - name: rook-ceph-cluster
+  #     namespace: rook-ceph
+
+  # Helm chart values
+  # Customize these based on your chart's values.yaml
+  values:
+    # For bjw-s app-template chart:
+    controllers:
+      <APP-NAME>:
+        annotations:
+          # Auto-reload when ConfigMaps or Secrets change
+          reloader.stakater.com/auto: "true"
+
+        containers:
+          app:
+            image:
+              repository: ghcr.io/org/<APP-NAME>
+              # IMPORTANT: Replace with actual version and SHA256 digest
+              # Find digest: docker pull <image>:<tag> && docker inspect <image>:<tag> | grep -A 1 RepoDigests
+              tag: 1.0.0@sha256:REPLACE_WITH_ACTUAL_SHA256_DIGEST
+
+            # Environment variables
+            env:
+              TZ: ${TIMEZONE}  # Use cluster variable
+
+            # Load secrets from ExternalSecret
+            # envFrom:
+            #   - secretRef:
+            #       name: <APP-NAME>-secret
+
+            # Security context for the container
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+
+            # Resource requests and limits
+            resources:
+              requests:
+                cpu: 10m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+
+    # Default security context for all pods
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+
+    # Service configuration
+    service:
+      app:
+        controller: <APP-NAME>
+        ports:
+          http:
+            port: 8080  # Adjust to your app's port
+
+    # Ingress configuration (uncomment and customize)
+    # ingress:
+    #   app:
+    #     className: external  # or 'internal' for LAN-only
+    #     annotations:
+    #       # Homepage dashboard integration
+    #       gethomepage.dev/enabled: "true"
+    #       gethomepage.dev/group: "Apps"
+    #       gethomepage.dev/name: "<APP-NAME>"
+    #       gethomepage.dev/icon: "app.png"
+    #       gethomepage.dev/description: "Description"
+    #       # External DNS
+    #       external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+    #     hosts:
+    #       - host: <APP-NAME>.${SECRET_DOMAIN}
+    #         paths:
+    #           - path: /
+    #             service:
+    #               identifier: app
+    #               port: http
+
+    # Prometheus monitoring (uncomment if app has /metrics endpoint)
+    # serviceMonitor:
+    #   app:
+    #     serviceName: <APP-NAME>
+    #     endpoints:
+    #       - port: metrics
+    #         scheme: http
+    #         path: /metrics
+    #         interval: 1m
+    #         scrapeTimeout: 30s
+
+    # Persistent storage (uncomment if needed)
+    # persistence:
+    #   config:
+    #     existingClaim: *app  # References PVC with same name
+    #     globalMounts:
+    #       - path: /config
+    #   tmp:
+    #     type: emptyDir  # Temporary storage
+    #     globalMounts:
+    #       - path: /tmp

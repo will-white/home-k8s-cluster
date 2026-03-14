@@ -1,6 +1,7 @@
 # Trash
 .DS_Store
 Thumbs.db
+
 # k8s
 kubeconfig
 talosconfig
@@ -9,15 +10,60 @@ talosconfig
 *.agekey
 *.pub
 *.key
+
 # Private
 .private
 .bin
+
 # Ansible
 .venv*
+
 # Taskfile
 .task
+
 # Brew
 Brewfile.lock.json
+
+# Build artifacts
+dist/
+build/
+*.pyc
+__pycache__/
+*.egg-info/
+.eggs/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# OS files
+*.log
+*.tmp
+.directory
+
+# Agent working files
+/tmp/agent-*
+.agent-work/
+
+# Test output
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Pre-commit
+.pre-commit-cache/
+
+# Secrets baseline
+.secrets.baseline
 # intellij
 .idea
 # wiki

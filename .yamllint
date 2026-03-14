@@ -1,0 +1,41 @@
+# yamllint configuration
+# See https://yamllint.readthedocs.io/en/stable/configuration.html
+
+extends: default
+
+rules:
+  # Line length
+  line-length:
+    max: 120
+    level: warning
+  
+  # Indentation
+  indentation:
+    spaces: 2
+    indent-sequences: true
+  
+  # Comments
+  comments:
+    min-spaces-from-content: 1
+  
+  # Trailing spaces
+  trailing-spaces: enable
+  
+  # Document start
+  document-start:
+    present: false  # Don't require --- at start
+  
+  # Truthy values
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no']
+    check-keys: false
+
+# Ignore patterns
+ignore: |
+  .git/
+  .venv/
+  .task/
+  kubernetes/templates/app-scaffold/
+  node_modules/
+  dist/
+  build/
