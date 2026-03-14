@@ -88,6 +88,13 @@ spec:
         type: filesystem
     lokiCanary:
       enabled: false
+    monitoring:
+      serviceMonitor:
+        enabled: true
+      selfMonitoring:
+        enabled: false
+        grafanaAgent:
+          installOperator: false
     read:
       replicas: 0
     resultsCache:
