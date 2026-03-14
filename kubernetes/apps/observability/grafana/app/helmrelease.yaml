@@ -166,16 +166,6 @@ spec:
           # renovate: depName="Kubernetes / Persistent Volumes"
           gnetId: 23233
           revision: 6
-        cilium-operator:
-          datasource: Prometheus
-          # renovate: depName="Cilium / Operator"
-          gnetId: 16611
-          revision: 1
-        cilium-agent:
-          datasource: Prometheus
-          # renovate: depName="Cilium / Agent"
-          gnetId: 16612
-          revision: 1
         nginx-ingress:
           datasource: Prometheus
           # renovate: depName="NGINX Ingress controller"
