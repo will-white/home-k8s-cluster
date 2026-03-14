@@ -21,6 +21,7 @@ spec:
     remediation:
       retries: 3
   interval: 30m
+  timeout: 10m
   upgrade:
     cleanupOnFail: true
     crds: Skip
