@@ -63,11 +63,6 @@ spec:
           # renovate: depName="Cert-manager-Kubernetes"
           gnetId: 20842
           revision: 3
-        cloudnative-pg:
-          datasource: Prometheus
-          # renovate: depName="CloudNativePG"
-          gnetId: 20417
-          revision: 3
         dragonfly:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/dragonflydb/dragonfly/main/tools/local/monitoring/grafana/provisioning/dashboards/dashboard.json
@@ -164,11 +159,6 @@ spec:
           # renovate: depName="NGINX / LOKI Ingress Controller"
           gnetId: 12559
           revision: 3
-        etcd:
-          datasource: Prometheus
-          # renovate: depName="etcd"
-          gnetId: 22236
-          revision: 4
         kubernetes-pvc:
           datasource:
             - name: DS_PROMETHEUS

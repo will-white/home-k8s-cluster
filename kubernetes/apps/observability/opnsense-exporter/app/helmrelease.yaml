@@ -34,13 +34,16 @@ spec:
               repository: ghcr.io/athennamind/opnsense-exporter
               tag: 0.0.11
             env:
-              OPNSENSE_HOST: "https://opnsense.willwhite.dev"
-              OPNSENSE_API_KEY:
+              OPNSENSE_EXPORTER_OPS_PROTOCOL: "https"
+              OPNSENSE_EXPORTER_OPS_API: "opnsense.willwhite.dev"
+              OPNSENSE_EXPORTER_OPS_INSECURE: "false"
+              OPNSENSE_EXPORTER_INSTANCE_LABEL: "opnsense"
+              OPNSENSE_EXPORTER_OPS_API_KEY:
                 valueFrom:
                   secretKeyRef:
                     name: opnsense-exporter-secret
                     key: OPNSENSE_API_KEY
-              OPNSENSE_API_SECRET:
+              OPNSENSE_EXPORTER_OPS_API_SECRET:
                 valueFrom:
                   secretKeyRef:
                     name: opnsense-exporter-secret
@@ -71,7 +74,7 @@ spec:
         controller: opnsense-exporter
         ports:
           http:
-            port: 9100
+            port: 8080
     serviceMonitor:
       app:
         serviceName: opnsense-exporter
