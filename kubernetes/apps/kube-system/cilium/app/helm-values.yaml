@@ -51,8 +51,7 @@ operator:
         matchLabels:
           name: cilium-operator
 rollOutCiliumPods: true
-upgradeCompatibility:
-  enabled: true
+upgradeCompatibility: "1.18"
 daemonSet:
   updateStrategy:
     rollingUpdate:
