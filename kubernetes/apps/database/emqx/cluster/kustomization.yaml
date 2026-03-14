@@ -4,3 +4,12 @@ resources:
   - ./cluster.yaml
   - ./ingress.yaml
   - ./podmonitor.yaml
+configMapGenerator:
+  - name: emqx-loki-rules
+    files:
+      - emqx.yaml=./resources/lokirule.yaml
+    options:
+      labels:
+        loki_rule: "true"
+generatorOptions:
+  disableNameSuffixHash: true

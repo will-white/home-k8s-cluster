@@ -1,0 +1,20 @@
+---
+groups:
+  - name: loki-recording-rules
+    interval: 1m
+    rules:
+      - record: loki:app_log_errors:1m
+        expr: |
+          sum by (namespace, app) (count_over_time({app=~".+"} |~ "(?i)(error|err|fatal|panic|exception)" [1m]))
+      - record: loki:app_log_lines:1m
+        expr: |
+          sum by (namespace, app) (count_over_time({app=~".+"} [1m]))
+      - record: loki:namespace_log_bytes:5m
+        expr: |
+          sum by (namespace) (bytes_over_time({namespace=~".+"} [5m]))
+      - record: loki:ingress_5xx:5m
+        expr: |
+          sum by (app) (count_over_time({app=~"ingress-nginx.*"} | json | status >= 500 [5m]))
+      - record: loki:ingress_requests:5m
+        expr: |
+          sum by (app) (count_over_time({app=~"ingress-nginx.*"} [5m]))

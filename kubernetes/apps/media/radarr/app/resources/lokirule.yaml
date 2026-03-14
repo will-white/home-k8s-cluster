@@ -1,0 +1,24 @@
+---
+groups:
+  - name: radarr
+    rules:
+      - alert: RadarrImportFailed
+        expr: |
+          sum by (app) (count_over_time({app="radarr"} |~ "(?i)(import failed|couldn't import|download failed)"[15m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} has a failed import"
+      - alert: RadarrApplicationError
+        expr: |
+          sum by (app) (count_over_time({app="radarr"} |~ "(?i)(\\|Fatal\\||\\|Error\\|.*NzbDrone)"[5m])) > 3
+        for: 5m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} is logging repeated application errors"

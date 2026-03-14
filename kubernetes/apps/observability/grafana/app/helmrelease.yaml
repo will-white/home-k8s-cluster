@@ -152,6 +152,18 @@ spec:
           # renovate: depName="Loki stack monitoring (Promtail, Loki)"
           gnetId: 14055
           revision: 5
+        logs-app:
+          datasource: Loki
+          # renovate: depName="Logs / App"
+          gnetId: 13639
+          revision: 2
+        nginx-ingress-loki:
+          datasource:
+            - name: DS_LOKI
+              value: Loki
+          # renovate: depName="NGINX / LOKI Ingress Controller"
+          gnetId: 12559
+          revision: 3
         etcd:
           datasource: Prometheus
           # renovate: depName="etcd"

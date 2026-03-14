@@ -1,0 +1,24 @@
+---
+groups:
+  - name: home-assistant
+    rules:
+      - alert: HomeAssistantIntegrationFailure
+        expr: |
+          sum by (app) (count_over_time({app="home-assistant"} |~ "(?i)(error setting up .+ integration|setup .+ failed|unable to prepare setup)"[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} has an integration that failed to set up"
+      - alert: HomeAssistantDatabaseError
+        expr: |
+          sum by (app) (count_over_time({app="home-assistant"} |~ "(?i)(database .* error|database is locked|disk I/O error|OperationalError)"[5m])) > 0
+        for: 2m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} is experiencing database errors"

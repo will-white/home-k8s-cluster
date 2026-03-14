@@ -1,0 +1,24 @@
+---
+groups:
+  - name: emqx
+    rules:
+      - alert: EMQXNodeDown
+        expr: |
+          sum(count_over_time({namespace="database", app=~"emqx.*"} |~ "(?i)(node .+ down|stopped|mnesia .+ error|cluster .+ error)"[5m])) > 0
+        for: 2m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "emqx"
+          summary: "EMQX broker is experiencing node or cluster errors"
+      - alert: EMQXAuthenticationFailure
+        expr: |
+          sum(count_over_time({namespace="database", app=~"emqx.*"} |~ "(?i)(authentication failure|client .+ banned|login failed)"[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: logs
+        annotations:
+          app: "emqx"
+          summary: "EMQX is seeing elevated authentication failures"

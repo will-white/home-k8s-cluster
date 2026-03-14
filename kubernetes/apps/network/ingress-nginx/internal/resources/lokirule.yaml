@@ -1,0 +1,24 @@
+---
+groups:
+  - name: ingress-nginx
+    rules:
+      - alert: IngressNginxHighServerErrors
+        expr: |
+          sum by (app) (count_over_time({app=~"ingress-nginx.*"} | json | status >= 500 [5m])) > 10
+        for: 5m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} is returning elevated 5xx errors"
+      - alert: IngressNginxHighClientErrors
+        expr: |
+          sum by (app) (count_over_time({app=~"ingress-nginx.*"} | json | status >= 400, status < 500 [5m])) > 50
+        for: 10m
+        labels:
+          severity: warning
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} is returning elevated 4xx errors"

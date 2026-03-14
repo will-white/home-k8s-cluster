@@ -60,8 +60,36 @@ spec:
             store: tsdb
       server:
         log_level: info
+      query_range:
+        results_cache:
+          cache:
+            embedded_cache:
+              enabled: true
+              max_size_mb: 128
+      rulerConfig:
+        storage:
+          type: local
+          local:
+            directory: /rules
+        alertmanager_url: http://alertmanager-operated.observability.svc.cluster.local:9093
+        ring:
+          kvstore:
+            store: inmemory
+        enable_api: true
+        enable_alertmanager_v2: true
+        remote_write:
+          enabled: true
+          clients:
+            prometheus:
+              url: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090/api/v1/write
+              headers: {}
       storage:
         type: filesystem
+      storage_config:
+        chunk_cache_config:
+          embedded_cache:
+            enabled: true
+            max_size_mb: 256
     lokiCanary:
       enabled: false
     read:

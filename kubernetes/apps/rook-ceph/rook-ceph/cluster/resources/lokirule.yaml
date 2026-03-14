@@ -1,0 +1,24 @@
+---
+groups:
+  - name: rook-ceph
+    rules:
+      - alert: CephClusterHealthWarning
+        expr: |
+          sum(count_over_time({namespace="rook-ceph"} |~ "(?i)(HEALTH_WARN|HEALTH_ERR)"[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: logs
+        annotations:
+          app: "rook-ceph"
+          summary: "Ceph cluster health is degraded"
+      - alert: CephOSDDown
+        expr: |
+          sum(count_over_time({namespace="rook-ceph"} |~ "(?i)(osd\\..* down|osd\\..* out|marked down)"[5m])) > 0
+        for: 2m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "rook-ceph"
+          summary: "A Ceph OSD has been marked down"

@@ -32,9 +32,9 @@ spec:
             image:
               # renovate: datasource=docker
               repository: ghcr.io/henrywhitaker3/adguard-exporter
-              tag: v1.2.5
+              tag: v1.2.1
             env:
-              ADGUARD_SERVERS: "http://adguard.internal:8083"
+              ADGUARD_SERVERS: "https://adguard.willwhite.dev"
               ADGUARD_USERNAME:
                 valueFrom:
                   secretKeyRef:

@@ -1,0 +1,24 @@
+---
+groups:
+  - name: frigate
+    rules:
+      - alert: FrigateCameraNotResponding
+        expr: |
+          sum by (app) (count_over_time({app="frigate"} |~ "(?i)(not responding|lost connection to camera|unable to connect)"[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} has a camera that is not responding"
+      - alert: FrigateDetectorError
+        expr: |
+          sum by (app) (count_over_time({app="frigate"} |~ "(?i)(detector.*error|coral.*error|inference.*error)"[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} is experiencing detector errors"

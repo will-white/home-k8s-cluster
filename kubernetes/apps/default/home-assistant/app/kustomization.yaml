@@ -5,3 +5,12 @@ resources:
   - ./helmrelease.yaml
   - ./gatus.yaml
   - ../../../../templates/volsync
+configMapGenerator:
+  - name: home-assistant-loki-rules
+    files:
+      - home-assistant.yaml=./resources/lokirule.yaml
+    options:
+      labels:
+        loki_rule: "true"
+generatorOptions:
+  disableNameSuffixHash: true

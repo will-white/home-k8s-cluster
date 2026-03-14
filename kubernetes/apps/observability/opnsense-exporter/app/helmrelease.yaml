@@ -34,7 +34,7 @@ spec:
               repository: ghcr.io/athennamind/opnsense-exporter
               tag: 0.0.11
             env:
-              OPNSENSE_HOST: "https://opnsense.internal:8443"
+              OPNSENSE_HOST: "https://opnsense.willwhite.dev"
               OPNSENSE_API_KEY:
                 valueFrom:
                   secretKeyRef:

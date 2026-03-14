@@ -1,0 +1,24 @@
+---
+groups:
+  - name: flux
+    rules:
+      - alert: FluxReconciliationFailure
+        expr: |
+          sum by (app) (count_over_time({namespace="flux-system"} |~ "(?i)(reconciliation failed|install retries exhausted|upgrade retries exhausted)"[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "Flux {{ $labels.app }} has reconciliation failures"
+      - alert: FluxSourceError
+        expr: |
+          sum by (app) (count_over_time({namespace="flux-system"} |~ "(?i)(failed to pull artifact|failed to fetch|authentication required|git repository.*not found)"[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "Flux {{ $labels.app }} has source fetch errors"

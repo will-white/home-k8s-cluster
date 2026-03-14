@@ -13,6 +13,12 @@ configMapGenerator:
       - tba-refresher.sh=./resources/tba-refresher.sh
       - tag-codecs.sh=./resources/tag-codecs.sh
       - refresh-series.sh=./resources/refresh-series.sh
+  - name: sonarr-loki-rules
+    files:
+      - sonarr.yaml=./resources/lokirule.yaml
+    options:
+      labels:
+        loki_rule: "true"
 generatorOptions:
   disableNameSuffixHash: true
   annotations:

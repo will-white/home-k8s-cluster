@@ -7,3 +7,12 @@ resources:
   - ./helmrelease.yaml
   - ./gatus.yaml
   - ../../../../templates/volsync
+configMapGenerator:
+  - name: paperless-loki-rules
+    files:
+      - paperless.yaml=./resources/lokirule.yaml
+    options:
+      labels:
+        loki_rule: "true"
+generatorOptions:
+  disableNameSuffixHash: true

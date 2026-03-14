@@ -26,5 +26,42 @@ spec:
     config:
       clients:
         - url: http://loki-headless.observability.svc.cluster.local:3100/loki/api/v1/push
+      snippets:
+        pipelineStages:
+          - cri: {}
+          - match:
+              selector: '{app=~"ingress-nginx.*"}'
+              stages:
+                - json:
+                    expressions:
+                      status: status
+                      method: method
+                - labels:
+                    status:
+                    method:
+          - match:
+              selector: '{namespace="flux-system"}'
+              stages:
+                - json:
+                    expressions:
+                      level: level
+                - labels:
+                    level:
+          - match:
+              selector: '{namespace="rook-ceph", container="rook-ceph-operator"}'
+              stages:
+                - json:
+                    expressions:
+                      level: level
+                - labels:
+                    level:
+          - match:
+              selector: '{app="homebox"}'
+              stages:
+                - json:
+                    expressions:
+                      level: level
+                - labels:
+                    level:
     serviceMonitor:
       enabled: true

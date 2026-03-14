@@ -1,0 +1,24 @@
+---
+groups:
+  - name: cert-manager
+    rules:
+      - alert: CertManagerRenewalFailure
+        expr: |
+          sum(count_over_time({namespace="cert-manager"} |~ "(?i)(failed to renew|failed to issue|challenge .+ failed|error preparing certificate)"[15m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "cert-manager"
+          summary: "cert-manager failed to renew or issue a certificate"
+      - alert: CertManagerACMEError
+        expr: |
+          sum(count_over_time({namespace="cert-manager"} |~ "(?i)(acme.*error|rate limit exceeded|too many requests from)"[15m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: logs
+        annotations:
+          app: "cert-manager"
+          summary: "cert-manager is hitting ACME provider errors or rate limits"

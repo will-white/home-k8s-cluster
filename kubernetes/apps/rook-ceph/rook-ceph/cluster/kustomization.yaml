@@ -5,3 +5,12 @@ resources:
   - ./objectstore-user.yaml
   - ./buckets.yaml
   - ./cloudnative-pg-push-secret.yaml
+configMapGenerator:
+  - name: rook-ceph-loki-rules
+    files:
+      - rook-ceph.yaml=./resources/lokirule.yaml
+    options:
+      labels:
+        loki_rule: "true"
+generatorOptions:
+  disableNameSuffixHash: true

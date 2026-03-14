@@ -12,5 +12,11 @@ configMapGenerator:
   - name: frigate-configmap
     files:
       - config.yaml=./config/config.yaml
+  - name: frigate-loki-rules
+    files:
+      - frigate.yaml=./resources/lokirule.yaml
+    options:
+      labels:
+        loki_rule: "true"
 generatorOptions:
   disableNameSuffixHash: true

@@ -1,0 +1,14 @@
+---
+groups:
+  - name: paperless
+    rules:
+      - alert: PaperlessConsumptionError
+        expr: |
+          sum by (app) (count_over_time({app="paperless"} |~ "(?i)(failed to consume|consumption.*error|not a valid document|OCR.*error)"[15m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} failed to consume or process a document"

@@ -3,3 +3,12 @@ kind: Kustomization
 resources:
   - ./helmrelease.yaml
   - ./prometheusrule.yaml
+configMapGenerator:
+  - name: cert-manager-loki-rules
+    files:
+      - cert-manager.yaml=./resources/lokirule.yaml
+    options:
+      labels:
+        loki_rule: "true"
+generatorOptions:
+  disableNameSuffixHash: true
