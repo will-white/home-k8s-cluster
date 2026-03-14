@@ -176,6 +176,13 @@ spec:
           # renovate: depName="EMQX"
           gnetId: 17446
           revision: 1
+        truenas:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="Netdata"
+          gnetId: 7107
+          revision: 1
         home-assistant-advanced:
           datasource: Prometheus
           # renovate: depName="Home Assistant Advanced"
