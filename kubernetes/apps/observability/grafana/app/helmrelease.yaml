@@ -92,6 +92,11 @@ spec:
         flux-control-plane:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/main/monitoring/configs/dashboards/control-plane.json
+        frigate:
+          datasource: Prometheus
+          # renovate: depName="Frigate Monitoring Dashboard"
+          gnetId: 24165
+          revision: 1
         home-assistant:
           datasource: Prometheus
           # renovate: depName="Home Assistant"
