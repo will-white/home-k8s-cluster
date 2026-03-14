@@ -171,11 +171,6 @@ spec:
           # renovate: depName="NGINX Ingress controller"
           gnetId: 14314
           revision: 2
-        truenas:
-          datasource: Prometheus
-          # renovate: depName="TrueNAS"
-          gnetId: 12106
-          revision: 2
         emqx:
           datasource: Prometheus
           # renovate: depName="EMQX"
@@ -192,15 +187,19 @@ spec:
           gnetId: 15513
           revision: 3
         adguard-home:
-          datasource: Prometheus
-          # renovate: depName="AdGuard Home"
-          gnetId: 14371
-          revision: 2
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="AdGuard Home Exporter"
+          gnetId: 20799
+          revision: 8
         opnsense:
-          datasource: Prometheus
-          # renovate: depName="OPNsense"
-          gnetId: 15857
-          revision: 4
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="OPNSense"
+          gnetId: 22248
+          revision: 1
         nginx:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/grafana/dashboards/nginx.json

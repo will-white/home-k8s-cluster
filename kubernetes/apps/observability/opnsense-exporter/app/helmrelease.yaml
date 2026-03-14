@@ -35,8 +35,8 @@ spec:
               tag: 0.0.11
             env:
               OPNSENSE_EXPORTER_OPS_PROTOCOL: "https"
-              OPNSENSE_EXPORTER_OPS_API: "opnsense.willwhite.dev"
-              OPNSENSE_EXPORTER_OPS_INSECURE: "false"
+              OPNSENSE_EXPORTER_OPS_API: "192.168.5.1:8443"
+              OPNSENSE_EXPORTER_OPS_INSECURE: "true"
               OPNSENSE_EXPORTER_INSTANCE_LABEL: "opnsense"
               OPNSENSE_EXPORTER_OPS_API_KEY:
                 valueFrom:

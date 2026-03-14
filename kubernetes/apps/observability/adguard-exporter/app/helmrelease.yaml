@@ -34,7 +34,7 @@ spec:
               repository: ghcr.io/henrywhitaker3/adguard-exporter
               tag: v1.2.1
             env:
-              ADGUARD_SERVERS: "https://adguard.willwhite.dev"
+              ADGUARD_SERVERS: "http://adguard.internal:8083"
               ADGUARD_USERNAMES:
                 valueFrom:
                   secretKeyRef:
