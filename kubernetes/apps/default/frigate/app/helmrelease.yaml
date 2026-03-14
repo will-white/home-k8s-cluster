@@ -113,6 +113,8 @@ spec:
         ports:
           http:
             port: *port
+          metrics:
+            port: 5001
     ingress:
       app:
         annotations:
@@ -134,9 +136,9 @@ spec:
       app:
         serviceName: frigate
         endpoints:
-          - port: http
+          - port: metrics
             scheme: http
-            path: /api/stats
+            path: /metrics
             interval: 1m
             scrapeTimeout: 30s
     persistence:
