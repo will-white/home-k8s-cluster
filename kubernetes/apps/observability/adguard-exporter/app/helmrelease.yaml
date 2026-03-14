@@ -35,17 +35,16 @@ spec:
               tag: v1.2.1
             env:
               ADGUARD_SERVERS: "https://adguard.willwhite.dev"
-              ADGUARD_USERNAME:
+              ADGUARD_USERNAMES:
                 valueFrom:
                   secretKeyRef:
                     name: adguard-exporter-secret
                     key: ADGUARD_USERNAME
-              ADGUARD_PASSWORD:
+              ADGUARD_PASSWORDS:
                 valueFrom:
                   secretKeyRef:
                     name: adguard-exporter-secret
                     key: ADGUARD_PASSWORD
-              ADGUARD_PORT: "9617"
             probes:
               liveness:
                 enabled: true
@@ -72,7 +71,7 @@ spec:
         controller: adguard-exporter
         ports:
           http:
-            port: 9617
+            port: 9618
     serviceMonitor:
       app:
         serviceName: adguard-exporter
