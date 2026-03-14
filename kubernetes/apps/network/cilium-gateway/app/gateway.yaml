@@ -36,7 +36,7 @@ metadata:
   name: external
   annotations:
     # NOTE: Using temporary IP during migration. Switch to 192.168.5.48 after ingress-nginx removal.
-    lbipam.cilium.io/ips: "192.168.5.50"
+    lbipam.cilium.io/ips: "192.168.5.44"
 spec:
   gatewayClassName: cilium
   listeners:
@@ -59,4 +59,4 @@ spec:
             name: "${SECRET_DOMAIN/./-}-gateway-tls"
   infrastructure:
     annotations:
-      lbipam.cilium.io/ips: "192.168.5.50"
+      lbipam.cilium.io/ips: "192.168.5.44"
