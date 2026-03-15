@@ -136,9 +136,9 @@ spec:
       app:
         serviceName: frigate
         endpoints:
-          - port: metrics
+          - port: http
             scheme: http
-            path: /metrics
+            path: /api/metrics
             interval: 1m
             scrapeTimeout: 30s
     persistence:
