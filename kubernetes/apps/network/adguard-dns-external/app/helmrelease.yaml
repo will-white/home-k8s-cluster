@@ -88,4 +88,4 @@ spec:
     txtOwnerId: external
     txtPrefix: k8s-ext.
     serviceMonitor:
-      enabled: true
+      enabled: false

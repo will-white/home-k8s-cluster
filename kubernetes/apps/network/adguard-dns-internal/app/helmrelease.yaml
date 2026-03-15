@@ -133,4 +133,4 @@ spec:
     txtOwnerId: default
     txtPrefix: k8s.
     serviceMonitor:
-      enabled: true
+      enabled: false
