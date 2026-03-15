@@ -39,8 +39,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: truenas-netdata
-      app.kubernetes.io/instance: truenas
+      app.kubernetes.io/name: node-exporter-truenas
   endpoints:
     - port: metrics
       scheme: http
