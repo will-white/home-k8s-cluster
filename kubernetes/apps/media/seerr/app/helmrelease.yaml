@@ -29,6 +29,7 @@ spec:
     controllers:
       seerr:
         type: statefulset
+        replicas: 0
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
