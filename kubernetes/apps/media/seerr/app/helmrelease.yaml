@@ -29,7 +29,7 @@ spec:
     controllers:
       seerr:
         type: statefulset
-        replicas: 0
+        replicas: 1
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
@@ -93,6 +93,19 @@ spec:
         className: external
         hosts:
           - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+      legacy:
+        annotations:
+          external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
+          nginx.ingress.kubernetes.io/permanent-redirect: "https://seerr.${SECRET_DOMAIN}$request_uri"
+          nginx.ingress.kubernetes.io/permanent-redirect-code: "308"
+        className: external
+        hosts:
+          - host: "overseerr.${SECRET_DOMAIN}"
             paths:
               - path: /
                 service:
