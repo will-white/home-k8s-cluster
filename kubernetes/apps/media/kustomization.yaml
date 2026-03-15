@@ -9,6 +9,7 @@ resources:
   - ./kometa/ks.yaml
   - ./omegabrr/ks.yaml
   - ./overseerr/ks.yaml
+  - ./seerr/ks.yaml
   - ./prowlarr/ks.yaml
   - ./qbittorrent/ks.yaml
   - ./radarr/ks.yaml
