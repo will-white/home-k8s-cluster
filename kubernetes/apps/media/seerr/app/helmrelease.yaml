@@ -64,6 +64,24 @@ spec:
                 memory: 256Mi
               limits:
                 memory: 512Mi
+      redirect:
+        replicas: 1
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: docker.io/caddy
+              tag: 2.10.2-alpine
+            env:
+              XDG_CONFIG_HOME: /tmp/caddy/config
+              XDG_DATA_HOME: /tmp/caddy/data
+            resources:
+              requests:
+                cpu: 5m
+                memory: 32Mi
+              limits:
+                memory: 64Mi
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -78,6 +96,11 @@ spec:
         ports:
           http:
             port: *port
+      redirect:
+        controller: redirect
+        ports:
+          http:
+            port: 8080
     ingress:
       app:
         annotations:
@@ -101,21 +124,26 @@ spec:
       legacy:
         annotations:
           external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
-          nginx.ingress.kubernetes.io/permanent-redirect: "https://seerr.${SECRET_DOMAIN}$request_uri"
-          nginx.ingress.kubernetes.io/permanent-redirect-code: "308"
         className: external
         hosts:
           - host: "overseerr.${SECRET_DOMAIN}"
             paths:
               - path: /
                 service:
-                  identifier: app
+                  identifier: redirect
                   port: http
     persistence:
       config:
         existingClaim: *app
         globalMounts:
           - path: /app/config
+      redirect-config:
+        type: configMap
+        name: seerr-redirect-config
+        globalMounts:
+          - path: /etc/caddy/Caddyfile
+            subPath: Caddyfile
+            readOnly: true
       cache:
         type: emptyDir
         globalMounts:
