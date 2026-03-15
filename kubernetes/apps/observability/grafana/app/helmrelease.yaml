@@ -180,8 +180,8 @@ spec:
           datasource:
             - name: DS_PROMETHEUS
               value: Prometheus
-          # renovate: depName="Netdata"
-          gnetId: 7107
+          # renovate: depName="Netdata and prometheus"
+          gnetId: 12279
           revision: 1
         home-assistant-advanced:
           datasource: Prometheus
