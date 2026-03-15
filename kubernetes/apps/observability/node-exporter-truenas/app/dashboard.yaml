@@ -1,0 +1,250 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: truenas-dashboard
+  namespace: observability
+  labels:
+    grafana_dashboard: "true"
+  annotations:
+    grafana_folder: "TrueNAS"
+data:
+  truenas.json: |-
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "graphTooltip": 1,
+      "links": [],
+      "panels": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+              "unit": "dtdurations"
+            }
+          },
+          "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+          "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+          "title": "Uptime",
+          "type": "stat",
+          "targets": [{ "expr": "netdata_system_uptime_seconds_average{instance=\"truenas\", dimension=\"uptime\"}", "legendFormat": "Uptime" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "max": 100, "min": 0,
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 60 }, { "color": "red", "value": 85 }] },
+              "unit": "percent"
+            }
+          },
+          "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+          "options": { "minVizHeight": 75, "minVizWidth": 75, "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": false },
+          "title": "CPU",
+          "type": "gauge",
+          "targets": [{ "expr": "100 - netdata_system_cpu_percentage_average{instance=\"truenas\", dimension=\"idle\"}", "legendFormat": "CPU" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "max": 100, "min": 0,
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] },
+              "unit": "percent"
+            }
+          },
+          "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+          "options": { "minVizHeight": 75, "minVizWidth": 75, "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": false },
+          "title": "Memory",
+          "type": "gauge",
+          "targets": [{ "expr": "netdata_system_ram_MiB_average{instance=\"truenas\", dimension=\"used\"} / (netdata_system_ram_MiB_average{instance=\"truenas\", dimension=\"used\"} + netdata_system_ram_MiB_average{instance=\"truenas\", dimension=\"free\"} + netdata_system_ram_MiB_average{instance=\"truenas\", dimension=\"cached\"} + netdata_system_ram_MiB_average{instance=\"truenas\", dimension=\"buffers\"}) * 100", "legendFormat": "Memory" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+              "unit": "decmbytes"
+            }
+          },
+          "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+          "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+          "title": "ZFS ARC",
+          "type": "stat",
+          "targets": [{ "expr": "netdata_zfs_arc_size_MiB_average{instance=\"truenas\", dimension=\"arcsz\"}", "legendFormat": "ARC" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 80 }, { "color": "green", "value": 95 }] },
+              "unit": "percent", "min": 0, "max": 100
+            }
+          },
+          "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+          "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+          "title": "ARC Hit Rate",
+          "type": "stat",
+          "targets": [{ "expr": "netdata_zfs_hits_percentage_average{instance=\"truenas\", dimension=\"hits\"}", "legendFormat": "Hits" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 60 }, { "color": "red", "value": 80 }] },
+              "unit": "celsius"
+            }
+          },
+          "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+          "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+          "title": "CPU Temp",
+          "type": "stat",
+          "targets": [{ "expr": "avg(netdata_sensors_temperature_Celsius_average{instance=\"truenas\", chart=\"cputemp.temperatures\"})", "legendFormat": "Temp" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "custom": { "fillOpacity": 20, "stacking": { "mode": "normal" } }, "unit": "percent" },
+            "overrides": [
+              { "matcher": { "id": "byName", "options": "idle" }, "properties": [{ "id": "custom.hideFrom", "value": { "legend": false, "tooltip": false, "viz": true } }] }
+            ]
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+          "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "title": "CPU",
+          "type": "timeseries",
+          "targets": [{ "expr": "netdata_system_cpu_percentage_average{instance=\"truenas\", dimension!=\"idle\"}", "legendFormat": "{{ dimension }}" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "custom": { "fillOpacity": 20, "stacking": { "mode": "normal" } }, "unit": "decmbytes" }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+          "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "title": "Memory",
+          "type": "timeseries",
+          "targets": [{ "expr": "netdata_system_ram_MiB_average{instance=\"truenas\"}", "legendFormat": "{{ dimension }}" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "custom": { "fillOpacity": 10 }, "unit": "Kbits" }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+          "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "title": "Network",
+          "type": "timeseries",
+          "targets": [
+            { "expr": "netdata_system_net_kilobits_persec_average{instance=\"truenas\", dimension=\"received\"}", "legendFormat": "Received" },
+            { "expr": "abs(netdata_system_net_kilobits_persec_average{instance=\"truenas\", dimension=\"sent\"})", "legendFormat": "Sent" }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "custom": { "fillOpacity": 10 }, "unit": "KiBs" }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+          "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "title": "Disk I/O",
+          "type": "timeseries",
+          "targets": [
+            { "expr": "netdata_system_io_KiB_persec_average{instance=\"truenas\", dimension=\"in\"}", "legendFormat": "Read" },
+            { "expr": "abs(netdata_system_io_KiB_persec_average{instance=\"truenas\", dimension=\"out\"})", "legendFormat": "Write" }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "custom": { "fillOpacity": 10 }, "unit": "decmbytes" }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+          "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "title": "ZFS ARC Size",
+          "type": "timeseries",
+          "targets": [
+            { "expr": "netdata_zfs_arc_size_MiB_average{instance=\"truenas\", dimension=\"arcsz\"}", "legendFormat": "Current" },
+            { "expr": "netdata_zfs_arc_size_MiB_average{instance=\"truenas\", dimension=\"target\"}", "legendFormat": "Target" },
+            { "expr": "netdata_zfs_arc_size_MiB_average{instance=\"truenas\", dimension=\"min (hard limit)\"}", "legendFormat": "Min" },
+            { "expr": "netdata_zfs_arc_size_MiB_average{instance=\"truenas\", dimension=\"max (high water)\"}", "legendFormat": "Max" }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "custom": { "fillOpacity": 10 }, "unit": "percent" }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+          "options": { "legend": { "calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "title": "ZFS ARC Hit Rates",
+          "type": "timeseries",
+          "targets": [
+            { "expr": "netdata_zfs_hits_percentage_average{instance=\"truenas\", dimension=\"hits\"}", "legendFormat": "Overall" },
+            { "expr": "netdata_zfs_demand_data_hits_percentage_average{instance=\"truenas\", dimension=\"hits\"}", "legendFormat": "Demand Data" },
+            { "expr": "netdata_zfs_prefetch_data_hits_percentage_average{instance=\"truenas\", dimension=\"hits\"}", "legendFormat": "Prefetch" }
+          ]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "custom": { "fillOpacity": 10 }, "unit": "celsius",
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 45 }, { "color": "red", "value": 55 }] }
+            }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
+          "options": { "legend": { "calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "title": "CPU Temperature",
+          "type": "timeseries",
+          "targets": [{ "expr": "netdata_sensors_temperature_Celsius_average{instance=\"truenas\", chart=\"cputemp.temperatures\"}", "legendFormat": "Core {{ dimension }}" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "custom": { "fillOpacity": 10 }, "unit": "short" }
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+          "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "title": "System Load",
+          "type": "timeseries",
+          "targets": [{ "expr": "netdata_system_load_load_average{instance=\"truenas\"}", "legendFormat": "{{ dimension }}" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [{ "options": { "0": { "color": "red", "text": "OFFLINE" }, "1": { "color": "green", "text": "ONLINE" } }, "type": "value" }],
+              "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+            }
+          },
+          "gridPos": { "h": 3, "w": 24, "x": 0, "y": 36 },
+          "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+          "title": "ZFS Pool Status",
+          "type": "stat",
+          "targets": [{ "expr": "netdata_zfspool_state_boolean_average{instance=\"truenas\", dimension=\"online\"}", "legendFormat": "{{ family }}" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": {
+            "defaults": { "custom": { "fillOpacity": 10 }, "unit": "KiBs" }
+          },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 39 },
+          "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+          "title": "Per-Disk I/O",
+          "type": "timeseries",
+          "targets": [
+            { "expr": "netdata_disk_io_KiB_persec_average{instance=\"truenas\", dimension=\"reads\"}", "legendFormat": "{{ family }} read" },
+            { "expr": "abs(netdata_disk_io_KiB_persec_average{instance=\"truenas\", dimension=\"writes\"})", "legendFormat": "{{ family }} write" }
+          ]
+        }
+      ],
+      "schemaVersion": 39,
+      "tags": ["truenas", "nas", "zfs"],
+      "templating": { "list": [] },
+      "time": { "from": "now-6h", "to": "now" },
+      "title": "TrueNAS",
+      "uid": "truenas"
+    }

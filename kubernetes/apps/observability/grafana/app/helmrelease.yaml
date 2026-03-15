@@ -88,12 +88,16 @@ spec:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/main/monitoring/configs/dashboards/control-plane.json
         frigate:
-          datasource: Prometheus
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
           # renovate: depName="Frigate Monitoring Dashboard"
           gnetId: 24165
           revision: 1
         gatus:
-          datasource: Prometheus
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
           # renovate: depName="Gatus"
           gnetId: 24379
           revision: 1
@@ -148,7 +152,9 @@ spec:
           gnetId: 14055
           revision: 5
         logs-app:
-          datasource: Loki
+          datasource:
+            - name: DS_LOKI
+              value: Loki
           # renovate: depName="Logs / App"
           gnetId: 13639
           revision: 2
@@ -172,17 +178,12 @@ spec:
           gnetId: 14314
           revision: 2
         emqx:
-          datasource: Prometheus
-          # renovate: depName="EMQX"
-          gnetId: 17446
-          revision: 1
-        truenas:
           datasource:
             - name: DS_PROMETHEUS
               value: Prometheus
-          # renovate: depName="Netdata and prometheus"
-          gnetId: 12279
-          revision: 1
+          # renovate: depName="EMQX"
+          gnetId: 17446
+          revision: 2
         home-assistant-advanced:
           datasource: Prometheus
           # renovate: depName="Home Assistant Advanced"
