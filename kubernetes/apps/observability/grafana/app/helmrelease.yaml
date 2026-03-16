@@ -30,82 +30,78 @@ spec:
         providers:
           - disableDeletion: false
             editable: true
-            folder: ''
-            name: default
+            folder: Kubernetes
+            name: kubernetes
             options:
-              path: /var/lib/grafana/dashboards/default
+              path: /var/lib/grafana/dashboards/kubernetes
+            orgId: 1
+            type: file
+          - disableDeletion: false
+            editable: true
+            folder: Infrastructure
+            name: infrastructure
+            options:
+              path: /var/lib/grafana/dashboards/infrastructure
+            orgId: 1
+            type: file
+          - disableDeletion: false
+            editable: true
+            folder: Networking
+            name: networking
+            options:
+              path: /var/lib/grafana/dashboards/networking
+            orgId: 1
+            type: file
+          - disableDeletion: false
+            editable: true
+            folder: External
+            name: external
+            options:
+              path: /var/lib/grafana/dashboards/external
+            orgId: 1
+            type: file
+          - disableDeletion: false
+            editable: true
+            folder: Storage
+            name: storage
+            options:
+              path: /var/lib/grafana/dashboards/storage
+            orgId: 1
+            type: file
+          - disableDeletion: false
+            editable: true
+            folder: Observability
+            name: observability
+            options:
+              path: /var/lib/grafana/dashboards/observability
+            orgId: 1
+            type: file
+          - disableDeletion: false
+            editable: true
+            folder: Home Automation
+            name: home-automation
+            options:
+              path: /var/lib/grafana/dashboards/home-automation
+            orgId: 1
+            type: file
+          - disableDeletion: false
+            editable: true
+            folder: Media
+            name: media
+            options:
+              path: /var/lib/grafana/dashboards/media
+            orgId: 1
+            type: file
+          - disableDeletion: false
+            editable: true
+            folder: Flux
+            name: flux
+            options:
+              path: /var/lib/grafana/dashboards/flux
             orgId: 1
             type: file
     dashboards:
-      default:
-        apc-ups:
-          datasource: Prometheus
-          # renovate: depName="APC UPS (SNMP)"
-          gnetId: 12340
-          revision: 1
-        ceph-cluster:
-          datasource: Prometheus
-          # renovate: depName="Ceph Cluster"
-          gnetId: 2842
-          revision: 18
-        ceph-osd:
-          datasource: Prometheus
-          # renovate: depName="Ceph - OSD (Single)"
-          gnetId: 5336
-          revision: 9
-        ceph-pools:
-          datasource: Prometheus
-          # renovate: depName="Ceph - Pools"
-          gnetId: 5342
-          revision: 9
-        cert-manager:
-          datasource: Prometheus
-          # renovate: depName="Cert-manager-Kubernetes"
-          gnetId: 20842
-          revision: 3
-        dragonfly:
-          datasource: Prometheus
-          url: https://raw.githubusercontent.com/dragonflydb/dragonfly/main/tools/local/monitoring/grafana/provisioning/dashboards/dashboard.json
-        cloudflared:
-          datasource:
-            - name: DS_PROMETHEUS
-              value: Prometheus
-          # renovate: depName="Cloudflare Tunnels (cloudflared)"
-          gnetId: 17457
-          revision: 6
-        external-dns:
-          datasource: Prometheus
-          # renovate: depName="External-dns"
-          gnetId: 15038
-          revision: 3
-        external-secrets:
-          datasource: Prometheus
-          url: https://raw.githubusercontent.com/external-secrets/external-secrets/main/docs/snippets/dashboard.json
-        flux-cluster:
-          datasource: Prometheus
-          url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/main/monitoring/configs/dashboards/cluster.json
-        flux-control-plane:
-          datasource: Prometheus
-          url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/main/monitoring/configs/dashboards/control-plane.json
-        frigate:
-          datasource:
-            - name: DS_PROMETHEUS
-              value: Prometheus
-          # renovate: depName="Frigate Monitoring Dashboard"
-          gnetId: 24165
-          revision: 1
-        gatus:
-          datasource:
-            - name: DS_PROMETHEUS
-              value: Prometheus
-          # renovate: depName="Gatus"
-          gnetId: 24379
-          revision: 1
-        home-assistant:
-          datasource: Prometheus
-          # renovate: depName="Home Assistant"
-          gnetId: 15309
-          revision: 2
+      kubernetes:
         kubernetes-api-server:
           datasource: Prometheus
           # renovate: depName="Kubernetes / System / API Server"
@@ -141,22 +137,61 @@ spec:
           # renovate: depName="K8s / Storage / Volumes / Cluster"
           gnetId: 11454
           revision: 14
-        loki-kubernetes-logs:
-          datasource: Loki
-          # renovate: depName="Kubernetes Service Logs"
-          gnetId: 15141
-          revision: 1
-        loki-stack-monitoring:
-          datasource: Prometheus
-          # renovate: depName="Loki stack monitoring (Promtail, Loki)"
-          gnetId: 14055
-          revision: 5
-        logs-app:
+        kubernetes-pvc:
           datasource:
-            - name: DS_LOKI
-              value: Loki
-          # renovate: depName="Logs / App"
-          gnetId: 13639
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="Kubernetes / Persistent Volumes"
+          gnetId: 23233
+          revision: 6
+      infrastructure:
+        cert-manager:
+          datasource: Prometheus
+          # renovate: depName="Cert-manager-Kubernetes"
+          gnetId: 20842
+          revision: 3
+        external-secrets:
+          datasource: Prometheus
+          url: https://raw.githubusercontent.com/external-secrets/external-secrets/main/docs/snippets/dashboard.json
+        spegel:
+          datasource: Prometheus
+          # renovate: depName="Spegel"
+          gnetId: 18089
+          revision: 1
+        talos:
+          datasource: Prometheus
+          # renovate: depName="Talos / Cluster"
+          gnetId: 15513
+          revision: 3
+        volsync:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+            - name: VAR_REPLICATIONDESTNAME
+              value: .*-dst
+          # renovate: depName="VolSync Dashboard"
+          gnetId: 21356
+          revision: 3
+      networking:
+        cloudflared:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="Cloudflare Tunnels (cloudflared)"
+          gnetId: 17457
+          revision: 6
+        external-dns:
+          datasource: Prometheus
+          # renovate: depName="External-dns"
+          gnetId: 15038
+          revision: 3
+        nginx:
+          datasource: Prometheus
+          url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/grafana/dashboards/nginx.json
+        nginx-ingress:
+          datasource: Prometheus
+          # renovate: depName="NGINX Ingress controller"
+          gnetId: 14314
           revision: 2
         nginx-ingress-loki:
           datasource:
@@ -165,35 +200,10 @@ spec:
           # renovate: depName="NGINX / LOKI Ingress Controller"
           gnetId: 12559
           revision: 3
-        kubernetes-pvc:
-          datasource:
-            - name: DS_PROMETHEUS
-              value: Prometheus
-          # renovate: depName="Kubernetes / Persistent Volumes"
-          gnetId: 23233
-          revision: 6
-        nginx-ingress:
+        nginx-request-handling-performance:
           datasource: Prometheus
-          # renovate: depName="NGINX Ingress controller"
-          gnetId: 14314
-          revision: 2
-        emqx:
-          datasource:
-            - name: DS_PROMETHEUS
-              value: Prometheus
-          # renovate: depName="EMQX"
-          gnetId: 17446
-          revision: 2
-        home-assistant-advanced:
-          datasource: Prometheus
-          # renovate: depName="Home Assistant Advanced"
-          gnetId: 12675
-          revision: 3
-        talos:
-          datasource: Prometheus
-          # renovate: depName="Talos / Cluster"
-          gnetId: 15513
-          revision: 3
+          url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/grafana/dashboards/request-handling-performance.json
+      external:
         adguard-home:
           datasource:
             - name: DS_PROMETHEUS
@@ -201,48 +211,22 @@ spec:
           # renovate: depName="AdGuard Home Exporter"
           gnetId: 20799
           revision: 8
+        apc-ups:
+          datasource: Prometheus
+          # renovate: depName="APC UPS (SNMP)"
+          gnetId: 12340
+          revision: 1
+        node-exporter-full:
+          datasource: Prometheus
+          # renovate: depName="Node Exporter Full"
+          gnetId: 1860
+          revision: 37
         opnsense:
           datasource:
             - name: DS_PROMETHEUS
               value: Prometheus
           # renovate: depName="OPNSense"
           gnetId: 22248
-          revision: 1
-        nginx:
-          datasource: Prometheus
-          url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/grafana/dashboards/nginx.json
-        nginx-request-handling-performance:
-          datasource: Prometheus
-          url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/grafana/dashboards/request-handling-performance.json
-        node-exporter-full:
-          datasource: Prometheus
-          # renovate: depName="Node Exporter Full"
-          gnetId: 1860
-          revision: 37
-        prometheus:
-          datasource: Prometheus
-          # renovate: depName="Prometheus"
-          gnetId: 19105
-          revision: 7
-        qbittorrent:
-          datasource: Prometheus
-          # renovate: depName="qBittorrent"
-          gnetId: 15080
-          revision: 2
-        radarr:
-          datasource: Prometheus
-          # renovate: depName="Radarr v3"
-          gnetId: 12896
-          revision: 1
-        sonarr:
-          datasource: Prometheus
-          # renovate: depName="Sonarr v3"
-          gnetId: 12530
-          revision: 2
-        spegel:
-          datasource: Prometheus
-          # renovate: depName="Spegel"
-          gnetId: 18089
           revision: 1
         smartctl-exporter:
           datasource:
@@ -271,6 +255,96 @@ spec:
           # renovate: depName="UniFi-Poller: USW Insights - Prometheus"
           gnetId: 11312
           revision: 9
+      storage:
+        ceph-cluster:
+          datasource: Prometheus
+          # renovate: depName="Ceph Cluster"
+          gnetId: 2842
+          revision: 18
+        ceph-osd:
+          datasource: Prometheus
+          # renovate: depName="Ceph - OSD (Single)"
+          gnetId: 5336
+          revision: 9
+        ceph-pools:
+          datasource: Prometheus
+          # renovate: depName="Ceph - Pools"
+          gnetId: 5342
+          revision: 9
+        dragonfly:
+          datasource: Prometheus
+          url: https://raw.githubusercontent.com/dragonflydb/dragonfly/main/tools/local/monitoring/grafana/provisioning/dashboards/dashboard.json
+      observability:
+        gatus:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="Gatus"
+          gnetId: 24379
+          revision: 1
+        loki-kubernetes-logs:
+          datasource: Loki
+          # renovate: depName="Kubernetes Service Logs"
+          gnetId: 15141
+          revision: 1
+        loki-stack-monitoring:
+          datasource: Prometheus
+          # renovate: depName="Loki stack monitoring (Promtail, Loki)"
+          gnetId: 14055
+          revision: 5
+        logs-app:
+          datasource:
+            - name: DS_LOKI
+              value: Loki
+          # renovate: depName="Logs / App"
+          gnetId: 13639
+          revision: 2
+        prometheus:
+          datasource: Prometheus
+          # renovate: depName="Prometheus"
+          gnetId: 19105
+          revision: 7
+      home-automation:
+        emqx:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="EMQX"
+          gnetId: 17446
+          revision: 2
+        frigate:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="Frigate Monitoring Dashboard"
+          gnetId: 24165
+          revision: 1
+        home-assistant:
+          datasource: Prometheus
+          # renovate: depName="Home Assistant"
+          gnetId: 15309
+          revision: 2
+        home-assistant-advanced:
+          datasource: Prometheus
+          # renovate: depName="Home Assistant Advanced"
+          gnetId: 12675
+          revision: 3
+      media:
+        qbittorrent:
+          datasource: Prometheus
+          # renovate: depName="qBittorrent"
+          gnetId: 15080
+          revision: 2
+        radarr:
+          datasource: Prometheus
+          # renovate: depName="Radarr v3"
+          gnetId: 12896
+          revision: 1
+        sonarr:
+          datasource: Prometheus
+          # renovate: depName="Sonarr v3"
+          gnetId: 12530
+          revision: 2
         unpackerr:
           datasource:
             - name: DS_PROMETHEUS
@@ -278,15 +352,13 @@ spec:
           # renovate: depName="Unpackerr"
           gnetId: 18817
           revision: 1
-        volsync:
-          datasource:
-            - name: DS_PROMETHEUS
-              value: Prometheus
-            - name: VAR_REPLICATIONDESTNAME
-              value: .*-dst
-          # renovate: depName="VolSync Dashboard"
-          gnetId: 21356
-          revision: 3
+      flux:
+        flux-cluster:
+          datasource: Prometheus
+          url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/main/monitoring/configs/dashboards/cluster.json
+        flux-control-plane:
+          datasource: Prometheus
+          url: https://raw.githubusercontent.com/fluxcd/flux2-monitoring-example/main/monitoring/configs/dashboards/control-plane.json
     datasources:
       datasources.yaml:
         apiVersion: 1
