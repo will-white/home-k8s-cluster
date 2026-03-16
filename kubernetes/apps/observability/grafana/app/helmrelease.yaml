@@ -225,8 +225,8 @@ spec:
           datasource:
             - name: DS_PROMETHEUS
               value: Prometheus
-          # renovate: depName="OPNSense"
-          gnetId: 22248
+          # renovate: depName="OPNsense Exporter"
+          gnetId: 21113
           revision: 1
         smartctl-exporter:
           datasource:
