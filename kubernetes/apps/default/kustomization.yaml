@@ -10,6 +10,7 @@ resources:
   - ./homebox/ks.yaml
   - ./homepage/ks.yaml
   - ./karakeep/ks.yaml
+  - ./litellm/ks.yaml
   - ./mealie/ks.yaml
   - ./paperless/ks.yaml
   - ./stirling-pdf/ks.yaml
