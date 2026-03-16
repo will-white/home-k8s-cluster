@@ -153,6 +153,18 @@ spec:
         external-secrets:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/external-secrets/external-secrets/main/docs/snippets/dashboard.json
+        node-exporter-full:
+          datasource: Prometheus
+          # renovate: depName="Node Exporter Full"
+          gnetId: 1860
+          revision: 37
+        smartctl-exporter:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="SMARTctl Exporter Dashboard"
+          gnetId: 22604
+          revision: 2
         spegel:
           datasource: Prometheus
           # renovate: depName="Spegel"
@@ -216,11 +228,6 @@ spec:
           # renovate: depName="APC UPS (SNMP)"
           gnetId: 12340
           revision: 1
-        node-exporter-full:
-          datasource: Prometheus
-          # renovate: depName="Node Exporter Full"
-          gnetId: 1860
-          revision: 37
         opnsense:
           datasource:
             - name: DS_PROMETHEUS
@@ -228,13 +235,6 @@ spec:
           # renovate: depName="OPNsense Exporter"
           gnetId: 21113
           revision: 1
-        smartctl-exporter:
-          datasource:
-            - name: DS_PROMETHEUS
-              value: Prometheus
-          # renovate: depName="SMARTctl Exporter Dashboard"
-          gnetId: 22604
-          revision: 2
         unifi-insights:
           datasource: Prometheus
           # renovate: depName="UniFi-Poller: Client Insights - Prometheus"
