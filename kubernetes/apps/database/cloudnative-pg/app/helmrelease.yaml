@@ -30,3 +30,16 @@ spec:
       podMonitorEnabled: true
       grafanaDashboard:
         create: true
+  postRenderers:
+    - kustomize:
+        patches:
+          - patch: |
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: cnpg-grafana-dashboard
+                annotations:
+                  grafana_folder: Kubernetes
+            target:
+              kind: ConfigMap
+              name: cnpg-grafana-dashboard

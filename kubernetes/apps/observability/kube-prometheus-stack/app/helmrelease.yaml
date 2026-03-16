@@ -186,6 +186,10 @@ spec:
     grafana:
       enabled: false
       forceDeployDashboards: true
+      sidecar:
+        dashboards:
+          annotations:
+            grafana_folder: Kubernetes
     kube-state-metrics:
       fullnameOverride: kube-state-metrics
       metricLabelsAllowlist:
