@@ -37,6 +37,7 @@ spec:
               DOWNLOAD_AS_CBZ: "true"
               AUTO_DOWNLOAD_CHAPTERS: "true"
               UPDATE_INTERVAL: "12"
+              DOWNLOADS_PATH: /media/manga
             probes:
               liveness:
                 enabled: true
