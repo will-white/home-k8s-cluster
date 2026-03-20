@@ -15,7 +15,7 @@ ARG KUSTOMIZE_VERSION=v5.5.0
 # renovate: datasource=github-releases depName=siderolabs/talos
 ARG TALOSCTL_VERSION=v1.12.5
 # renovate: datasource=github-releases depName=budimanjojo/talhelper
-ARG TALHELPER_VERSION=v3.1.5
+ARG TALHELPER_VERSION=v3.1.7
 # renovate: datasource=github-releases depName=mikefarah/yq
 ARG YQ_VERSION=v4.52.4
 # renovate: datasource=github-releases depName=bitwarden/sdk-sm extractVersion=^bws-(?<version>.+)$
