@@ -5,7 +5,7 @@ ENV ENABLE_DIND=${ENABLE_DIND}
 
 # --- Pinned tool versions (update these for upgrades) ---
 # renovate: datasource=github-releases depName=getsops/sops
-ARG SOPS_VERSION=v3.12.1
+ARG SOPS_VERSION=v3.12.2
 # renovate: datasource=github-releases depName=FiloSottile/age
 ARG AGE_VERSION=v1.3.1
 # renovate: datasource=github-releases depName=yannh/kubeconform
