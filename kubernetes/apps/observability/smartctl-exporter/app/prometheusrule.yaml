@@ -69,3 +69,12 @@ spec:
           for: 15m
           labels:
             severity: critical
+        - alert: SmartDeviceErrorLogEntries
+          annotations:
+            summary:
+              Device {{ $labels.device }} on instance {{ $labels.instance }}
+              has {{ $value }} error log entries.
+          expr: smartctl_device_num_err_log_entries > 0
+          for: 15m
+          labels:
+            severity: warning
