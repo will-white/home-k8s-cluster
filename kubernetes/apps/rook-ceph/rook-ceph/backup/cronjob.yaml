@@ -7,7 +7,8 @@ metadata:
 spec:
   # Run daily at 3 AM
   schedule: "0 3 * * *"
-  suspend: false
+  # Suspended: Garage S3 endpoint returns 404 on ListBuckets - verify endpoint/credentials in Bitwarden
+  suspend: true
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3

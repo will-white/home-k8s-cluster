@@ -220,5 +220,8 @@ spec:
     monitoring:
       createPrometheusRules: true
       enabled: true
+      prometheusRuleOverrides:
+        CephPGImbalance:
+          disabled: true
     toolbox:
       enabled: true
