@@ -9,7 +9,7 @@ data:
     endpoints:
       - name: komga
         group: guarded
-        url: http://komga.media.svc.cluster.local:25600/api/v1/actuator/health
+        url: http://komga.media.svc.cluster.local:25600/actuator/health
         interval: 1m
         ui:
           hide-hostname: true

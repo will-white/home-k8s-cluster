@@ -41,7 +41,7 @@ spec:
                 custom: true
                 spec:
                   httpGet:
-                    path: /api/v1/actuator/health
+                    path: /actuator/health
                     port: &port 25600
                   initialDelaySeconds: 30
                   periodSeconds: 10
