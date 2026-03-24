@@ -82,6 +82,7 @@ spec:
           gethomepage.dev/widget.type: kavita
           gethomepage.dev/widget.url: http://kavita.media
           gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_KAVITA_API_KEY}}` }}"
+          nginx.ingress.kubernetes.io/proxy-hide-headers: Content-Security-Policy,X-Frame-Options
         className: internal
         hosts:
           - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
