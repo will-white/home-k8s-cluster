@@ -1,7 +1,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: &app kavita
+  name: &app komga
 spec:
   interval: 30m
   chart:
@@ -25,14 +25,14 @@ spec:
       namespace: rook-ceph
   values:
     controllers:
-      kavita:
+      komga:
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
           app:
             image:
-              repository: ghcr.io/kareadita/kavita
-              tag: 0.8.9@sha256:1f2acae7466d022f037ea09f7989eb7c487f916b881174c7a6de33dbfa8acb39
+              repository: gotson/komga
+              tag: 1.24.1@sha256:a84a0424e2f8235ba9373ed10b9b903e0feecdbb500a1b4aebac01f08e9e57db
             env:
               TZ: ${TIMEZONE}
             probes:
@@ -41,9 +41,9 @@ spec:
                 custom: true
                 spec:
                   httpGet:
-                    path: /api/Health
-                    port: &port 5000
-                  initialDelaySeconds: 20
+                    path: /api/v1/actuator/health
+                    port: &port 25600
+                  initialDelaySeconds: 30
                   periodSeconds: 10
                   timeoutSeconds: 1
                   failureThreshold: 3
@@ -67,7 +67,7 @@ spec:
         seccompProfile: { type: RuntimeDefault }
     service:
       app:
-        controller: kavita
+        controller: komga
         ports:
           http:
             port: *port
@@ -76,12 +76,11 @@ spec:
         annotations:
           gethomepage.dev/enabled: "true"
           gethomepage.dev/group: Media
-          gethomepage.dev/name: Kavita
-          gethomepage.dev/icon: kavita.png
-          gethomepage.dev/description: Manga, Manhwa & Books Reader
-          gethomepage.dev/widget.type: kavita
-          gethomepage.dev/widget.url: http://kavita.media
-          gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_KAVITA_API_KEY}}` }}"
+          gethomepage.dev/name: Komga
+          gethomepage.dev/icon: komga.png
+          gethomepage.dev/description: eBooks & Comics Reader
+          gethomepage.dev/widget.type: komga
+          gethomepage.dev/widget.url: http://komga.media
         className: internal
         hosts:
           - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
@@ -94,7 +93,7 @@ spec:
       config:
         existingClaim: *app
         globalMounts:
-          - path: /kavita/config
+          - path: /config
       media:
         type: nfs
         server: ${NAS_IP}
