@@ -49,7 +49,7 @@ spec:
       ingester:
         chunk_encoding: snappy
       limits_config:
-        retention_period: 14d
+        retention_period: 7d
       schemaConfig:
         configs:
           - from: '2024-04-01'
@@ -107,7 +107,7 @@ spec:
     singleBinary:
       persistence:
         enabled: true
-        size: 50Gi
+        size: 100Gi
         storageClass: ceph-block
       replicas: 1
     test:
