@@ -40,6 +40,12 @@ spec:
     accessModes: ["${VOLSYNC_SNAP_ACCESSMODES:-ReadWriteOnce}"]
     capacity: ${VOLSYNC_CAPACITY:-2Gi}
     copyMethod: Snapshot
+    moverResources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: ${VOLSYNC_MOVER_MEMORY_LIMIT:-1Gi}
     moverSecurityContext:
       fsGroup: ${VOLSYNC_PGID:-1000}
       runAsGroup: ${VOLSYNC_PGID:-1000}
@@ -59,6 +65,12 @@ spec:
   kopia:
     accessModes: ["${VOLSYNC_SNAP_ACCESSMODES:-ReadWriteOnce}"]
     copyMethod: ${VOLSYNC_COPYMETHOD:-Snapshot}
+    moverResources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: ${VOLSYNC_MOVER_MEMORY_LIMIT:-1Gi}
     moverSecurityContext:
       fsGroup: ${VOLSYNC_PGID:-1000}
       runAsGroup: ${VOLSYNC_PGID:-1000}
