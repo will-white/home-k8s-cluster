@@ -35,7 +35,7 @@ resources:
 
 ## Optional `postBuild` vars:
 
-- `VOLSYNC_MOVER_MEMORY_LIMIT`: Memory limit for mover pods (default: `1Gi`)
+- `VOLSYNC_MOVER_MEMORY_LIMIT`: Memory limit for mover pods (default: `2Gi`)
 - `VOLSYNC_STORAGECLASS`: Storage class for volumes (default: `ceph-block`)
 - `VOLSYNC_SNAPSHOTCLASS`: Snapshot class (default: `csi-ceph-blockpool`)
 - `VOLSYNC_SNAP_ACCESSMODES`: Access modes for snapshots (default: `ReadWriteOnce`)

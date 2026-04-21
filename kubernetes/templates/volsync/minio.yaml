@@ -43,9 +43,9 @@ spec:
     moverResources:
       requests:
         cpu: 100m
-        memory: 256Mi
+        memory: 512Mi
       limits:
-        memory: ${VOLSYNC_MOVER_MEMORY_LIMIT:-1Gi}
+        memory: ${VOLSYNC_MOVER_MEMORY_LIMIT:-2Gi}
     moverSecurityContext:
       fsGroup: ${VOLSYNC_PGID:-1000}
       runAsGroup: ${VOLSYNC_PGID:-1000}
@@ -68,9 +68,9 @@ spec:
     moverResources:
       requests:
         cpu: 100m
-        memory: 256Mi
+        memory: 512Mi
       limits:
-        memory: ${VOLSYNC_MOVER_MEMORY_LIMIT:-1Gi}
+        memory: ${VOLSYNC_MOVER_MEMORY_LIMIT:-2Gi}
     moverSecurityContext:
       fsGroup: ${VOLSYNC_PGID:-1000}
       runAsGroup: ${VOLSYNC_PGID:-1000}
