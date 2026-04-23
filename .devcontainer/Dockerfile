@@ -17,7 +17,7 @@ ARG TALOSCTL_VERSION=v1.12.5
 # renovate: datasource=github-releases depName=budimanjojo/talhelper
 ARG TALHELPER_VERSION=v3.1.5
 # renovate: datasource=github-releases depName=mikefarah/yq
-ARG YQ_VERSION=v4.52.4
+ARG YQ_VERSION=v4.53.2
 # renovate: datasource=github-releases depName=bitwarden/sdk-sm extractVersion=^bws-(?<version>.+)$
 ARG BWS_VERSION=v2.0.0
 # renovate: datasource=github-tags depName=kubernetes/kubernetes
