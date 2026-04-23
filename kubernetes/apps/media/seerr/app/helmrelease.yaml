@@ -72,7 +72,7 @@ spec:
           app:
             image:
               repository: docker.io/caddy
-              tag: 2.10.2-alpine
+              tag: 2.11.2-alpine
             env:
               XDG_CONFIG_HOME: /tmp/caddy/config
               XDG_DATA_HOME: /tmp/caddy/data
