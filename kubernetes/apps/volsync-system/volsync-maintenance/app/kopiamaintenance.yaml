@@ -1,0 +1,37 @@
+---
+# yaml-language-server: $schema=https://kube-schemas.pages.dev/volsync.backube/kopiamaintenance_v1alpha1.json
+# Single shared maintenance for the entire `volsync-backups` Kopia repository.
+#
+# Why this exists:
+#   Without periodic maintenance, kopia's index-blob count grows unbounded
+#   (one per pack file). Once the count approaches the per-process
+#   `vm.max_map_count` (default 65530 on Linux), the mover starts failing with
+#   `mmap error: cannot allocate memory` when connecting to the repo, and ALL
+#   ReplicationSources sharing the repo break simultaneously.
+#
+# Maintenance compacts those index blobs back down. One KopiaMaintenance per
+# repository is sufficient — all ReplicationSources in any namespace that
+# point at `s3://volsync-backups` share the result. The repository credentials
+# come from a dedicated ExternalSecret (`volsync-backups-maintenance`) so
+# maintenance does not depend on any individual application's secret.
+apiVersion: volsync.backube/v1alpha1
+kind: KopiaMaintenance
+metadata:
+  name: volsync-backups
+spec:
+  enabled: true
+  repository:
+    repository: volsync-backups-maintenance
+    repositoryType: s3
+  trigger:
+    schedule: "0 2 * * *"
+  # Allow up to 6h for maintenance on a large repo (1 TiB, 270k+ objects).
+  activeDeadlineSeconds: 21600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  resources:
+    requests:
+      cpu: 100m
+      memory: 1Gi
+    limits:
+      memory: 4Gi
