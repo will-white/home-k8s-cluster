@@ -24,6 +24,13 @@ rules:
   - apiGroups: ["dragonflydb.io"]
     resources: ["dragonflies/status"]
     verbs: ["get", "patch", "update"]
+  # Required by operator v1.5.0+ which watches NetworkPolicy resources.
+  # Without this, the controller-runtime cache fails to sync and the
+  # operator crashloops, leaving Dragonfly StatefulSet pods unlabeled
+  # (no role=master) so the headless Service has zero endpoints.
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
