@@ -37,3 +37,9 @@ machine:
 
     # PostgreSQL huge pages
     vm.nr_hugepages: "1024"
+
+    # Increase per-process memory map count.
+    # Required for workloads that mmap many files: Kopia (VolSync mover with
+    # large repositories — 270k+ pack files exhaust the default 65530), as well
+    # as Elasticsearch / OpenSearch / Loki and other index-heavy services.
+    vm.max_map_count: "1048576"
