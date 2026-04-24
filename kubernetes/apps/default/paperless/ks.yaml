@@ -25,3 +25,5 @@ spec:
     substitute:
       APP: *app
       VOLSYNC_CAPACITY: 10Gi
+      # Documents are ingested manually; daily backup is sufficient.
+      VOLSYNC_SCHEDULE: "45 3 * * *"

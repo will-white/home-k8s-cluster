@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/_/persistentvolumeclaim_v1.json
+# Plain PVC for recyclarr. Replaces the volsync-template-managed PVC.
+# Recyclarr's runtime state is reconstructable from configs in Git, so this
+# volume is not backed up via volsync. Keeping the PVC name and storage class
+# identical to what the template previously generated avoids any prune/rebind.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: recyclarr
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ceph-block

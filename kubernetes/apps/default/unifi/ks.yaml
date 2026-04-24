@@ -24,3 +24,6 @@ spec:
     substitute:
       APP: *app
       VOLSYNC_CAPACITY: 10Gi
+      # Stats DB writes constantly but losing a few hours of network stats is
+      # acceptable. Back up every 6 hours instead of hourly.
+      VOLSYNC_SCHEDULE: "0 */6 * * *"

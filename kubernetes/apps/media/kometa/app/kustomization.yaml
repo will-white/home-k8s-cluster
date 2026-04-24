@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ../../../../templates/volsync
+  - ./pvc.yaml
 configMapGenerator:
   - name: kometa-configmap
     files:

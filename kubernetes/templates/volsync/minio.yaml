@@ -86,4 +86,4 @@ spec:
     volumeSnapshotClassName: ${VOLSYNC_SNAPSHOTCLASS:-csi-ceph-blockpool}
   sourcePVC: ${CLAIM:-${APP}}
   trigger:
-    schedule: 0 * * * *
+    schedule: ${VOLSYNC_SCHEDULE:-0 * * * *}

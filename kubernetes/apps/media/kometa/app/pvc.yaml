@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/_/persistentvolumeclaim_v1.json
+# Plain PVC for kometa. Replaces the volsync-template-managed PVC.
+# Kometa's PVC is pure cache that regenerates on the next scheduled run, so
+# this volume is not backed up via volsync. Keeping the PVC name and storage
+# class identical to what the template previously generated avoids any
+# prune/rebind.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kometa
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ceph-block

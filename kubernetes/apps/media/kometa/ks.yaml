@@ -10,7 +10,6 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: external-secrets-stores
-    - name: volsync
   path: ./kubernetes/apps/media/kometa/app
   prune: true
   sourceRef:
@@ -22,4 +21,3 @@ spec:
   postBuild:
     substitute:
       APP: *app
-      VOLSYNC_CAPACITY: 1Gi

@@ -13,6 +13,8 @@ resources:
   - ./litellm/ks.yaml
   - ./mealie/ks.yaml
   - ./paperless/ks.yaml
+  - ./paperless-gpt/ks.yaml
   - ./stirling-pdf/ks.yaml
   - ./unifi/ks.yaml
   - ./zigbee2mqtt/ks.yaml
+  - ./zigbee2mqtt-ota/ks.yaml

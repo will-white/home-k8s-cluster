@@ -25,3 +25,5 @@ spec:
     substitute:
       APP: *app
       VOLSYNC_CAPACITY: 5Gi
+      # Subtitle metadata is trivial to re-fetch; daily backup is sufficient.
+      VOLSYNC_SCHEDULE: "15 4 * * *"

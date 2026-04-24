@@ -23,3 +23,5 @@ spec:
     substitute:
       APP: *app
       VOLSYNC_CAPACITY: 5Gi
+      # Inventory changes rarely; daily backup is sufficient.
+      VOLSYNC_SCHEDULE: "30 3 * * *"
