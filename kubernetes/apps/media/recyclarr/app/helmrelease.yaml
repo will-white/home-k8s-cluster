@@ -74,6 +74,9 @@ spec:
           - path: /config/recyclarr.yml
             subPath: recyclarr.yml
             readOnly: true
+          - path: /config/settings.yml
+            subPath: settings.yml
+            readOnly: true
       config-logs:
         type: emptyDir
         globalMounts:

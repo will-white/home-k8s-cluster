@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://schemas.recyclarr.dev/latest/settings-schema.json
+---
+# Recyclarr 8.x auto-selects the `v8` branch of recyclarr/config-templates,
+# which currently has an empty includes registry. Pin to `master` (the
+# production branch maintained for current Recyclarr) so referenced template
+# IDs like `radarr-quality-definition-movie` resolve.
+resource_providers:
+  - name: config-templates-master
+    type: config-templates
+    clone_url: https://github.com/recyclarr/config-templates.git
+    reference: master
+    replace_default: true
