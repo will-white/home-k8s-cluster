@@ -60,6 +60,8 @@ class State:
     current_update_done: bool = False
     current_update_failed: bool = False
     current_update_progress: int = 0
+    current_update_device: str = ""
+    current_update_seen_updating: bool = False
     ota_in_progress: bool = False
     ota_in_progress_device: str = ""
 
@@ -98,19 +100,38 @@ def on_message(client: mqtt.Client, _userdata, msg: mqtt.MQTTMessage) -> None:
         state.devices_received = True
         return
 
-    # Detect in-progress OTA from any source (manual UI, other automation, etc.)
-    # Device state messages with "update" containing progress indicate an active OTA.
+    # Device state messages: track OTA lifecycle on the device's own topic.
+    # Z2M publishes update.state in {idle, available, updating} and update.progress
+    # on {Z2M_TOPIC}/{device_friendly_name}. This is the authoritative progress channel.
     if (
         not topic.startswith(f"{Z2M_TOPIC}/bridge/")
         and isinstance(payload, dict)
         and isinstance(payload.get("update"), dict)
     ):
-        update_state = payload["update"].get("state")
-        if update_state == "updating":
-            device_name = topic.rsplit("/", 1)[-1]
+        device_name = topic.rsplit("/", 1)[-1]
+        update_block = payload["update"]
+        update_state = update_block.get("state")
+        progress = update_block.get("progress")
+        remaining = update_block.get("remaining")
+
+        # Pre-flight: detect any device currently being updated.
+        if update_state == "updating" and not state.current_update_device:
             state.ota_in_progress = True
             state.ota_in_progress_device = device_name
-            return
+
+        # Active update tracking for the device we're currently updating.
+        if state.current_update_device and device_name == state.current_update_device:
+            if update_state == "updating":
+                state.current_update_seen_updating = True
+                if isinstance(progress, (int, float)):
+                    state.current_update_progress = int(progress)
+                    remaining_str = f", ~{int(remaining)}s remaining" if isinstance(remaining, (int, float)) else ""
+                    log.info("  Progress: %d%%%s", int(progress), remaining_str)
+            elif update_state in ("idle", "available") and state.current_update_seen_updating:
+                # Transitioned out of "updating" after we observed it -> done.
+                log.info("  Update complete (state=%s)", update_state)
+                state.current_update_done = True
+        return
 
     # OTA check response
     if topic == f"{Z2M_TOPIC}/bridge/response/device/ota_update/check":
@@ -140,21 +161,23 @@ def _handle_check_response(payload: dict) -> None:
 
 
 def _handle_update_response(payload: dict) -> None:
+    """Handle the bridge response to an ota_update/update request.
+
+    Z2M sends this response once at the *end* of the OTA (success or failure),
+    not as a progress stream. Use it as the authoritative success/failure signal.
+    Real progress is tracked via the device's state topic in on_message().
+    """
     data = payload.get("data", {})
     status = payload.get("status", "")
+    device_name = data.get("id", "")
 
     if status == "ok":
-        progress = data.get("progress", 0)
-        remaining = data.get("remaining")
-        state.current_update_progress = progress
-        if progress >= 100 or data.get("status") == "idle":
-            log.info("  Update complete (progress=%d%%)", progress)
-            state.current_update_done = True
-        else:
-            remaining_str = f", ~{remaining}s remaining" if remaining else ""
-            log.info("  Progress: %d%%%s", progress, remaining_str)
+        from_ver = data.get("from", {}).get("software_build_id") or data.get("from")
+        to_ver = data.get("to", {}).get("software_build_id") or data.get("to")
+        log.info("  Update complete for %s (%s -> %s)", device_name, from_ver, to_ver)
+        state.current_update_done = True
     else:
-        log.error("  Update failed: %s", payload.get("error", "unknown error"))
+        log.error("  Update failed for %s: %s", device_name, payload.get("error", "unknown error"))
         state.current_update_done = True
         state.current_update_failed = True
 
@@ -261,6 +284,8 @@ def apply_update(client: mqtt.Client, device_name: str) -> bool:
     state.current_update_done = False
     state.current_update_failed = False
     state.current_update_progress = 0
+    state.current_update_device = device_name
+    state.current_update_seen_updating = False
 
     publish_json(
         client,
@@ -271,6 +296,8 @@ def apply_update(client: mqtt.Client, device_name: str) -> bool:
     deadline = time.time() + UPDATE_TIMEOUT
     while not state.current_update_done and time.time() < deadline:
         time.sleep(5)
+
+    state.current_update_device = ""
 
     if not state.current_update_done:
         log.error("Timed out waiting for OTA update on %s", device_name)
