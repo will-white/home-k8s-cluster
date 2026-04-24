@@ -124,9 +124,17 @@ def on_message(client: mqtt.Client, _userdata, msg: mqtt.MQTTMessage) -> None:
             if update_state == "updating":
                 state.current_update_seen_updating = True
                 if isinstance(progress, (int, float)):
-                    state.current_update_progress = int(progress)
-                    remaining_str = f", ~{int(remaining)}s remaining" if isinstance(remaining, (int, float)) else ""
-                    log.info("  Progress: %d%%%s", int(progress), remaining_str)
+                    pct = int(progress)
+                    # Dedupe: Z2M republishes state several times per second.
+                    # Only log when integer percent advances.
+                    if pct > state.current_update_progress:
+                        state.current_update_progress = pct
+                        remaining_str = (
+                            f", ~{int(remaining)}s remaining"
+                            if isinstance(remaining, (int, float))
+                            else ""
+                        )
+                        log.info("  Progress: %d%%%s", pct, remaining_str)
             elif update_state in ("idle", "available") and state.current_update_seen_updating:
                 # Transitioned out of "updating" after we observed it -> done.
                 log.info("  Update complete (state=%s)", update_state)
