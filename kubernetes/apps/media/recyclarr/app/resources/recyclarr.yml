@@ -60,8 +60,8 @@ sonarr:
           - 9b27ab6498ec0f31a3353992e19434ca # DV (WEBDL)
 
           # HDR10+ Boost (purely additive; boosts HDR10+ releases, no impact on non-HDR clients).
-          - 0dad0a507451acddd754fe6dc3a7f5e7 # HDR10+ Boost
-          - 385e9e8581d33133c3961bdcdeffb7b4 # DV HDR10+ Boost
+          # Upstream consolidated DV HDR10+ Boost into this single CF (regex now matches both HDR10+ and DV HDR10+).
+          - 0c4b99df9206d2cfac3c05ab897dd62a # HDR10+ Boost
         assign_scores_to:
           - name: 4K
           - name: Best Available
@@ -155,7 +155,7 @@ radarr:
       - trash_ids:
           - b6832f586342ef70d9c128d40c07b872 # Bad Dual Groups
           # - cc444569854e9de0b084ab2b8b1532b2 # Black and White Editions
-          - 90cedc1fea7ea5d11298bebd3d1d3223 # EVO (no WEBDL)
+          # EVO (no WEBDL) removed upstream from TRaSH-Guides; LQ CF now covers EVO releases.
           - ae9b7c9ebde1f3bd336a8cbd1ec4c5e5 # No-RlsGroup
           - 7357cf5161efbf8c4d5d0c30b4815ee2 # Obfuscated
           - 5c44f52a8714fdd79bb4d98e2673be1f # Retags
@@ -181,8 +181,8 @@ radarr:
           - 923b6abef9b17f937fab56cfcf89e1f1 # DV (WEBDL)
 
           # HDR10+ Boost (purely additive; boosts HDR10+ releases, no impact on non-HDR clients).
-          - b17886cb4158d9fea189859409975758 # HDR10Plus Boost
-          - 55a5b50cb416dea5a50c4955896217ab # DV HDR10+ Boost
+          # Upstream consolidated DV HDR10+ Boost into this single CF (regex now matches both HDR10+ and DV HDR10+).
+          - caa37d0df9c348912df1fb1d88f9273a # HDR10+ Boost
         assign_scores_to:
           - name: 4K
           - name: Best Available
@@ -217,7 +217,7 @@ radarr:
       # Junk blockers for Anime profile.
       - trash_ids:
           - b6832f586342ef70d9c128d40c07b872 # Bad Dual Groups
-          - 90cedc1fea7ea5d11298bebd3d1d3223 # EVO (no WEBDL)
+          # EVO (no WEBDL) removed upstream from TRaSH-Guides; LQ CF now covers EVO releases.
           - ae9b7c9ebde1f3bd336a8cbd1ec4c5e5 # No-RlsGroup
           - 7357cf5161efbf8c4d5d0c30b4815ee2 # Obfuscated
           - 5c44f52a8714fdd79bb4d98e2673be1f # Retags
