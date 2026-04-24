@@ -33,9 +33,10 @@ snapshots:
 
 record:
   enabled: true
-  retain:
-    days: 1
-    mode: motion
+  # NOTE: top-level `record.retain` was removed in Frigate 0.14+.
+  # Recording retention is now configured per-category below
+  # (alerts + detections). Continuous/motion recording would need to
+  # be set via `record.continuous` or `record.motion` instead.
   alerts:
     retain:
       days: 7
