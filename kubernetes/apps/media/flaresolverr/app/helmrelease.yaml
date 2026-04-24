@@ -36,13 +36,12 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /health
+                  tcpSocket:
                     port: &port 8191
                   initialDelaySeconds: 30
                   periodSeconds: 30
                   timeoutSeconds: 5
-                  failureThreshold: 3
+                  failureThreshold: 5
               readiness: *probes
             securityContext:
               allowPrivilegeEscalation: false
