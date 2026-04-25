@@ -133,25 +133,36 @@ spec:
                   identifier: redirect
                   port: http
     persistence:
+      # RWO Ceph RBD: scope to the seerr controller only. Mounting on the redirect
+      # Caddy pod (which doesn't need it) caused multi-attach deadlocks whenever
+      # the two pods landed on different nodes.
       config:
         existingClaim: *app
-        globalMounts:
-          - path: /app/config
+        advancedMounts:
+          seerr:
+            app:
+              - path: /app/config
       redirect-config:
         type: configMap
         name: seerr-redirect-config
-        globalMounts:
-          - path: /etc/caddy/Caddyfile
-            subPath: Caddyfile
-            readOnly: true
+        advancedMounts:
+          redirect:
+            app:
+              - path: /etc/caddy/Caddyfile
+                subPath: Caddyfile
+                readOnly: true
       cache:
         type: emptyDir
-        globalMounts:
-          - path: /app/config/cache
+        advancedMounts:
+          seerr:
+            app:
+              - path: /app/config/cache
       logs:
         type: emptyDir
-        globalMounts:
-          - path: /app/config/logs
+        advancedMounts:
+          seerr:
+            app:
+              - path: /app/config/logs
       tmp:
         type: emptyDir
         globalMounts:
