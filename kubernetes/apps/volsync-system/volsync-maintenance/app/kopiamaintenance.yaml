@@ -24,18 +24,16 @@ spec:
     repository: volsync-backups-maintenance
     repositoryType: s3
   # Kopia's epoch index manager compacts ONE eligible epoch per maintenance
-  # run. With ~12 ReplicationSources backing up hourly (~288 snapshots/day),
-  # a once-daily maintenance cannot keep pace and the index-blob count grows
-  # unbounded toward `vm.max_map_count`. Run hourly while the index-blob
-  # backlog drains (was ~66k on 2026-04-24); once the count is comfortably
-  # under ~1000, ratchet back to `0 */4 * * *` or `0 */12 * * *`.
+  # run. With ReplicationSources mostly on a daily cadence (~30 snapshots/day
+  # as of 2026-04-28), every-4-hours easily keeps the index-blob count flat.
+  # If you add many more hourly ReplicationSources, drop this back to hourly.
   trigger:
-    schedule: "0 * * * *"
-  # Allow up to 8h per run during the initial backlog-clear phase.
-  # Steady-state runs complete in minutes; this is a ceiling, not a target.
-  # CronJob concurrencyPolicy=Forbid prevents overlap if a run runs long.
-  activeDeadlineSeconds: 28800
-  successfulJobsHistoryLimit: 3
+    schedule: "0 */4 * * *"
+  # Steady-state runs complete in well under a minute. Cap at 2h so a stuck
+  # run is killed before the next one is scheduled. CronJob
+  # concurrencyPolicy=Forbid already prevents overlap.
+  activeDeadlineSeconds: 7200
+  successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 3
   resources:
     requests:
