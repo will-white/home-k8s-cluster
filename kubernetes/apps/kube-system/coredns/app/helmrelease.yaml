@@ -13,6 +13,7 @@ spec:
         kind: HelmRepository
         name: coredns
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -24,3 +25,5 @@ spec:
   valuesFrom:
     - kind: ConfigMap
       name: coredns-helm-values
+  driftDetection:
+    mode: enabled

@@ -14,6 +14,7 @@ spec:
         kind: HelmRepository
         name: bjw-s
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -49,19 +50,11 @@ spec:
             envFrom:
               - secretRef:
                   name: qbtools-secret
-            args:
-              [
-                "tagging",
-                "--added-on",
-                "--expired",
-                "--last-activity",
-                "--sites",
-                "--unregistered",
-              ]
+            args: ["tagging", "--added-on", "--expired", "--last-activity", "--sites", "--unregistered"]
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: { drop: ["ALL"] }
+              capabilities: {drop: ["ALL"]}
             resources:
               requests:
                 cpu: 25m
@@ -69,81 +62,47 @@ spec:
                 memory: 256M
         containers:
           unregistered:
-            <<: *container
-            args: [
-                "prune",
-                "--exclude-category",
-                "manual",
-                "--exclude-category",
-                "music",
-                "--exclude-tag",
-                "added:1d",
-                "--include-tag",
-                "unregistered",
-                "--with-data",
-                # "--dry-run"
-              ]
+            !!merge <<: *container
+            args: ["prune", "--exclude-category", "manual", "--exclude-category", "music", "--exclude-tag", "added:1d", "--include-tag", "unregistered", "--with-data",
+              # "--dry-run"
+            ]
           expired:
-            <<: *container
-            args: [
-                "prune",
-                "--exclude-category",
-                "manual",
-                "--exclude-category",
-                "music",
-                "--exclude-tag",
-                "added:1d",
-                "--include-tag",
-                "expired",
-                "--with-data",
-                # "--dry-run"
-              ]
+            !!merge <<: *container
+            args: ["prune", "--exclude-category", "manual", "--exclude-category", "music", "--exclude-tag", "added:1d", "--include-tag", "expired", "--with-data",
+              # "--dry-run"
+            ]
         pod:
           restartPolicy: Never
       orphaned:
         type: cronjob
         cronjob:
-          <<: *cronJobSpec
+          !!merge <<: *cronJobSpec
           schedule: 0 0 * * 0
           suspend: true
         containers:
           app:
-            <<: *container
-            args: [
-                "orphaned",
-                "--exclude-pattern",
-                "*_unpackerred*",
-                # "--dry-run"
-              ]
+            !!merge <<: *container
+            args: ["orphaned", "--exclude-pattern", "*_unpackerred*",
+              # "--dry-run"
+            ]
         pod:
           restartPolicy: Never
       reannounce:
         containers:
           app:
-            <<: *container
+            !!merge <<: *container
             args: ["reannounce", "--process-seeding"]
       limiter:
         containers:
           app:
-            <<: *container
-            args:
-              [
-                "limiter",
-                "--max-line-speed-mbps",
-                "100",
-                "--max-percent",
-                "0.8",
-                "--limit-percent",
-                "0.4",
-                "--interval",
-                "5",
-              ]
+            !!merge <<: *container
+            args: ["limiter", "--max-line-speed-mbps", "100", "--max-percent", "0.8", "--limit-percent", "0.4", "--interval", "5"]
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
-        seccompProfile: { type: RuntimeDefault }
+        seccompProfile: {type: RuntimeDefault}
     persistence:
       secret-file:
         type: secret
@@ -161,3 +120,5 @@ spec:
             app:
               - path: /Downloads
                 subPath: Downloads
+  driftDetection:
+    mode: enabled

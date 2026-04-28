@@ -14,6 +14,7 @@ spec:
         kind: HelmRepository
         name: bjw-s
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -51,7 +52,7 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: { drop: ["ALL"] }
+              capabilities: {drop: ["ALL"]}
             resources:
               requests:
                 cpu: 10m
@@ -66,7 +67,7 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
-        seccompProfile: { type: RuntimeDefault }
+        seccompProfile: {type: RuntimeDefault}
     persistence:
       config:
         existingClaim: *app
@@ -81,3 +82,5 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /config/logs
+  driftDetection:
+    mode: enabled

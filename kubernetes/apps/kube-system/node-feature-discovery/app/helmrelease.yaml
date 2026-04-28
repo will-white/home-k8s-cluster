@@ -14,6 +14,7 @@ spec:
         kind: HelmRepository
         name: node-feature-discovery
         namespace: flux-system
+      interval: 1h
   install:
     crds: CreateReplace
     remediation:
@@ -39,3 +40,5 @@ spec:
           effect: NoSchedule
     prometheus:
       enable: true
+  driftDetection:
+    mode: enabled

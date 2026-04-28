@@ -13,6 +13,7 @@ spec:
         kind: HelmRepository
         name: external-dns
         namespace: flux-system
+      interval: 1h
   install:
     crds: CreateReplace
     disableSchemaValidation: true # Ref: https://github.com/kubernetes-sigs/external-dns/issues/5206
@@ -28,7 +29,7 @@ spec:
   values:
     fullnameOverride: *app
     provider:
-       name: cloudflare
+      name: cloudflare
     env:
       - name: CF_API_TOKEN
         valueFrom:
@@ -49,3 +50,5 @@ spec:
       enabled: true
     podAnnotations:
       secret.reloader.stakater.com/reload: cloudflare-dns-secret
+  driftDetection:
+    mode: enabled

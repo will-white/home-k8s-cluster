@@ -12,6 +12,7 @@ spec:
         name: grafana
         namespace: flux-system
       version: 10.5.15
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -466,3 +467,5 @@ spec:
         searchNamespace: ALL
     testFramework:
       enabled: false
+  driftDetection:
+    mode: enabled

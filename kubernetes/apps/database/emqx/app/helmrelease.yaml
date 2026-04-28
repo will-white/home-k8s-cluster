@@ -12,6 +12,7 @@ spec:
         kind: HelmRepository
         name: emqx
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -27,3 +28,5 @@ spec:
     fullnameOverride: emqx-operator
     image:
       repository: ghcr.io/emqx/emqx-operator
+  driftDetection:
+    mode: enabled

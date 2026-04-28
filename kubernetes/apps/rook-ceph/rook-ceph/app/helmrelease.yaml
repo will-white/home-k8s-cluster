@@ -13,6 +13,7 @@ spec:
         kind: HelmRepository
         name: rook-ceph
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -174,10 +175,12 @@ spec:
     monitoring:
       enabled: true
     tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
     resources:
       requests:
         memory: 128Mi # unchangable
         cpu: 100m # unchangable
       limits: {}
+  driftDetection:
+    mode: enabled

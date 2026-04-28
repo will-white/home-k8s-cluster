@@ -12,6 +12,7 @@ spec:
         name: bjw-s
         namespace: flux-system
       version: 3.7.3
+      interval: 1h
   dependsOn:
     - name: kube-prometheus-stack
       namespace: observability
@@ -78,3 +79,5 @@ spec:
             scheme: http
             scrapeTimeout: 10s
         serviceName: unpoller
+  driftDetection:
+    mode: enabled

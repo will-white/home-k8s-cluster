@@ -12,6 +12,7 @@ spec:
         kind: HelmRepository
         name: cloudnative-pg
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -43,3 +44,5 @@ spec:
             target:
               kind: ConfigMap
               name: cnpg-grafana-dashboard
+  driftDetection:
+    mode: enabled

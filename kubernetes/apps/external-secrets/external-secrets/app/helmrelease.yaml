@@ -12,6 +12,7 @@ spec:
         kind: HelmRepository
         name: external-secrets
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -43,3 +44,5 @@ spec:
       enabled: true
       podAnnotations:
         secret.reloader.stakater.com/reload: "bitwarden-css-certs,bitwarden-secrets-manager,bitwarden-tls-certs"
+  driftDetection:
+    mode: enabled

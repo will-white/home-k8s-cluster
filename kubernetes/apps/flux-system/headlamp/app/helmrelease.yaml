@@ -51,3 +51,5 @@ spec:
       - name: headlamp-plugins
         emptyDir:
           sizeLimit: 100Mi
+  driftDetection:
+    mode: enabled

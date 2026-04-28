@@ -12,6 +12,7 @@ spec:
         kind: HelmRepository
         name: bjw-s
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -79,3 +80,5 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /tmp
+  driftDetection:
+    mode: enabled

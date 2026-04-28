@@ -13,6 +13,7 @@ spec:
         kind: HelmRepository
         name: external-dns
         namespace: flux-system
+      interval: 1h
   install:
     crds: CreateReplace
     disableSchemaValidation: true # Ref: https://github.com/kubernetes-sigs/external-dns/issues/5206
@@ -28,7 +29,7 @@ spec:
   values:
     fullnameOverride: *app
     domainFilters: ["${SECRET_DOMAIN}"]
-    env: []  # Clear any existing env vars from previous Cloudflare config
+    env: [] # Clear any existing env vars from previous Cloudflare config
     extraArgs:
       - --ingress-class=internal
       - --managed-record-types=A
@@ -134,3 +135,5 @@ spec:
     txtPrefix: k8s.
     serviceMonitor:
       enabled: false
+  driftDetection:
+    mode: enabled

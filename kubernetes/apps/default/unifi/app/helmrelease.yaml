@@ -13,6 +13,7 @@ spec:
         kind: HelmRepository
         name: bjw-s
         namespace: flux-system
+      interval: 1h
   maxHistory: 2
   install:
     createNamespace: true
@@ -116,3 +117,5 @@ spec:
         existingClaim: *app
         globalMounts:
           - path: /unifi
+  driftDetection:
+    mode: enabled

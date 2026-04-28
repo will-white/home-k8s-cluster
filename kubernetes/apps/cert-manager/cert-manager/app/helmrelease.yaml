@@ -12,6 +12,7 @@ spec:
         kind: HelmRepository
         name: jetstack
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -28,3 +29,5 @@ spec:
       enabled: true
       servicemonitor:
         enabled: true
+  driftDetection:
+    mode: enabled

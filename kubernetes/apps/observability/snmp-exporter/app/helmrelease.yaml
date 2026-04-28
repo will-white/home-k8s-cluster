@@ -23,3 +23,13 @@ spec:
         memory: 64Mi
       limits:
         memory: 128Mi
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3

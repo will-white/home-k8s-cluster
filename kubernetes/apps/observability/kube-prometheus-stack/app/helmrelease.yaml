@@ -13,6 +13,7 @@ spec:
         name: prometheus-community
         namespace: flux-system
       version: 84.2.1
+      interval: 1h
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
@@ -322,3 +323,5 @@ spec:
               replacement: $1
               sourceLabels: ["__meta_kubernetes_pod_node_name"]
               targetLabel: kubernetes_node
+  driftDetection:
+    mode: enabled

@@ -12,6 +12,7 @@ spec:
         kind: HelmRepository
         name: piraeus
         namespace: flux-system
+      interval: 1h
   install:
     crds: CreateReplace
     remediation:
@@ -27,3 +28,5 @@ spec:
       replicaCount: 2
       serviceMonitor:
         create: true
+  driftDetection:
+    mode: enabled

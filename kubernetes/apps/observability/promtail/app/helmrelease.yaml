@@ -14,6 +14,7 @@ spec:
         kind: HelmRepository
         name: grafana
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -65,3 +66,5 @@ spec:
                     level:
     serviceMonitor:
       enabled: true
+  driftDetection:
+    mode: enabled

@@ -13,6 +13,7 @@ spec:
         kind: HelmRepository
         name: bjw-s
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -160,3 +161,5 @@ spec:
         globalMounts:
           - path: /usr/src/paperless/export
             subPath: export
+  driftDetection:
+    mode: enabled

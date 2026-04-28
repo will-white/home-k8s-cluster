@@ -12,6 +12,7 @@ spec:
         kind: HelmRepository
         name: prometheus-community
         namespace: flux-system
+      interval: 1h
   install:
     remediation:
       retries: 3
@@ -33,3 +34,5 @@ spec:
       enabled: true
     prometheusRules:
       enabled: false
+  driftDetection:
+    mode: enabled

@@ -12,6 +12,7 @@ spec:
         name: openebs
         namespace: flux-system
       version: 4.4.0
+      interval: 1h
   install:
     disableHooks: true
     remediation:
@@ -64,3 +65,5 @@ spec:
           keep: false
     zfs-localpv:
       enabled: false
+  driftDetection:
+    mode: enabled

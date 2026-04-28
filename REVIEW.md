@@ -59,12 +59,17 @@ Legend:
   for the postgres init container, exportarr sidecar, security context,
   ingress + homepage annotations, ServiceMonitor. Same for the per-app
   `ks.yaml` skeleton.
-- [ ] **P1 / S — `wait: true` on dependency anchors** (`cnpg-cluster`,
-  `external-secrets-stores`, `rook-ceph-cluster`).
-- [ ] **P1 / S — HelmRelease reliability defaults.** Every HR gets
-  `install.remediation.retries`, `upgrade.remediation.{retries,
-  strategy: rollback}`, `driftDetection.mode: enabled`, separate
-  `chart.spec.interval`.
+- [x] **P1 / S — `wait: true` on dependency anchors** — verified 2026-04-28.
+  All anchor Kustomizations (`cloudnative-pg-cluster`, `dragonfly-cluster`,
+  `emqx-cluster`, `external-secrets-stores`, `rook-ceph-cluster`) already
+  have `wait: true`. Cascade behavior (downstream apps blocking on
+  `dependency '…' is not ready`) is the system working as designed.
+- [x] **P1 / S — HelmRelease reliability defaults** applied 2026-04-28.
+  All 74 HelmReleases now have `install.remediation.retries: 3`,
+  `upgrade.{cleanupOnFail: true, remediation: {strategy: rollback,
+  retries: 3}}`, and `driftDetection.mode: enabled`. The 69
+  `HelmRepository`-backed HRs also got `chart.spec.interval: 1h`; the
+  5 OCI-backed HRs use `chartRef` so the field doesn't apply.
 - [ ] **P2 / S — Switch `HelmRepository` → `OCIRepository`** where the
   publisher supports it (bjw-s, prometheus-community, etc.).
 - [ ] **P2 / S — Audit hard-coded IPs / FQDNs** and move into
@@ -142,6 +147,11 @@ Legend:
 
 ## In-flight / completed
 
+- **2026-04-28** — HelmRelease reliability baseline: every HR now has
+  install/upgrade remediation, rollback strategy, drift detection
+  enabled, and (where applicable) explicit chart polling interval.
+- **2026-04-28** — Verified `wait: true` already in place on all Flux
+  dependency anchor Kustomizations.
 - **2026-04-28** — Secret-leak prevention: gitleaks workflow,
   sops-check workflow + script. History audit clean.
 - **2026-04-28** — Alerting baseline: Flux / cert-manager / Volsync

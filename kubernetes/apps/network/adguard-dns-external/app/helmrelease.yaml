@@ -13,6 +13,7 @@ spec:
         kind: HelmRepository
         name: external-dns
         namespace: flux-system
+      interval: 1h
   install:
     crds: CreateReplace
     disableSchemaValidation: true # Ref: https://github.com/kubernetes-sigs/external-dns/issues/5206
@@ -89,3 +90,5 @@ spec:
     txtPrefix: k8s-ext.
     serviceMonitor:
       enabled: false
+  driftDetection:
+    mode: enabled

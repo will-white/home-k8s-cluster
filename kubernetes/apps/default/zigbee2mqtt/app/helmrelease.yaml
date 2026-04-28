@@ -13,6 +13,7 @@ spec:
         name: bjw-s
         namespace: flux-system
       version: 3.7.3
+      interval: 1h
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
@@ -135,3 +136,5 @@ spec:
         ports:
           http:
             port: 80
+  driftDetection:
+    mode: enabled

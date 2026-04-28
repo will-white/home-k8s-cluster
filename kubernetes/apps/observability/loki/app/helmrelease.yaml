@@ -13,6 +13,7 @@ spec:
         name: grafana
         namespace: flux-system
       version: 6.55.0
+      interval: 1h
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
@@ -114,3 +115,5 @@ spec:
       enabled: false
     write:
       replicas: 0
+  driftDetection:
+    mode: enabled
