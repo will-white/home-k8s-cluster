@@ -150,6 +150,10 @@ Legend:
 - **2026-04-28** — HelmRelease reliability baseline: every HR now has
   install/upgrade remediation, rollback strategy, drift detection
   enabled, and (where applicable) explicit chart polling interval.
+  Drift detection immediately surfaced an obsolete
+  `CephObjectStore.spec.healthCheck.bucket` field (removed in rook
+  v1.19+) that had been silently dropped at apply time; fixed in
+  same PR.
 - **2026-04-28** — Verified `wait: true` already in place on all Flux
   dependency anchor Kustomizations.
 - **2026-04-28** — Secret-leak prevention: gitleaks workflow,
