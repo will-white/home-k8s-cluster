@@ -80,8 +80,6 @@ spec:
             port: 8123
           code-server:
             port: 12321
-          metrics:
-            port: 8123
     ingress:
       app:
         annotations:
@@ -119,7 +117,7 @@ spec:
       app:
         serviceName: home-assistant
         endpoints:
-          - port: metrics
+          - port: http
             scheme: http
             path: /api/prometheus
             interval: 1m
