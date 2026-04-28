@@ -19,7 +19,7 @@ spec:
             description: >-
               The Flux resource {{ $labels.kind }}/{{ $labels.name }} in
               namespace {{ $labels.namespace }} reports Ready=False.
-              Check `flux get {{ $labels.kind | lower }}s -A` and the
+              Check `flux get {{ $labels.kind | toLower }}s -A` and the
               controller logs for the cause.
             runbook_url: https://fluxcd.io/flux/cheatsheets/troubleshooting/
           expr: |
@@ -56,7 +56,7 @@ spec:
             description: >-
               A suspended resource will not reconcile. Confirm this is
               intentional; if not, run
-              `flux resume {{ $labels.kind | lower }} -n {{ $labels.namespace }} {{ $labels.name }}`.
+              `flux resume {{ $labels.kind | toLower }} -n {{ $labels.namespace }} {{ $labels.name }}`.
           expr: |
             max by (namespace, name, kind) (
               gotk_suspend_status
