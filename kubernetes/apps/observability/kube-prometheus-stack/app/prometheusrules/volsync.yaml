@@ -1,0 +1,61 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: volsync-rules
+  labels:
+    prometheus: kube-prometheus-stack
+    role: alert-rules
+spec:
+  groups:
+    - name: volsync.rules
+      rules:
+        - alert: VolsyncReplicationSourceMissedSchedule
+          annotations:
+            summary: >-
+              ReplicationSource {{ $labels.namespace }}/{{ $labels.obj_name }}
+              has not completed a sync in over 26 hours.
+            description: >-
+              Volsync is failing to back up
+              {{ $labels.namespace }}/{{ $labels.obj_name }}. Inspect the
+              mover pod logs and the source's `.status.lastSyncTime`.
+            runbook_url: https://volsync.readthedocs.io/en/stable/usage/triggers.html
+          expr: |
+            (time() - max by (namespace, obj_name) (
+              volsync_volume_out_of_sync{obj_name!=""}
+                * on (namespace, obj_name) group_right
+              max by (namespace, obj_name) (timestamp(volsync_volume_out_of_sync))
+            )) > (26 * 3600)
+          for: 30m
+          labels:
+            severity: warning
+
+        - alert: VolsyncOutOfSync
+          annotations:
+            summary: >-
+              Volsync reports
+              {{ $labels.namespace }}/{{ $labels.obj_name }} is out of sync.
+            description: >-
+              The replication source/destination has fallen out of sync. A
+              warning means a single sync was missed; if it persists,
+              inspect the mover pod and the Kopia repository connectivity.
+            runbook_url: https://volsync.readthedocs.io/en/stable/usage/triggers.html
+          expr: max by (namespace, obj_name) (volsync_volume_out_of_sync) == 1
+          for: 1h
+          labels:
+            severity: warning
+
+        - alert: VolsyncMissingMetrics
+          annotations:
+            summary: >-
+              No volsync metrics scraped from the volsync controller for
+              30 minutes.
+            description: >-
+              Either the volsync controller is down or its ServiceMonitor is
+              broken. Backups may be silently failing.
+          expr: |
+            absent(volsync_volume_out_of_sync) == 1
+          for: 30m
+          labels:
+            severity: critical

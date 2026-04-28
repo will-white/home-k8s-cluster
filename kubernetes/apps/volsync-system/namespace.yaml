@@ -4,3 +4,7 @@ metadata:
   name: volsync-system
   labels:
     kustomize.toolkit.fluxcd.io/prune: disabled
+    # Volsync mover pods may need privileged for block-mode replication.
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/warn: privileged
+    pod-security.kubernetes.io/audit: privileged

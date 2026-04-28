@@ -1,0 +1,35 @@
+---
+# Allow egress to the Kubernetes API server. The API server runs on the
+# node IPs (control-plane host network), so we cannot use a pod selector;
+# we egress to the kubernetes.default service which Cilium translates
+# correctly. For non-Cilium clusters, replace with explicit CIDRs of
+# control-plane nodes.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-kube-apiserver
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: default
+          podSelector:
+            matchLabels:
+              component: apiserver
+              provider: kubernetes
+      ports:
+        - protocol: TCP
+          port: 6443
+    # Fallback: allow the kubernetes service ClusterIP range (rfc1918
+    # private link). Kept narrow on purpose; if you have a different
+    # service CIDR, override per-namespace.
+    - to:
+        - ipBlock:
+            cidr: 10.96.0.1/32
+      ports:
+        - protocol: TCP
+          port: 443

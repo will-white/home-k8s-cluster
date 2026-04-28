@@ -63,3 +63,6 @@ resources:
   requests:
     cpu: 100m
     memory: 70Mi
+# Cluster DNS must keep at least one replica during voluntary disruptions.
+podDisruptionBudget:
+  minAvailable: 1

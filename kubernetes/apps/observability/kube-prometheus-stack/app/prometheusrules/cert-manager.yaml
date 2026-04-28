@@ -1,0 +1,80 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cert-manager-rules
+  labels:
+    prometheus: kube-prometheus-stack
+    role: alert-rules
+spec:
+  groups:
+    - name: cert-manager.rules
+      rules:
+        - alert: CertManagerCertExpiringSoon
+          annotations:
+            summary: >-
+              Certificate {{ $labels.namespace }}/{{ $labels.name }} expires
+              in less than 14 days.
+            description: >-
+              Cert-manager has not renewed
+              {{ $labels.namespace }}/{{ $labels.name }} ({{ $labels.issuer_name }})
+              and it expires in
+              {{ $value | humanizeDuration }}.
+            runbook_url: https://cert-manager.io/docs/troubleshooting/
+          expr: |
+            (certmanager_certificate_expiration_timestamp_seconds - time())
+              < (14 * 24 * 3600)
+          for: 1h
+          labels:
+            severity: warning
+
+        - alert: CertManagerCertExpiringCritical
+          annotations:
+            summary: >-
+              Certificate {{ $labels.namespace }}/{{ $labels.name }} expires
+              in less than 3 days.
+            description: >-
+              Immediate intervention required; renewal has been failing.
+            runbook_url: https://cert-manager.io/docs/troubleshooting/
+          expr: |
+            (certmanager_certificate_expiration_timestamp_seconds - time())
+              < (3 * 24 * 3600)
+          for: 1h
+          labels:
+            severity: critical
+
+        - alert: CertManagerCertNotReady
+          annotations:
+            summary: >-
+              Certificate {{ $labels.namespace }}/{{ $labels.name }} is not
+              Ready.
+            description: >-
+              Cert-manager reports
+              {{ $labels.namespace }}/{{ $labels.name }} has Ready=False for
+              more than 1 hour.
+            runbook_url: https://cert-manager.io/docs/troubleshooting/
+          expr: |
+            max by (namespace, name, condition) (
+              certmanager_certificate_ready_status{condition!="True"}
+            ) == 1
+          for: 1h
+          labels:
+            severity: warning
+
+        - alert: CertManagerHittingRateLimits
+          annotations:
+            summary: >-
+              Cert-manager is being rate-limited by
+              {{ $labels.acme_server }}.
+            description: >-
+              ACME order failures with status `urn:ietf:params:acme:error:rateLimited`.
+              Pause new issuances and inspect cert-manager logs.
+            runbook_url: https://letsencrypt.org/docs/rate-limits/
+          expr: |
+            sum by (acme_server) (
+              rate(certmanager_http_acme_client_request_count{status="429"}[10m])
+            ) > 0
+          for: 15m
+          labels:
+            severity: critical

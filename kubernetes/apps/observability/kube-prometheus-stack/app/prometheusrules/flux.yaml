@@ -1,0 +1,66 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: flux-rules
+  labels:
+    prometheus: kube-prometheus-stack
+    role: alert-rules
+spec:
+  groups:
+    - name: flux.rules
+      rules:
+        - alert: FluxReconciliationFailure
+          annotations:
+            summary: >-
+              Flux {{ $labels.kind }} {{ $labels.namespace }}/{{ $labels.name }}
+              has been failing to reconcile for more than 15 minutes.
+            description: >-
+              The Flux resource {{ $labels.kind }}/{{ $labels.name }} in
+              namespace {{ $labels.namespace }} reports Ready=False.
+              Check `flux get {{ $labels.kind | lower }}s -A` and the
+              controller logs for the cause.
+            runbook_url: https://fluxcd.io/flux/cheatsheets/troubleshooting/
+          expr: |
+            max by (namespace, name, kind) (
+              gotk_reconcile_condition{type="Ready", status="False"}
+            ) == 1
+          for: 15m
+          labels:
+            severity: warning
+
+        - alert: FluxReconciliationStalled
+          annotations:
+            summary: >-
+              Flux {{ $labels.kind }} {{ $labels.namespace }}/{{ $labels.name }}
+              has been stalled for more than 30 minutes.
+            description: >-
+              Stalled reconciliations require manual intervention; Flux will
+              not retry without a spec change. Inspect status conditions on
+              the resource.
+            runbook_url: https://fluxcd.io/flux/cheatsheets/troubleshooting/
+          expr: |
+            max by (namespace, name, kind) (
+              gotk_reconcile_condition{type="Stalled", status="True"}
+            ) == 1
+          for: 30m
+          labels:
+            severity: critical
+
+        - alert: FluxSuspended
+          annotations:
+            summary: >-
+              Flux {{ $labels.kind }} {{ $labels.namespace }}/{{ $labels.name }}
+              has been suspended for more than 1 hour.
+            description: >-
+              A suspended resource will not reconcile. Confirm this is
+              intentional; if not, run
+              `flux resume {{ $labels.kind | lower }} -n {{ $labels.namespace }} {{ $labels.name }}`.
+          expr: |
+            max by (namespace, name, kind) (
+              gotk_suspend_status
+            ) == 1
+          for: 1h
+          labels:
+            severity: warning

@@ -1,0 +1,13 @@
+---
+# Default-deny: drop ALL ingress and egress in the namespace this is
+# applied to. Companion `allow-*` policies must be added back to keep
+# the cluster functional.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

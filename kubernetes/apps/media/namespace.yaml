@@ -4,3 +4,8 @@ metadata:
   name: media
   labels:
     kustomize.toolkit.fluxcd.io/prune: disabled
+    # PodSecurity admission: enforce baseline now; warn/audit at restricted
+    # so we can fix violations before tightening enforcement.
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted

@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "SOPS Encryption Check"
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths: ["kubernetes/**"]
+  push:
+    branches: ["main"]
+    paths: ["kubernetes/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  sops-check:
+    name: SOPS Encryption Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Verify all Secret manifests are SOPS-encrypted
+        run: bash ./scripts/sops-check.sh kubernetes
