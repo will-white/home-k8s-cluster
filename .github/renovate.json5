@@ -89,6 +89,15 @@
     },
     {
       description: [
+        'Pin all container image versions to immutable digests',
+      ],
+      matchDatasources: [
+        'docker',
+      ],
+      pinDigests: true,
+    },
+    {
+      description: [
         'Flux Group',
       ],
       groupName: 'Flux',

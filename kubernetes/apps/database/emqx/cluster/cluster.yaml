@@ -31,6 +31,14 @@ spec:
         reloader.stakater.com/auto: "true"
     spec:
       replicas: 3
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              apps.emqx.io/instance: emqx
+              apps.emqx.io/db-role: core
       envFrom:
         - secretRef:
             name: emqx-secret

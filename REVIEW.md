@@ -30,11 +30,21 @@ Legend:
 - [x] **P0 / S — PodSecurity admission.** Workload namespaces enforce
   `baseline` with `warn`/`audit` at `restricted`; system namespaces
   enforce `privileged`.
-- [ ] **P1 / S — Pin every image by digest** (`@sha256:…`). Enable
-  Renovate digest-pinning preset.
-- [ ] **P1 / S — `topologySpreadConstraints`** on critical singletons
-  (sonarr, radarr, prowlarr, home-assistant, frigate, grafana,
-  prometheus) across `kubernetes.io/hostname`.
+- [x] **P1 / S — Pin every image by digest** — Renovate `pinDigests: true`
+  rule added 2026-04-28; Renovate will open PRs to pin the 29
+  currently-unpinned tags (44/73 already pinned). Rolling tags
+  (`latest`, `stable`, `main-stable`) on flaresolverr, kopia,
+  karakeep/meilisearch, sosse, litellm need explicit pinning later —
+  Renovate can only update what it can resolve.
+- [x] **P1 / S — `topologySpreadConstraints`** — corrected scope:
+  TSC is a no-op on `replicas=1` workloads (per Kubernetes docs),
+  so the original singleton list (sonarr/radarr/prowlarr/HA/frigate/
+  grafana/prometheus/alertmanager/loki) cannot benefit. Audited the
+  multi-replica workloads instead: ingress-nginx external+internal,
+  coredns, cilium, dragonfly, rook-ceph already had TSC. Added TSC
+  on EMQX core (3-replica STS, was missing). HA for the singletons
+  is a separate, larger item (would require chart changes to
+  support multiple replicas).
 
 ## 🔴 Secrets & Supply Chain
 
@@ -70,8 +80,17 @@ Legend:
   retries: 3}}`, and `driftDetection.mode: enabled`. The 69
   `HelmRepository`-backed HRs also got `chart.spec.interval: 1h`; the
   5 OCI-backed HRs use `chartRef` so the field doesn't apply.
-- [ ] **P2 / S — Switch `HelmRepository` → `OCIRepository`** where the
-  publisher supports it (bjw-s, prometheus-community, etc.).
+- [ ] **P2 / M — Switch `HelmRepository` → `OCIRepository`** where the
+  publisher supports it. Audit 2026-04-28: 24 HelmRepositories,
+  consumer distribution heavily skewed to bjw-s (41 HRs); other
+  multi-consumer repos: grafana(3), external-dns(3), rook-ceph(2),
+  prometheus-community(2), intel(2), ingress-nginx(2). Recommend a
+  staged migration: low-blast-radius single-consumer repos first
+  (descheduler, spegel, stakater, postfinance, piraeus, openebs,
+  node-feature-discovery, metrics-server, jetstack, external-secrets,
+  emqx, coredns, cloudnative-pg, cilium), then multi-consumer ones
+  (each with verified OCI URL), then bjw-s last as a dedicated PR.
+  Effort revised to **M**.
 - [ ] **P2 / S — Audit hard-coded IPs / FQDNs** and move into
   `cluster-settings`.
 
@@ -147,6 +166,12 @@ Legend:
 
 ## In-flight / completed
 
+- **2026-04-28** — Renovate `pinDigests: true` enabled. Renovate will
+  proactively pin any image lacking an `@sha256:` digest.
+- **2026-04-28** — EMQX core (3-replica STS) gained explicit
+  `topologySpreadConstraints` across `kubernetes.io/hostname` with
+  `whenUnsatisfiable: DoNotSchedule`. All other multi-replica
+  workloads we own already had TSC.
 - **2026-04-28** — HelmRelease reliability baseline: every HR now has
   install/upgrade remediation, rollback strategy, drift detection
   enabled, and (where applicable) explicit chart polling interval.
