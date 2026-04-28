@@ -110,7 +110,7 @@ spec:
           gethomepage.dev/icon: overseerr.png
           gethomepage.dev/description: Application for managing requests for the media library
           gethomepage.dev/widget.type: overseerr
-          gethomepage.dev/widget.url: http://seerr.media:5055
+          gethomepage.dev/widget.url: http://seerr-app.media:5055
           gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_SEERR_API_KEY}}` }}"
           external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
         className: external
