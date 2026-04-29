@@ -12,7 +12,7 @@ spec:
         kind: HelmRepository
         name: grafana
         namespace: flux-system
-      version: 6.55.0
+      version: 7.0.0
       interval: 1h
   dependsOn:
     - name: rook-ceph-cluster
