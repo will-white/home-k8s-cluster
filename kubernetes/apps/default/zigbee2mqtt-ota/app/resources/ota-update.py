@@ -43,6 +43,14 @@ CHECK_WAIT = int(os.environ.get("CHECK_WAIT", "30"))
 # If "true", only check and report — do not apply updates.
 DRY_RUN = os.environ.get("DRY_RUN", "false").lower() == "true"
 
+# Comma-separated list of zigbee-herdsman-converters models to skip.
+# Default skips Inovelli VZM31-SN: its OTA index reports a higher imageVersion
+# than the device persistently advertises, so Z2M perpetually claims an update
+# is available even after a successful flash. Re-flashing them weekly does
+# nothing useful and ties up the mesh for hours.
+SKIP_MODELS = {
+    m.strip() for m in os.environ.get("SKIP_MODELS", "VZM31-SN").split(",") if m.strip()
+}
 
 # Seconds to observe MQTT for in-progress OTA activity before starting.
 OTA_OBSERVE_WINDOW = int(os.environ.get("OTA_OBSERVE_WINDOW", "15"))
@@ -254,6 +262,29 @@ def get_updatable_devices(client: mqtt.Client) -> list[str]:
         and not d.get("disabled", False)
         and d.get("interview_completed", False)
     ]
+
+    # Drop models that are known-broken at the OTA-availability check (their
+    # OTA index reports a higher imageVersion than the device persistently
+    # advertises, so they perpetually claim "update available" even after a
+    # successful flash). Configurable via SKIP_MODELS env.
+    if SKIP_MODELS:
+        skipped = [
+            d.get("friendly_name", d.get("ieee_address"))
+            for d in eligible
+            if (d.get("definition") or {}).get("model") in SKIP_MODELS
+        ]
+        eligible = [
+            d for d in eligible
+            if (d.get("definition") or {}).get("model") not in SKIP_MODELS
+        ]
+        if skipped:
+            log.info(
+                "Skipping %d device(s) matching SKIP_MODELS=%s: %s",
+                len(skipped),
+                ",".join(sorted(SKIP_MODELS)),
+                ", ".join(skipped),
+            )
+
     log.info("Found %d eligible devices (out of %d total)", len(eligible), len(state.devices))
 
     # Check OTA for each device

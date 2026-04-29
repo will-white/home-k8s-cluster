@@ -57,6 +57,10 @@ spec:
               CHECK_WAIT: "60"
               # 15 seconds of MQTT observation to detect concurrent OTA activity
               OTA_OBSERVE_WINDOW: "15"
+              # Models to skip — Inovelli VZM31-SN's OTA index reports a higher
+              # imageVersion than the device advertises, so it perpetually
+              # claims "update available" even after a clean flash.
+              SKIP_MODELS: "VZM31-SN"
               # Set to "true" to only check without applying updates
               DRY_RUN: "false"
               PIP_DISABLE_PIP_VERSION_CHECK: "1"
