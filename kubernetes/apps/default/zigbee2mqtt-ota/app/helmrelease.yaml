@@ -57,10 +57,25 @@ spec:
               CHECK_WAIT: "60"
               # 15 seconds of MQTT observation to detect concurrent OTA activity
               OTA_OBSERVE_WINDOW: "15"
-              # Models to skip — Inovelli VZM31-SN's OTA index reports a higher
-              # imageVersion than the device advertises, so it perpetually
-              # claims "update available" even after a clean flash.
-              SKIP_MODELS: "VZM31-SN"
+              # After Z2M reports OTA success, wait this long for the device to
+              # republish its state with the new installed_version, then verify.
+              VERIFY_DELAY: "30"
+              # Persistent self-managed skip list (devices that ACK firmware but
+              # never advance installed_version — e.g. Inovelli VZM31-SN 2.x->3.x).
+              # Auto-retry triggers if Z2M starts offering a different firmware.
+              STATE_FILE: /state/skip.json
+              # Hard model skip — applied before any OTA check is sent. Prefer
+              # the self-managing skip list over this. Empty disables.
+              SKIP_MODELS: ""
+              # One-shot bootstrap on the very first run only (skip.json absent):
+              # pre-mark every device of these models that currently advertises
+              # an update as STUCK on whatever Z2M is offering. Avoids a 10-hour
+              # cold-start rediscovering known-broken OTAs. Once skip.json
+              # exists, this is ignored. Inovelli VZM31-SN 2.x is the offender
+              # in the current cluster — Z2M offers FW 3.04 but devices accept
+              # the bytes without ever swapping. Will auto-retry the moment
+              # the upstream firmware index advances past 3.04.
+              BASELINE_SKIP_MODELS: "VZM31-SN"
               # Set to "true" to only check without applying updates
               DRY_RUN: "false"
               PIP_DISABLE_PIP_VERSION_CHECK: "1"
@@ -97,6 +112,11 @@ spec:
           - path: /scripts/ota-update.py
             subPath: ota-update.py
             readOnly: true
+      state:
+        type: persistentVolumeClaim
+        existingClaim: zigbee2mqtt-ota-state
+        globalMounts:
+          - path: /state
       tmp:
         type: emptyDir
         globalMounts:

@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/_/persistentvolumeclaim_v1.json
+# Tiny persistent volume for the OTA automation's self-managed skip list.
+# Records devices whose firmware download succeeded but whose installed_version
+# never advanced (broken upstream OTA paths, e.g. Inovelli VZM31-SN 2.x -> 3.x).
+# A device is only persistently skipped while Z2M keeps offering the *same*
+# firmware target — the moment Z2M's index changes, we automatically retry.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zigbee2mqtt-ota-state
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 64Mi
+  storageClassName: ceph-block
