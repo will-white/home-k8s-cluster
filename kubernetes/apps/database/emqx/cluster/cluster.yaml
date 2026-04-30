@@ -1,12 +1,11 @@
-apiVersion: apps.emqx.io/v2
+apiVersion: apps.emqx.io/v2beta1
 kind: EMQX
 metadata:
   name: emqx
 spec:
   # OSS 5.8.9 is the last open-source EMQX release; 5.9+ is Enterprise-only
   # and refuses to start in a >1-node cluster without a license. Operator
-  # 2.3.0 reconcile loop will log 404s on /api/v5/load_rebalance/global_status
-  # (a 5.9+ endpoint) — known and accepted; existing pods keep working.
+  # is pinned to 2.2.29 (see helmrelease.yaml) which still supports v2beta1.
   image: public.ecr.aws/emqx/emqx:5.8.9
   config:
     data: |
