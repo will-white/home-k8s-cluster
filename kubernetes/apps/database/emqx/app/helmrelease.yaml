@@ -7,11 +7,7 @@ spec:
   chart:
     spec:
       chart: emqx-operator
-      # Pin to 2.2.29: operator 2.3.0 polls EMQX 5.9+ /api/v5/load_rebalance/global_status
-      # which 404s on our EMQX 5.8.9 cluster, aborts the reconcile loop, and leaves
-      # new core pods stuck on the apps.emqx.io/on-serving readiness gate (0/1 forever).
-      # Revisit when the EMQX broker is bumped to 5.10.x and the CR is migrated to apps.emqx.io/v2.
-      version: 2.2.29
+      version: 2.3.0
       sourceRef:
         kind: HelmRepository
         name: emqx
@@ -25,9 +21,6 @@ spec:
     remediation:
       strategy: rollback
       retries: 3
-  dependsOn:
-    - name: cert-manager
-      namespace: cert-manager
   values:
     fullnameOverride: emqx-operator
     image:
