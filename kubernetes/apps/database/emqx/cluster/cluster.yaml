@@ -3,16 +3,13 @@ kind: EMQX
 metadata:
   name: emqx
 spec:
-  # Operator 2.3.0 + apps.emqx.io/v2 + EMQX 5.10.x. durable_sessions is
-  # disabled because coreTemplate has no PVC; enabling DS without
-  # persistent storage would write session state to ephemeral disk.
-  # Note: public.ecr.aws/emqx/emqx stops at 5.8.9, so we pull from Docker Hub.
-  image: docker.io/emqx/emqx:5.10.3
+  # OSS 5.8.9 is the last open-source EMQX release; 5.9+ is Enterprise-only
+  # and refuses to start in a >1-node cluster without a license. Operator
+  # 2.3.0 reconcile loop will log 404s on /api/v5/load_rebalance/global_status
+  # (a 5.9+ endpoint) — known and accepted; existing pods keep working.
+  image: public.ecr.aws/emqx/emqx:5.8.9
   config:
     data: |
-      durable_sessions {
-        enable = false
-      }
       authentication {
         backend = "built_in_database"
         mechanism = "password_based"
