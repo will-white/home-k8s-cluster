@@ -16,7 +16,11 @@ spec:
         - alert: VolSyncVolumeOutOfSync
           annotations:
             summary: "{{ $labels.obj_namespace }}/{{ $labels.obj_name }} volume is out of sync."
-          expr: volsync_volume_out_of_sync == 1
+            description: >-
+              VolSync ReplicationSource {{ $labels.obj_namespace }}/{{ $labels.obj_name }}
+              has been out of sync for 15m. Bootstrap (one-time restore)
+              destinations are excluded via the `role="source"` filter.
+          expr: volsync_volume_out_of_sync{role="source"} == 1
           for: 15m
           labels:
             severity: critical

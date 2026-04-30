@@ -26,10 +26,9 @@ spec:
       namespace: observability
   values:
     fullnameOverride: *app
-    config:
-      devices:
-        - /dev/sda;sat
-        - /dev/nvme0n1
+    # Auto-discover devices via `smartctl --scan`. The previous explicit
+    # device list (`/dev/sda;sat`, `/dev/nvme0n1`) returned HTTP 500 on nodes
+    # that do not have a SATA disk, which fired persistent TargetDown alerts.
     serviceMonitor:
       enabled: true
     prometheusRules:

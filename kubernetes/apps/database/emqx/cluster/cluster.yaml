@@ -3,9 +3,17 @@ kind: EMQX
 metadata:
   name: emqx
 spec:
-  image: public.ecr.aws/emqx/emqx:5.8.9
+  # Step 1 of operator 2.3.0 upgrade path: broker on 5.10.x with durable
+  # sessions disabled (no PVC on coreTemplate, so DS would write to
+  # ephemeral storage). Operator stays on 2.2.29 + apps.emqx.io/v2beta1
+  # for this step. Revisit once cluster.yaml is migrated to v2 and the
+  # operator chart is restored to 2.3.0.
+  image: public.ecr.aws/emqx/emqx:5.10.3
   config:
     data: |
+      durable_sessions {
+        enable = false
+      }
       authentication {
         backend = "built_in_database"
         mechanism = "password_based"

@@ -113,15 +113,6 @@ spec:
                 service:
                   identifier: app
                   port: code-server
-    serviceMonitor:
-      app:
-        serviceName: home-assistant
-        endpoints:
-          - port: http
-            scheme: http
-            path: /api/prometheus
-            interval: 1m
-            scrapeTimeout: 30s
     persistence:
       config:
         existingClaim: *app

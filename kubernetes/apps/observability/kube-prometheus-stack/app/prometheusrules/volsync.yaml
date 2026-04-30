@@ -14,19 +14,17 @@ spec:
         - alert: VolsyncReplicationSourceMissedSchedule
           annotations:
             summary: >-
-              ReplicationSource {{ $labels.namespace }}/{{ $labels.obj_name }}
-              has not completed a sync in over 26 hours.
+              ReplicationSource {{ $labels.obj_namespace }}/{{ $labels.obj_name }}
+              missed its scheduled sync interval.
             description: >-
-              Volsync is failing to back up
-              {{ $labels.namespace }}/{{ $labels.obj_name }}. Inspect the
-              mover pod logs and the source's `.status.lastSyncTime`.
+              Volsync recorded one or more missed sync intervals for the
+              ReplicationSource {{ $labels.obj_namespace }}/{{ $labels.obj_name }}
+              in the last hour. Inspect the mover pod logs and the source's
+              `.status.lastSyncTime`. Bootstrap (one-time restore) destinations
+              are excluded by the `role="source"` filter.
             runbook_url: https://volsync.readthedocs.io/en/stable/usage/triggers.html
           expr: |
-            (time() - max by (namespace, obj_name) (
-              volsync_volume_out_of_sync{obj_name!=""}
-                * on (namespace, obj_name) group_right
-              max by (namespace, obj_name) (timestamp(volsync_volume_out_of_sync))
-            )) > (26 * 3600)
+            increase(volsync_missed_intervals_total{role="source"}[1h]) > 0
           for: 30m
           labels:
             severity: warning
@@ -35,13 +33,14 @@ spec:
           annotations:
             summary: >-
               Volsync reports
-              {{ $labels.namespace }}/{{ $labels.obj_name }} is out of sync.
+              {{ $labels.obj_namespace }}/{{ $labels.obj_name }} is out of sync.
             description: >-
-              The replication source/destination has fallen out of sync. A
-              warning means a single sync was missed; if it persists,
-              inspect the mover pod and the Kopia repository connectivity.
+              The ReplicationSource has fallen out of sync. A warning means a
+              single sync was missed; if it persists, inspect the mover pod
+              and the Kopia repository connectivity. One-time bootstrap
+              destinations are excluded by the `role="source"` filter.
             runbook_url: https://volsync.readthedocs.io/en/stable/usage/triggers.html
-          expr: max by (namespace, obj_name) (volsync_volume_out_of_sync) == 1
+          expr: max by (obj_namespace, obj_name) (volsync_volume_out_of_sync{role="source"}) == 1
           for: 1h
           labels:
             severity: warning
