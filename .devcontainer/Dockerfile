@@ -25,7 +25,7 @@ ARG KUBECTL_VERSION=v1.36.0
 # renovate: datasource=github-releases depName=helm/helm
 ARG HELM_VERSION=v3.20.2
 # renovate: datasource=github-releases depName=stern/stern
-ARG STERN_VERSION=v1.33.1
+ARG STERN_VERSION=v1.34.0
 
 # Install system packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
