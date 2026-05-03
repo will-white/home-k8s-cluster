@@ -24,6 +24,7 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 10Gi
       # Documents are ingested manually; daily backup is sufficient.
       VOLSYNC_SCHEDULE: "45 3 * * *"

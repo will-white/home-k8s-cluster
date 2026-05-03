@@ -25,4 +25,5 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 5Gi

@@ -22,6 +22,7 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 5Gi
       # Bookmarks change infrequently; daily backup is sufficient.
       VOLSYNC_SCHEDULE: "15 3 * * *"

@@ -24,6 +24,7 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: media
       VOLSYNC_CAPACITY: 5Gi
       VOLSYNC_ACCESSMODES: ReadWriteMany
       VOLSYNC_SNAP_ACCESSMODES: ReadWriteMany

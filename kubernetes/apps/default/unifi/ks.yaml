@@ -23,6 +23,7 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 10Gi
       # Stats DB writes constantly but losing a few hours of network stats is
       # acceptable. Back up every 6 hours instead of hourly.

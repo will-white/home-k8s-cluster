@@ -51,6 +51,9 @@ spec:
       runAsGroup: ${VOLSYNC_PGID:-1000}
       runAsUser: ${VOLSYNC_PUID:-1000}
     repository: ${APP}-volsync
+    sourceIdentity:
+      sourceName: ${VOLSYNC_BOOTSTRAP_SOURCE_NAME:-${APP}}
+      sourceNamespace: ${VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE}
     storageClassName: ${VOLSYNC_STORAGECLASS:-ceph-block}
     volumeSnapshotClassName: ${VOLSYNC_SNAPSHOTCLASS:-csi-ceph-blockpool}
   trigger:

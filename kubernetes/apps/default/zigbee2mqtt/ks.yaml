@@ -26,6 +26,7 @@ spec:
     substitute:
       APP: *app
       GATUS_SUBDOMAIN: zigbee
+      VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 1Gi
       # Device DB only changes on pair/unpair; daily backup is sufficient.
       VOLSYNC_SCHEDULE: "0 4 * * *"
