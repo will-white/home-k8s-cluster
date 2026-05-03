@@ -24,5 +24,11 @@ spec:
       APP: *app
       VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 5Gi
+      VOLSYNC_ACCESSMODES: ReadWriteMany
+      VOLSYNC_SNAP_ACCESSMODES: ReadWriteMany
+      PVC_VOLSYNC_STORAGECLASS: ceph-filesystem
+      VOLSYNC_STORAGECLASS: ceph-filesystem
+      VOLSYNC_SNAPSHOTCLASS: csi-ceph-filesystem
+      VOLSYNC_BOOTSTRAP_TRIGGER: restore-cephfs-2026-05-03
       # Inventory changes rarely; daily backup is sufficient.
       VOLSYNC_SCHEDULE: "30 3 * * *"

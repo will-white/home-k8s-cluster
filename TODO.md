@@ -230,6 +230,83 @@
   - [ ] Alert on out-of-sync resources
   - [ ] Generate drift reports
 
+## Storage Architecture Roadmap
+
+Captured 2026-05-03 after the Volsync identity-bug incident. Goal: move
+each workload onto the storage tier that fits its access pattern, not the
+historical default. See REVIEW.md / commit `2b2c07d` for context.
+
+### Decided & in flight
+
+- [ ] **Migrate paperless / mealie / homebox PVCs to ceph-filesystem (RWX)**
+  - All three already use Postgres (CNPG) — PVC is pure blob storage
+    (documents, recipe images, asset attachments).
+  - Removes the "node loss = app down" failure mode that caused the
+    mj0581rw incident.
+  - Pattern: same as bazarr/qbittorrent in commit `bbe3961` — set
+    `VOLSYNC_STORAGECLASS=ceph-filesystem`,
+    `PVC_VOLSYNC_STORAGECLASS=ceph-filesystem`,
+    `VOLSYNC_SNAPSHOTCLASS=csi-ceph-filesystem`,
+    `VOLSYNC_ACCESSMODES=ReadWriteMany`,
+    bump `VOLSYNC_BOOTSTRAP_TRIGGER`, delete old PVC + cache, restore.
+
+- [ ] **Migrate bazarr SQLite → Postgres (CNPG)**
+  - Bazarr has native Postgres support (`POSTGRES_ENABLED=true`).
+  - Note: Bazarr does NOT auto-migrate SQLite → Postgres. Either accept
+    a fresh DB (re-scan subtitle library, no history loss for media) or
+    use the community migration script
+    (https://github.com/morpheus65535/bazarr/issues/2245).
+
+- [ ] **Karakeep → enable Postgres + Meilisearch**
+  - Karakeep currently runs degraded: SQLite + no full-text search
+    (see `kubernetes/apps/default/karakeep/README.md`).
+  - Add a Karakeep Postgres database to CNPG, deploy a single
+    Meilisearch pod (with its own small PVC), set `MEILI_ADDR` and
+    `DATABASE_URL`. Karakeep does NOT auto-migrate SQLite → Postgres
+    either; plan for fresh start or manual export/import.
+
+### Deferred (bigger lifts)
+
+- [ ] **Home Assistant recorder → Postgres (CNPG)**
+  - Biggest resilience win for the most-used app in the cluster.
+  - Once recorder is on Postgres, HA's `/config` PVC becomes pure config
+    (small, no fsync hot path) and can move to ceph-filesystem.
+  - Migration: stop HA, dump SQLite via `homeassistant.recorder.purge`
+    + `pg_loader`, point recorder at new CNPG database, restart.
+  - Risk: long-running history queries will be slower until indexes warm.
+
+- [ ] **Loki chunks → Rook RGW (S3)**
+  - Loki is designed for object storage; the current 100Gi RBD PVC is a
+    temporary expedient. Object backend survives node loss trivially,
+    scales horizontally, and uses the existing
+    `rook-ceph-rgw-ceph-objectstore` we already trust for Volsync.
+  - Keep WAL on local NVMe (`openebs-hostpath`) for write throughput.
+  - Migration: set Loki `storage.s3` block, add a new RGW bucket
+    (`loki-chunks`), migrate via Loki's built-in shipper, drain old PVC.
+
+- [ ] **Frigate volume split**
+  - Today: one RBD PVC holds config + SQLite + recordings.
+  - Optimal: `/config` on RBD or hostpath (small, infrequent writes),
+    SQLite `frigate.db` on local NVMe (hot path for events), recordings
+    on ceph-filesystem (large, sequential writes, multi-reader OK).
+  - Requires Frigate `database.path` override and three separate PVCs.
+
+- [ ] **Prometheus → remote-write to Mimir/Thanos on RGW**
+  - Defer until Loki proves the RGW path works under sustained load.
+  - Pattern: short retention on local NVMe, long-term on object storage.
+  - Smaller blast radius (TSDB corruption no longer eats 100Gi), better
+    retention economics, scales horizontally.
+
+### Will not do (analysed and rejected)
+
+- ~~PDBs for stateful singletons~~ — `maxUnavailable: 0` blocks node
+  drains, `maxUnavailable: 1` is a no-op for replicas=1. Wrong tool;
+  resilience comes from fast node recovery (node-fencer + Tuppr) and
+  RWX where viable.
+- ~~Move recyclarr / kometa onto Volsync~~ — both are pure caches
+  reconstructable from Git config + upstream (TRaSH guides / Plex /
+  TMDb). Not worth the canary noise. (Removed from canary 2026-05-03.)
+
 ## Infrastructure Improvements
 
 - [ ] **Rclone RGW to Garage Migration**
