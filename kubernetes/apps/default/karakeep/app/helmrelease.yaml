@@ -47,8 +47,9 @@ spec:
               INFERENCE_TEXT_MODEL: claude-haiku-4-5-20251001
               INFERENCE_IMAGE_MODEL: claude-haiku-4-5-20251001
               INFERENCE_LANG: english
-              # Meilisearch for full-text search (requires deployment)
-              # MEILI_ADDR: http://meilisearch.default.svc.cluster.local:7700
+              # Meilisearch for full-text search
+              # MEILI_MASTER_KEY is injected via envFrom: karakeep-secret
+              MEILI_ADDR: http://meilisearch.default.svc.cluster.local:7700
               # Browser for web scraping (browserless sidecar on port 3001)
               # Use Playwright-specific endpoint
               BROWSER_WEBSOCKET_URL: ws://localhost:3001/playwright/chromium

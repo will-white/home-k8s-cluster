@@ -11,6 +11,7 @@ spec:
   dependsOn:
     - name: external-secrets-stores
     - name: volsync
+    - name: meilisearch
   path: ./kubernetes/apps/default/karakeep/app
   prune: true
   sourceRef:
@@ -24,6 +25,12 @@ spec:
       APP: *app
       VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 5Gi
+      VOLSYNC_ACCESSMODES: ReadWriteMany
+      VOLSYNC_SNAP_ACCESSMODES: ReadWriteMany
+      PVC_VOLSYNC_STORAGECLASS: ceph-filesystem
+      VOLSYNC_STORAGECLASS: ceph-filesystem
+      VOLSYNC_SNAPSHOTCLASS: csi-ceph-filesystem
+      VOLSYNC_BOOTSTRAP_TRIGGER: restore-cephfs-2026-05-03
       # Bookmarks change infrequently; daily backup is sufficient.
       VOLSYNC_SCHEDULE: "15 3 * * *"
       # Reduced retention - low priority backup

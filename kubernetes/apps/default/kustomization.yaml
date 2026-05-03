@@ -12,6 +12,7 @@ resources:
   - ./karakeep/ks.yaml
   - ./litellm/ks.yaml
   - ./mealie/ks.yaml
+  - ./meilisearch/ks.yaml
   - ./paperless/ks.yaml
   # paperless-gpt/ks.yaml missing — re-add when the Flux Kustomization is authored
   - ./stirling-pdf/ks.yaml

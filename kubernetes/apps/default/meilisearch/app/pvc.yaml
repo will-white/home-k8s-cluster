@@ -1,0 +1,16 @@
+---
+# Meilisearch index is rebuildable from Karakeep's source data, so this PVC is
+# intentionally NOT covered by Volsync. Loss of this volume only triggers a
+# re-index, not data loss.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: meilisearch-data
+  labels:
+    app.kubernetes.io/name: meilisearch
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: ceph-block

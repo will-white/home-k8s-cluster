@@ -1,0 +1,84 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app meilisearch
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  values:
+    controllers:
+      meilisearch:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        strategy: Recreate
+        containers:
+          app:
+            image:
+              repository: getmeili/meilisearch
+              tag: v1.41.0
+            envFrom:
+              - secretRef:
+                  name: meilisearch-secret
+            env:
+              MEILI_ENV: production
+              MEILI_NO_ANALYTICS: "true"
+              MEILI_DB_PATH: /meili_data/data.ms
+              MEILI_DUMP_DIR: /meili_data/dumps
+              MEILI_HTTP_ADDR: 0.0.0.0:7700
+            resources:
+              requests:
+                cpu: 25m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 7700
+                  initialDelaySeconds: 15
+                  periodSeconds: 30
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 7700
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: 7700
+            targetPort: 7700
+            protocol: TCP
+    persistence:
+      data:
+        existingClaim: meilisearch-data
+        globalMounts:
+          - path: /meili_data
+  driftDetection:
+    mode: enabled
