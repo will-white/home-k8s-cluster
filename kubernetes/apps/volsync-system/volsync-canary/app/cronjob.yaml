@@ -1,0 +1,202 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/batch/cronjob_v1.json
+# Volsync Kopia canary
+#
+# Why this exists:
+#   On 2026-05-03 we discovered that ALL bootstrap restores (`ReplicationDestination`
+#   with no `sourceIdentity`) were silently restoring 0 bytes and reporting
+#   `result: Successful`. We also discovered that recyclarr and kometa
+#   ReplicationSources had stopped producing snapshots 9 days earlier with no
+#   alert, because `volsync_volume_out_of_sync` only fires when the controller
+#   knows it missed an interval — which it didn't, because the source had
+#   silently stopped firing.
+#
+#   This canary connects to the shared Kopia repo (read-only), enumerates the
+#   `<identity>@<namespace>` snapshot identities listed in the
+#   `volsync-canary-identities` ConfigMap, and fails the job if ANY identity
+#   is missing or its latest snapshot is older than the configured max age.
+#   Failure → KubeJobFailed alert (already provisioned by kube-prometheus-stack).
+#
+# Threat model:
+#   - Stale snapshots (source stopped writing) → caught
+#   - Missing snapshots (identity typo, secret rotation broke writes) → caught
+#   - Empty snapshots (RD restored 0 bytes from wrong identity) → NOT caught
+#     directly, but the bootstrap-source-identity bug that caused that has
+#     been fixed in commit 2b2c07d, and a stale identity will catch any
+#     repo-side regression.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: volsync-canary
+spec:
+  # Daily — fast enough to catch a 25h staleness threshold within one cycle,
+  # and slow enough that the resulting "ok" log noise is manageable.
+  schedule: "30 6 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 3600
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 600
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: volsync-canary
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: canary
+              # Same image volsync uses for its kopia mover. Has kopia + GNU
+              # coreutils available.
+              image: ghcr.io/perfectra1n/volsync:v0.17.11
+              command: ["/bin/sh", "/etc/canary/canary.sh"]
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              envFrom:
+                - secretRef:
+                    name: volsync-canary
+              env:
+                - name: KOPIA_CACHE_DIRECTORY
+                  value: /tmp/cache
+                - name: KOPIA_LOG_DIR
+                  value: /tmp/logs
+                - name: HOME
+                  value: /tmp
+                - name: KOPIA_CHECK_FOR_UPDATES
+                  value: "false"
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+                - name: canary
+                  mountPath: /etc/canary
+          volumes:
+            - name: tmp
+              emptyDir: {}
+            - name: canary
+              projected:
+                sources:
+                  - configMap:
+                      name: volsync-canary-identities
+                      items:
+                        - key: identities
+                          path: identities
+                  - configMap:
+                      name: volsync-canary-script
+                      items:
+                        - key: canary.sh
+                          path: canary.sh
+                          mode: 0755
+---
+# Inline script delivered via ConfigMap so the entire canary lives in one
+# Flux Kustomization with no external image build pipeline.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: volsync-canary-script
+data:
+  canary.sh: |
+    #!/bin/sh
+    # Connect to the shared Kopia repo. We do NOT pass --override-username
+    # so that the connection identity does not pollute the snapshot listings.
+    set -e
+    kopia repository connect s3 \
+      --bucket=volsync-backups \
+      --endpoint="$(echo "$AWS_S3_ENDPOINT" | sed 's|http://||; s|https://||')" \
+      --disable-tls \
+      --access-key="$AWS_ACCESS_KEY_ID" \
+      --secret-access-key="$AWS_SECRET_ACCESS_KEY" \
+      --password="$KOPIA_PASSWORD" \
+      --override-username=canary \
+      --override-hostname=volsync-system >/dev/null
+    set +e
+
+    NOW=$(date -u +%s)
+    FAILED=0
+    TOTAL=0
+
+    # Pre-fetch the full snapshot list once — it's cheaper than one
+    # `kopia snapshot list <id>` call per identity.
+    ALL=$(kopia snapshot list --all 2>/dev/null)
+    if [ -z "$ALL" ]; then
+      echo "FATAL: kopia snapshot list --all returned empty"
+      exit 2
+    fi
+
+    while IFS= read -r raw; do
+      # strip leading whitespace + comments + blanks
+      line=$(printf '%s' "$raw" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+      case "$line" in ''|'#'*) continue ;; esac
+
+      identity=$(printf '%s' "$line" | cut -d: -f1)
+      max_age=$(printf '%s' "$line" | cut -d: -f2)
+      desc=$(printf '%s' "$line" | cut -d: -f3-)
+      TOTAL=$((TOTAL + 1))
+
+      # Find the latest snapshot date for this identity.
+      # `kopia snapshot list --all` output has two relevant row shapes inside
+      # an identity block (`<id>:/data`):
+      #   `  2026-05-03 19:00:25 UTC k0495... 1.6 GB ...`           (a snapshot)
+      #   `  + 9 identical snapshots until 2026-05-03 18:00:24 UTC` (a span)
+      # The most recent snapshot in the block is the LAST date of either kind.
+      latest=$(printf '%s\n' "$ALL" \
+        | awk -v id="${identity}:/data" '
+            $0 == id { in_block=1; next }
+            in_block && /^[a-zA-Z]/ { in_block=0 }
+            in_block && /^  [0-9]{4}-[0-9]{2}-[0-9]{2} / { last=$1 " " $2 " " $3 }
+            in_block && /until [0-9]{4}-[0-9]{2}-[0-9]{2} / {
+              # row shape: "  + N identical snapshots until DATE TIME UTC"
+              for (i=1; i<=NF; i++) if ($i == "until") { last=$(i+1) " " $(i+2) " " $(i+3); break }
+            }
+            END { print last }
+          ')
+
+      if [ -z "$latest" ]; then
+        printf 'FAIL %s: no snapshots in repo (%s)\n' "$identity" "$desc"
+        FAILED=$((FAILED + 1))
+        continue
+      fi
+
+      latest_ts=$(date -u -d "$latest" +%s 2>/dev/null)
+      if [ -z "$latest_ts" ]; then
+        printf 'FAIL %s: cannot parse snapshot timestamp %q (%s)\n' "$identity" "$latest" "$desc"
+        FAILED=$((FAILED + 1))
+        continue
+      fi
+
+      age_h=$(( (NOW - latest_ts) / 3600 ))
+      if [ "$age_h" -gt "$max_age" ]; then
+        printf 'FAIL %s: latest snapshot %dh old (>%sh) - %s\n' \
+          "$identity" "$age_h" "$max_age" "$desc"
+        FAILED=$((FAILED + 1))
+      else
+        printf 'ok   %s: %dh ago (max %sh) - %s\n' \
+          "$identity" "$age_h" "$max_age" "$desc"
+      fi
+    done < /etc/canary/identities
+
+    printf '\nchecked=%d failed=%d\n' "$TOTAL" "$FAILED"
+    if [ "$FAILED" -gt 0 ]; then
+      echo "STALE OR MISSING SNAPSHOTS DETECTED — inspect ReplicationSources or backup CronJobs above."
+      exit 1
+    fi
+    echo "all backups fresh"

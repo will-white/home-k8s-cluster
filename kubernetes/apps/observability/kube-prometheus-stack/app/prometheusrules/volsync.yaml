@@ -58,3 +58,23 @@ spec:
           for: 30m
           labels:
             severity: critical
+
+        - alert: VolsyncCanaryStale
+          annotations:
+            summary: >-
+              The volsync-canary CronJob has not completed successfully in
+              over 36h.
+            description: >-
+              The volsync-canary daily job verifies that every expected Kopia
+              snapshot identity has a recent backup. If the CronJob itself
+              stops running, we lose the only end-to-end signal that catches
+              silently-stopped ReplicationSources (the failure mode that hid
+              the recyclarr/kometa data loss for 9 days).
+              Investigate the CronJob in the volsync-system namespace.
+          expr: |
+            time() - max(kube_cronjob_status_last_successful_time{namespace="volsync-system",cronjob="volsync-canary"}) > 60 * 60 * 36
+            or
+            absent(kube_cronjob_info{namespace="volsync-system",cronjob="volsync-canary"}) == 1
+          for: 1h
+          labels:
+            severity: warning

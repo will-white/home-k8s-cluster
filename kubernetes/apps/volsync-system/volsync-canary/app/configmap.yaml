@@ -1,0 +1,37 @@
+---
+# Each line is: <identity>:<max-age-hours>:<description>
+# - identity must match the Kopia repo identity used by the source
+#   (typically `<APP>@<NAMESPACE>` — set via `username:` on the
+#   ReplicationSource, defaults to `${APP}` in the shared template).
+# - max-age-hours is the maximum age of the most recent snapshot before
+#   the canary fails the job (and KubeJobFailed alerts).
+# - description is shown in the canary log to make alert triage easier.
+#
+# Schedules in the cluster (as of 2026-05-03):
+#   hourly:   bazarr (`0 4 * * *` actually daily — kept hourly threshold for safety),
+#             frigate, home-assistant, qbittorrent
+#   daily:    homebox, karakeep, kometa (CronJob, not Volsync), mealie,
+#             paperless, recyclarr (CronJob), unifi, zigbee2mqtt
+#
+# Identity quirks:
+#   - seerr is `overseerr@media` (legacy app name preserved in Kopia)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: volsync-canary-identities
+data:
+  identities: |
+    # default namespace
+    frigate@default:3:hourly Volsync RS
+    home-assistant@default:3:hourly Volsync RS
+    homebox@default:30:daily Volsync RS
+    karakeep@default:30:daily Volsync RS
+    mealie@default:30:daily Volsync RS
+    paperless@default:30:daily Volsync RS
+    unifi@default:8:6-hourly Volsync RS
+    zigbee2mqtt@default:30:daily Volsync RS
+    # media namespace
+    bazarr@media:30:daily Volsync RS
+    qbittorrent@media:3:hourly Volsync RS
+    recyclarr@media:30:daily CronJob → Kopia
+    kometa@media:30:daily CronJob → Kopia

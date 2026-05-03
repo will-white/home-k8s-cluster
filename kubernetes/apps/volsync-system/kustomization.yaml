@@ -7,4 +7,5 @@ resources:
   - ./snapshot-controller/ks.yaml
   - ./volsync/ks.yaml
   - ./volsync-maintenance/ks.yaml
+  - ./volsync-canary/ks.yaml
   - ./kopia/ks.yaml
