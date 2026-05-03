@@ -19,3 +19,9 @@ spec:
       kind: CephCluster
       expr: |-
         status.ceph.health in ['HEALTH_OK']
+    # Refuse to start the next node if any node is not Ready (catches the
+    # case where a previous upgrade left a node unreachable).
+    - apiVersion: v1
+      kind: Node
+      expr: |-
+        status.conditions.filter(c, c.type == "Ready").all(c, c.status == "True")

@@ -4,8 +4,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: seerr
 spec:
-  accessModes: ["ReadWriteOnce"]
+  accessModes: ["ReadWriteMany"]
   resources:
     requests:
       storage: 5Gi
-  storageClassName: ceph-block
+  storageClassName: ceph-filesystem

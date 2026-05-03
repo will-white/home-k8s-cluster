@@ -10,8 +10,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: kometa
 spec:
-  accessModes: ["ReadWriteOnce"]
+  accessModes: ["ReadWriteMany"]
   resources:
     requests:
       storage: 1Gi
-  storageClassName: ceph-block
+  storageClassName: ceph-filesystem

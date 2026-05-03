@@ -10,8 +10,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: zigbee2mqtt-ota-state
 spec:
-  accessModes: ["ReadWriteOnce"]
+  accessModes: ["ReadWriteMany"]
   resources:
     requests:
       storage: 64Mi
-  storageClassName: ceph-block
+  storageClassName: ceph-filesystem

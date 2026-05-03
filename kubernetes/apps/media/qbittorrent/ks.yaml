@@ -26,8 +26,12 @@ spec:
       APP: *app
       GATUS_SUBDOMAIN: torrents
       VOLSYNC_CAPACITY: 5Gi
-      # VOLSYNC_ACCESSMODES: ReadWriteMany
-      # VOLSYNC_SNAP_ACCESSMODES: ReadOnlyMany # CephFS shallow snapshot
+      VOLSYNC_ACCESSMODES: ReadWriteMany
+      VOLSYNC_SNAP_ACCESSMODES: ReadWriteMany
+      PVC_VOLSYNC_STORAGECLASS: ceph-filesystem
+      VOLSYNC_STORAGECLASS: ceph-filesystem
+      VOLSYNC_SNAPSHOTCLASS: csi-ceph-filesystem
+      VOLSYNC_BOOTSTRAP_TRIGGER: restore-cephfs-2026-05-03
 # ---
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 # apiVersion: kustomize.toolkit.fluxcd.io/v1

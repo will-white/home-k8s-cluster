@@ -54,7 +54,7 @@ spec:
     storageClassName: ${VOLSYNC_STORAGECLASS:-ceph-block}
     volumeSnapshotClassName: ${VOLSYNC_SNAPSHOTCLASS:-csi-ceph-blockpool}
   trigger:
-    manual: restore-once
+    manual: ${VOLSYNC_BOOTSTRAP_TRIGGER:-restore-once}
 ---
 # yaml-language-server: $schema=https://kube-schemas.pages.dev/volsync.backube/replicationsource_v1alpha1.json
 apiVersion: volsync.backube/v1alpha1

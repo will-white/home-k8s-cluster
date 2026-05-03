@@ -3,4 +3,5 @@ kind: Kustomization
 resources:
   - ./flux.yaml
   - ./cert-manager.yaml
+  - ./node-and-storage.yaml
   - ./volsync.yaml

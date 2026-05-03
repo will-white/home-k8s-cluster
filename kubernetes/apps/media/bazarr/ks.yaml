@@ -25,5 +25,11 @@ spec:
     substitute:
       APP: *app
       VOLSYNC_CAPACITY: 5Gi
+      VOLSYNC_ACCESSMODES: ReadWriteMany
+      VOLSYNC_SNAP_ACCESSMODES: ReadWriteMany
+      PVC_VOLSYNC_STORAGECLASS: ceph-filesystem
+      VOLSYNC_STORAGECLASS: ceph-filesystem
+      VOLSYNC_SNAPSHOTCLASS: csi-ceph-filesystem
+      VOLSYNC_BOOTSTRAP_TRIGGER: restore-cephfs-2026-05-03
       # Subtitle metadata is trivial to re-fetch; daily backup is sufficient.
       VOLSYNC_SCHEDULE: "15 4 * * *"

@@ -1,0 +1,141 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: node-and-storage-rules
+  labels:
+    prometheus: kube-prometheus-stack
+    role: alert-rules
+spec:
+  groups:
+    - name: node.rules
+      rules:
+        - alert: NodeUnreachable
+          annotations:
+            summary: >-
+              Node {{ $labels.node }} is unreachable (Ready=Unknown).
+            description: >-
+              The kubelet on {{ $labels.node }} has stopped reporting status
+              for more than 5 minutes. Workloads with RWO PVCs pinned to this
+              node will be stuck until the node returns or the node-fencer
+              CronJob applies the `node.kubernetes.io/out-of-service` taint
+              (after 1h). Investigate the host (power, network, Talos
+              upgrade plan) before that fires.
+            runbook_url: https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/
+          expr: |
+            kube_node_status_condition{condition="Ready",status="unknown"} == 1
+          for: 5m
+          labels:
+            severity: warning
+
+        - alert: NodeNotReady
+          annotations:
+            summary: >-
+              Node {{ $labels.node }} is NotReady (kubelet reporting failure).
+            description: >-
+              The kubelet on {{ $labels.node }} reports Ready=False. The node
+              is up but failing health checks (CNI, container runtime, disk
+              pressure). Check `kubectl describe node {{ $labels.node }}` for
+              the underlying condition. Distinct from NodeUnreachable, which
+              indicates kubelet has stopped reporting entirely.
+          expr: |
+            kube_node_status_condition{condition="Ready",status="false"} == 1
+          for: 10m
+          labels:
+            severity: warning
+
+        - alert: NodeFenced
+          annotations:
+            summary: >-
+              Node {{ $labels.node }} has been fenced (out-of-service taint).
+            description: >-
+              The node-fencer CronJob applied the
+              `node.kubernetes.io/out-of-service` taint to {{ $labels.node }}
+              because it was unreachable for over 1 hour. Volumes have been
+              force-detached and pods evicted. Recover the node and remove
+              the taint manually with
+              `kubectl taint node {{ $labels.node }} node.kubernetes.io/out-of-service-`.
+          expr: |
+            kube_node_spec_taint{key="node.kubernetes.io/out-of-service"} == 1
+          for: 1m
+          labels:
+            severity: critical
+
+    - name: pod.rules
+      rules:
+        - alert: PodPendingTooLong
+          annotations:
+            summary: >-
+              Pod {{ $labels.namespace }}/{{ $labels.pod }} has been Pending
+              for over 15 minutes.
+            description: >-
+              The pod cannot be scheduled or its volumes/images cannot be
+              attached. Common causes: RWO PVC still attached to a dead node
+              (see NodeUnreachable), insufficient capacity, image pull
+              failure, missing PVC. Inspect with
+              `kubectl describe pod -n {{ $labels.namespace }} {{ $labels.pod }}`.
+          expr: |
+            kube_pod_status_phase{phase="Pending"} == 1
+          for: 15m
+          labels:
+            severity: warning
+
+        - alert: PodStuckTerminating
+          annotations:
+            summary: >-
+              Pod {{ $labels.namespace }}/{{ $labels.pod }} stuck Terminating
+              for over 30 minutes.
+            description: >-
+              A pod has been Terminating for >30m. Usually means the node
+              hosting it is unreachable and kubelet cannot confirm shutdown.
+              Will resolve when the node returns or node-fencer applies the
+              out-of-service taint.
+          expr: |
+            kube_pod_deletion_timestamp > 0
+            and on (namespace, pod)
+            (time() - kube_pod_deletion_timestamp) > 1800
+          for: 5m
+          labels:
+            severity: warning
+
+    - name: storage.rules
+      rules:
+        - alert: VolumeAttachmentStuck
+          annotations:
+            summary: >-
+              VolumeAttachment {{ $labels.volumeattachment }} attached to a
+              non-Ready node.
+            description: >-
+              A CSI VolumeAttachment is bound to a node that is not Ready.
+              The volume cannot be reattached elsewhere until the node
+              returns or is force-detached via the
+              `node.kubernetes.io/out-of-service` taint. This is exactly the
+              failure mode that strands RWO Ceph RBD volumes after a node
+              outage.
+          expr: |
+            kube_volumeattachment_status_attached == 1
+            * on (node) group_left()
+            (kube_node_status_condition{condition="Ready",status="true"} == 0)
+          for: 15m
+          labels:
+            severity: warning
+
+        - alert: PersistentVolumeFillingUp
+          annotations:
+            summary: >-
+              PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }}
+              is over 85% full.
+            description: >-
+              Less than 15% of the PVC's capacity remains. Resize the PVC
+              (Ceph block/filesystem support online expansion) or free space
+              before it hits 100% and the workload starts failing writes.
+          expr: |
+            (
+              kubelet_volume_stats_available_bytes
+              / kubelet_volume_stats_capacity_bytes
+            ) < 0.15
+            and kubelet_volume_stats_capacity_bytes > 0
+          for: 30m
+          labels:
+            severity: warning

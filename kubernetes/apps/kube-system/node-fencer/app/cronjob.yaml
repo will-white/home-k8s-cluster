@@ -1,0 +1,55 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: node-fencer
+  namespace: kube-system
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 300
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 3600
+      template:
+        spec:
+          serviceAccountName: node-fencer
+          restartPolicy: Never
+          # Tolerate scheduling on any healthy node; we don't want to land on a
+          # node that's about to be fenced, but kube-scheduler already avoids
+          # NotReady nodes by default.
+          containers:
+            - name: fence
+              image: docker.io/bitnami/kubectl:1.35.1
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/bash", "/scripts/fence.sh"]
+              env:
+                # Minimum age (seconds) of the Ready=Unknown condition before
+                # we fence the node. 1h for a homelab.
+                - name: UNREACHABLE_THRESHOLD_SECONDS
+                  value: "3600"
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 1001
+                capabilities:
+                  drop: ["ALL"]
+          volumes:
+            - name: scripts
+              configMap:
+                name: node-fencer-script
+                defaultMode: 0755
