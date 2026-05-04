@@ -26,11 +26,21 @@ spec:
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
+    - name: cloudnative-pg-cluster
+      namespace: database
   values:
     controllers:
       bazarr:
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.3@sha256:6fa1f331cddd2eb0b6afa7b8d3685c864127a81ab01c3d9400bc3ff5263a51cf
+            envFrom: &envFrom
+              - secretRef:
+                  name: bazarr-secret
         containers:
           app:
             image:
@@ -39,9 +49,7 @@ spec:
               tag: 1.5.6@sha256:79fc37491f55c7e24427bcd669bce3df2d7415ca432a47ce9d53cc5988af8411
             env:
               TZ: ${TIMEZONE}
-            envFrom:
-              - secretRef:
-                  name: bazarr-secret
+            envFrom: *envFrom
             probes:
               liveness: &probes
                 enabled: true
