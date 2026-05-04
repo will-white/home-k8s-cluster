@@ -4,7 +4,13 @@ metadata:
   name: observability
   labels:
     kustomize.toolkit.fluxcd.io/prune: disabled
-    pod-security.kubernetes.io/enforce: baseline
+    # smartctl-exporter requires `privileged: true` + hostPath /dev to read
+    # SMART data, which `baseline` forbids (CAP_SYS_RAWIO + hostPath). With
+    # `enforce: baseline` the daemonset cannot reschedule on new/restarted
+    # nodes, leading to KubeDaemonSetNotScheduled / KubeDaemonSetRolloutStuck.
+    # Warn/audit stay at `restricted` so any new workload here is still
+    # surfaced as a deviation.
+    pod-security.kubernetes.io/enforce: privileged
     pod-security.kubernetes.io/warn: restricted
     pod-security.kubernetes.io/audit: restricted
 ---
