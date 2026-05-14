@@ -10,7 +10,7 @@ spec:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: 0.41.0
+    tag: 0.42.0@sha256:e8fef74af6309132661b55b245944f28b1ea21748684084f2118e5c410f88c8b
   url: oci://ghcr.io/home-operations/charts-mirror/headlamp
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
