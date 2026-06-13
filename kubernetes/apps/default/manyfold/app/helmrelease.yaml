@@ -32,7 +32,7 @@ spec:
           app:
             image:
               repository: ghcr.io/manyfold3d/manyfold-solo
-              tag: 0.138.0@sha256:f72a81a8585329e001e6e09243f9b305fe0a7058e86a82b7a5802fec412b5ef6
+              tag: 0.143.2@sha256:0712ebcd6dfe21f1caccae6f4c48043355708037ae7633f9b33ec265ee6c16fd
               pullPolicy: IfNotPresent
             env:
               TZ: ${TIMEZONE}
