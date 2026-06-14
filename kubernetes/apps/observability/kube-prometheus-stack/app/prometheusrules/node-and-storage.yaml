@@ -113,9 +113,13 @@ spec:
               `node.kubernetes.io/out-of-service` taint. This is exactly the
               failure mode that strands RWO Ceph RBD volumes after a node
               outage.
+          # kube_volumeattachment_status_attached has no `node` label, so the
+          # node association comes from kube_volumeattachment_info{node=...}.
+          # Keep every attachment whose node is currently not Ready (the
+          # status="true" series reads 0 for NotReady and Unknown nodes).
           expr: |
-            kube_volumeattachment_status_attached == 1
-            * on (node) group_left()
+            kube_volumeattachment_info
+            and on (node)
             (kube_node_status_condition{condition="Ready",status="true"} == 0)
           for: 15m
           labels:

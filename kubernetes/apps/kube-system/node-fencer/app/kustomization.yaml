@@ -10,3 +10,9 @@ configMapGenerator:
       - fence.sh=./resources/fence.sh
 generatorOptions:
   disableNameSuffixHash: true
+  # fence.sh contains shell parameter expansions (e.g. ${NODES[@]}) that Flux's
+  # post-build envsubst cannot parse ("missing closing brace"). Exclude the
+  # generated ConfigMap from variable substitution so the script is applied
+  # verbatim.
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: disabled
