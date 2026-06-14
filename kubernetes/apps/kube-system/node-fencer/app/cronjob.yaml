@@ -23,7 +23,10 @@ spec:
           # NotReady nodes by default.
           containers:
             - name: fence
-              image: docker.io/bitnami/kubectl:1.35.1
+              # alpine/k8s bundles kubectl + bash + jq (all required by
+              # fence.sh). Replaces docker.io/bitnami/kubectl, whose Docker Hub
+              # catalog was deprecated/removed in 2025 (ImagePullBackOff).
+              image: docker.io/alpine/k8s:1.35.1
               imagePullPolicy: IfNotPresent
               command: ["/bin/bash", "/scripts/fence.sh"]
               env:

@@ -20,6 +20,16 @@ NOW="$(date -u +%s)"
 
 log() { echo "[$(date -u +%FT%TZ)] $*"; }
 
+# Parse an RFC3339 UTC timestamp (e.g. 2026-06-14T18:00:00Z, as emitted by
+# Kubernetes .status.conditions[].lastTransitionTime) to epoch seconds.
+# Works with both GNU coreutils (`date -d`) and BusyBox (`date -D ... -d`),
+# so the script is portable across glibc and Alpine-based images.
+to_epoch() {
+    date -u -d "$1" +%s 2>/dev/null \
+        || date -u -D "%Y-%m-%dT%H:%M:%SZ" -d "$1" +%s 2>/dev/null \
+        || echo 0
+}
+
 mapfile -t NODES < <(kubectl get nodes -o name)
 
 for node in "${NODES[@]}"; do
@@ -49,7 +59,7 @@ for node in "${NODES[@]}"; do
         continue
     fi
 
-    transition_epoch="$(date -u -d "$last_transition" +%s 2>/dev/null || echo 0)"
+    transition_epoch="$(to_epoch "$last_transition")"
     if [[ "$transition_epoch" -eq 0 ]]; then
         log "WARN $name: could not parse lastTransitionTime '$last_transition'"
         continue
