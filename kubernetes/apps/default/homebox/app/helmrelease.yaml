@@ -35,6 +35,8 @@ spec:
             envFrom: &envFrom
               - secretRef:
                   name: homebox-secret
+              - secretRef:
+                  name: homebox-pepper
         containers:
           app:
             image:
