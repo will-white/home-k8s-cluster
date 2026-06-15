@@ -26,6 +26,8 @@ ARG KUBECTL_VERSION=v1.36.0
 ARG HELM_VERSION=v3.21.1
 # renovate: datasource=github-releases depName=stern/stern
 ARG STERN_VERSION=v1.34.0
+# renovate: datasource=github-releases depName=cli/cli
+ARG GH_VERSION=v2.94.0
 
 # Install system packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -88,6 +90,9 @@ RUN set -eux \
     # stern
     && curl -fsSL "https://github.com/stern/stern/releases/download/${STERN_VERSION}/stern_${STERN_VERSION#v}_linux_amd64.tar.gz" | tar xz -C /usr/local/bin stern \
     && chmod +x /usr/local/bin/stern \
+    # gh (GitHub CLI)
+    && curl -fsSL "https://github.com/cli/cli/releases/download/${GH_VERSION}/gh_${GH_VERSION#v}_linux_amd64.tar.gz" | tar xz --strip-components=2 -C /usr/local/bin "gh_${GH_VERSION#v}_linux_amd64/bin/gh" \
+    && chmod +x /usr/local/bin/gh \
     # bws (Bitwarden Secrets Manager)
     && curl -fsSL "https://github.com/bitwarden/sdk-sm/releases/download/bws-${BWS_VERSION}/bws-x86_64-unknown-linux-gnu-${BWS_VERSION#v}.zip" -o /tmp/bws.zip \
     && unzip -o /tmp/bws.zip -d /usr/local/bin/ \

@@ -22,4 +22,9 @@ generate_completion kustomize kustomize.fish
 generate_completion task task.fish
 generate_completion yq yq.fish
 
+# gh uses a different completion subcommand signature
+if command -v gh >/dev/null 2>&1; then
+	gh completion -s fish > "${COMPLETIONS_DIR}/gh.fish" 2>/dev/null || true
+fi
+
 echo "Shell completions installed successfully"

@@ -1,0 +1,39 @@
+{
+  "features": {
+    "ghcr.io/devcontainers-extra/features/direnv:1": {
+      "version": "1.0.3",
+      "resolved": "ghcr.io/devcontainers-extra/features/direnv@sha256:cd4c07352fb75cadcdde6f8cabba49224341eb4d5348870a7434b0ad15128a48",
+      "integrity": "sha256:cd4c07352fb75cadcdde6f8cabba49224341eb4d5348870a7434b0ad15128a48"
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "version": "2.5.9",
+      "resolved": "ghcr.io/devcontainers/features/common-utils@sha256:cb0c4d3c276f157eed17935747e364178d75fee17f55c4e129966f64633deb3a",
+      "integrity": "sha256:cb0c4d3c276f157eed17935747e364178d75fee17f55c4e129966f64633deb3a"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "2.17.0",
+      "resolved": "ghcr.io/devcontainers/features/docker-in-docker@sha256:25b9f05705ffba7dbe503230ac76081419306f8c8bc88e0ce78c4ecd99a0c78c",
+      "integrity": "sha256:25b9f05705ffba7dbe503230ac76081419306f8c8bc88e0ce78c4ecd99a0c78c"
+    },
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.3.4",
+      "resolved": "ghcr.io/devcontainers/features/go@sha256:d85e921f91b41340055bb12b325d9d551170ed04b3b832e33530bf42f167c032",
+      "integrity": "sha256:d85e921f91b41340055bb12b325d9d551170ed04b3b832e33530bf42f167c032"
+    },
+    "ghcr.io/eitsupi/devcontainer-features/go-task:1": {
+      "version": "1.0.4",
+      "resolved": "ghcr.io/eitsupi/devcontainer-features/go-task@sha256:8a6c4b4f9d7559f32400da0c11d1bb11e59732f47f7db5defca68e7712544d13",
+      "integrity": "sha256:8a6c4b4f9d7559f32400da0c11d1bb11e59732f47f7db5defca68e7712544d13"
+    },
+    "ghcr.io/jsburckhardt/devcontainer-features/flux:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/jsburckhardt/devcontainer-features/flux@sha256:9d81685acf08318a1751131f04e4bc83b5780ef2054484eab46acc74a3f7ed67",
+      "integrity": "sha256:9d81685acf08318a1751131f04e4bc83b5780ef2054484eab46acc74a3f7ed67"
+    },
+    "ghcr.io/nikobockerman/devcontainer-features/fish-persistent-data:2": {
+      "version": "2.0.3",
+      "resolved": "ghcr.io/nikobockerman/devcontainer-features/fish-persistent-data@sha256:dd058881255848fa7d00c60a8b591e912346f6b839189574e2dae80c623af89b",
+      "integrity": "sha256:dd058881255848fa7d00c60a8b591e912346f6b839189574e2dae80c623af89b"
+    }
+  }
+}
