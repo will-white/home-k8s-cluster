@@ -22,6 +22,12 @@ rules:
   - apiGroups: ["apps"]
     resources: ["statefulsets"]
     verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  # Required by operator v1.6.0+ which manages a PodDisruptionBudget for the
+  # Dragonfly StatefulSet. Missing this only logs reflector errors (non-fatal)
+  # but leaves the cluster without PDB protection.
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
   - apiGroups: ["dragonflydb.io"]
     resources: ["dragonflies"]
     verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
