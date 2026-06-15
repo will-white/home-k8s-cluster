@@ -42,6 +42,10 @@ spec:
               MEILI_DB_PATH: /meili_data/data.ms
               MEILI_DUMP_DIR: /meili_data/dumps
               MEILI_HTTP_ADDR: 0.0.0.0:7700
+              # In-place DB migration when engine version > on-disk DB version
+              # (required to move past v1.41.0 -> v1.46.1). Safe to keep set;
+              # only acts when a version mismatch is detected on startup.
+              MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE: "true"
             resources:
               requests:
                 cpu: 25m
