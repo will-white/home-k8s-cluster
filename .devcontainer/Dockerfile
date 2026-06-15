@@ -19,7 +19,7 @@ ARG TALHELPER_VERSION=v3.1.8
 # renovate: datasource=github-releases depName=mikefarah/yq
 ARG YQ_VERSION=v4.53.3
 # renovate: datasource=github-releases depName=bitwarden/sdk-sm extractVersion=^bws-(?<version>.+)$
-ARG BWS_VERSION=v2.0.0
+ARG BWS_VERSION=v2.1.0
 # renovate: datasource=github-tags depName=kubernetes/kubernetes
 ARG KUBECTL_VERSION=v1.36.0
 # renovate: datasource=github-releases depName=helm/helm
