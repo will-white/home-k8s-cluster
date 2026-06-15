@@ -9,7 +9,7 @@ ARG SOPS_VERSION=v3.12.2
 # renovate: datasource=github-releases depName=FiloSottile/age
 ARG AGE_VERSION=v1.3.1
 # renovate: datasource=github-releases depName=yannh/kubeconform
-ARG KUBECONFORM_VERSION=v0.7.0
+ARG KUBECONFORM_VERSION=v0.8.0
 # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.+)$
 ARG KUSTOMIZE_VERSION=v5.8.1
 # renovate: datasource=github-releases depName=siderolabs/talos
