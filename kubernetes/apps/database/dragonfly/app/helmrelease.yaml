@@ -67,6 +67,14 @@ spec:
               readOnlyRootFilesystem: true
               capabilities: {drop: ["ALL"]}
     defaultPodOptions:
+      # The operator (v1.6+) generates a NetworkPolicy that only allows the
+      # admin port (9999) on Dragonfly pods from pods labeled
+      # `control-plane: controller-manager`. app-template labels the operator
+      # `app.kubernetes.io/name: dragonfly-operator`, so without this extra
+      # label the operator cannot reach 9999 to check dataset-load status and
+      # rolling updates stall ("dial tcp ...:9999: i/o timeout").
+      labels:
+        control-plane: controller-manager
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
