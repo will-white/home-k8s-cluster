@@ -12,6 +12,13 @@ rules:
   - apiGroups: [""]
     resources: ["pods", "services"]
     verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
+  # Required by operator v1.6.0+ which watches ConfigMaps for Dragonfly
+  # configuration. Without this, the controller-runtime cache fails to sync
+  # ("timed out waiting for cache to be synced for Kind *v1.ConfigMap") and
+  # the operator crashloops.
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
   - apiGroups: ["apps"]
     resources: ["statefulsets"]
     verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
