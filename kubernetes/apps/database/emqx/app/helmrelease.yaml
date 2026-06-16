@@ -7,12 +7,15 @@ spec:
   chart:
     spec:
       chart: emqx-operator
-      # Pin to 2.2.29: operator 2.3.0 polls EMQX 5.9+ /api/v5/load_rebalance/global_status
+      # Pin to 2.2.29: operator 2.3.0+ polls EMQX 5.9+ /api/v5/load_rebalance/global_status
       # which 404s on OSS EMQX 5.8.9 (the last open-source release; 5.9+ is
       # Enterprise-only and refuses to run >1 node without a license). With
-      # 2.3.0 the reconcile aborts before the readiness-gate step, leaving new
-      # core pods stuck on apps.emqx.io/on-serving (0/1 forever).
-      version: 2.3.1
+      # 2.3.x the reconcile aborts before the readiness-gate step, leaving new
+      # core pods stuck on apps.emqx.io/on-serving (0/1 forever) -> emqx-listeners
+      # Service has no ready endpoints -> all MQTT clients get ECONNREFUSED.
+      # DO NOT bump without verifying the operator no longer calls the enterprise
+      # load_rebalance API against OSS EMQX (renovate: this is intentionally held back).
+      version: 2.2.29
       sourceRef:
         kind: HelmRepository
         name: emqx
