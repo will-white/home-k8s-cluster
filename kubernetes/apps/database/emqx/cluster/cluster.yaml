@@ -26,7 +26,14 @@ spec:
             enable = true
           }
         ]
-        no_match: "deny"
+        # Authenticated clients are trusted to pub/sub on this LAN-only broker.
+        # The security boundary is authentication (per-user passwords); the
+        # built_in_database ACL has no bootstrap source in Git, so any rules
+        # only ever lived in the broker's mnesia volume (emptyDir) and are lost
+        # on a full broker rebuild. Keep "allow" so the bootstrap users
+        # (hass/frigate/z2m) — which are is_superuser:false — can operate
+        # without depending on un-versioned, manually-curated ACL entries.
+        no_match: "allow"
       }
   coreTemplate:
     metadata:
