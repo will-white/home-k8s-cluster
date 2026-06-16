@@ -35,6 +35,15 @@ spec:
         # without depending on un-versioned, manually-curated ACL entries.
         no_match: "allow"
       }
+      mqtt {
+        # zigbee2mqtt publishes large retained payloads on connect
+        # (bridge/devices + bridge/definitions for all devices, with
+        # mqtt.include_device_information enabled). With 40+ devices these
+        # exceed EMQX's 1MB default, causing frame_too_large shutdowns the
+        # client sees as "write ECONNRESET", which blocks z2m startup. Raise
+        # the limit so the full device manifest fits.
+        max_packet_size = "10MB"
+      }
   coreTemplate:
     metadata:
       annotations:
