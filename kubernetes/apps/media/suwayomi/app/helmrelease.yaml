@@ -36,8 +36,21 @@ spec:
               TZ: ${TIMEZONE}
               AUTH_MODE: none
               DOWNLOAD_AS_CBZ: "true"
+              # Auto-download new chapters as soon as the global update finds them
               AUTO_DOWNLOAD_CHAPTERS: "true"
-              UPDATE_INTERVAL: "12"
+              # Default true skips auto-download for entries that still have unread
+              # chapters -> the reason new chapters were not being grabbed
+              AUTO_DOWNLOAD_EXCLUDE_UNREAD: "false"
+              # No cap on how many unread downloaded chapters may pile up
+              AUTO_DOWNLOAD_NEW_CHAPTERS_LIMIT: "0"
+              # Check sources every 6h (minimum allowed) instead of 12h
+              UPDATE_INTERVAL: "6"
+              # Do not exclude manga from the global update based on read state;
+              # otherwise unread/unstarted/completed series are never checked, so
+              # their new chapters are never found and thus never auto-downloaded
+              UPDATE_EXCLUDE_UNREAD: "false"
+              UPDATE_EXCLUDE_STARTED: "false"
+              UPDATE_EXCLUDE_COMPLETED: "false"
               DOWNLOADS_PATH: /media/manga
             probes:
               liveness:
