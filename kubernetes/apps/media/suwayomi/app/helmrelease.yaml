@@ -51,6 +51,9 @@ spec:
               UPDATE_EXCLUDE_UNREAD: "false"
               UPDATE_EXCLUDE_STARTED: "false"
               UPDATE_EXCLUDE_COMPLETED: "false"
+              # Refresh each entry's own metadata (status/cover/description)
+              # during the global update, not just its chapter list
+              UPDATE_MANGA_INFO: "true"
               DOWNLOADS_PATH: /media/manga
               # Route Cloudflare-challenged sources through the in-cluster
               # FlareSolverr (byparr) instance; only invoked when a source
