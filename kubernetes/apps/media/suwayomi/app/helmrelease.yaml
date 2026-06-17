@@ -52,6 +52,11 @@ spec:
               UPDATE_EXCLUDE_STARTED: "false"
               UPDATE_EXCLUDE_COMPLETED: "false"
               DOWNLOADS_PATH: /media/manga
+              # Route Cloudflare-challenged sources through the in-cluster
+              # FlareSolverr (byparr) instance; only invoked when a source
+              # actually returns a challenge, so otherwise a no-op
+              FLARESOLVERR_ENABLED: "true"
+              FLARESOLVERR_URL: http://flaresolverr.media.svc.cluster.local:8191
             probes:
               liveness:
                 enabled: true
