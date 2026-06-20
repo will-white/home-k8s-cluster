@@ -18,7 +18,7 @@ spec:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
   upgrade:
-    image: ghcr.io/siderolabs/installer:v1.13.0
+    image: ghcr.io/siderolabs/installer:v1.13.4@sha256:a072bce4439c4c6aa8107e665615f9621ada080d9bd1bd8634eefc2acff0414a
   drain:
     force: true
     disableEviction: true
