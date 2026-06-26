@@ -18,7 +18,7 @@ spec:
           init-config:
             image:
               repository: busybox
-              tag: latest
+              tag: latest@sha256:a5d0ce49aa801d475da48f8cb163c354ab95cab073cd3c138bd458fc8257fbf1
             command:
               - sh
               - -c
