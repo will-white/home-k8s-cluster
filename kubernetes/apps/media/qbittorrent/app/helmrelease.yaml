@@ -192,6 +192,17 @@ spec:
         existingClaim: *app
       tmp:
         type: emptyDir
+      # Provide the kernel TUN device to gluetun. Mounting the node's
+      # /dev/net/tun avoids the in-container mknod (blocked by the device cgroup
+      # without privileged), which is why gluetun hit "operation not permitted".
+      dev-net-tun:
+        type: hostPath
+        hostPath: /dev/net/tun
+        hostPathType: CharDevice
+        advancedMounts:
+          qbittorrent:
+            gluetun:
+              - path: /dev/net/tun
       scripts:
         type: configMap
         name: qbittorrent-scripts
