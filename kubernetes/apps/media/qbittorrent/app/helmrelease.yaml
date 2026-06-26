@@ -95,7 +95,10 @@ spec:
               tag: v3.41.1@sha256:1a5bf4b4820a879cdf8d93d7ef0d2d963af56670c9ebff8981860b6804ebc8ab
             env:
               VPN_SERVICE_PROVIDER: private internet access
-              VPN_TYPE: wireguard
+              # gluetun does NOT support PIA over WireGuard — only OpenVPN. PIA
+              # OpenVPN uses the same OPENVPN_USER/OPENVPN_PASSWORD account creds.
+              VPN_TYPE: openvpn
+              OPENVPN_PROTOCOL: udp
               # Change region as desired. NOTE: PIA US regions do NOT support port
               # forwarding — to enable it below, switch to a PF-capable region
               # (e.g. "CA Toronto", "Netherlands").
@@ -107,7 +110,8 @@ spec:
               # Allow direct (non-VPN) access to in-cluster + LAN ranges so DNS,
               # the Service, kubelet probes, and the NFS server keep working.
               FIREWALL_OUTBOUND_SUBNETS: "10.69.0.0/16,10.96.0.0/16,192.168.5.0/24"
-              DOT: "off"
+              # DNS left at gluetun default (DNS-over-TLS through the tunnel) to
+              # avoid DNS leaks.
               UPDATER_PERIOD: 24h
               TZ: ${TIMEZONE}
             # OPENVPN_USER / OPENVPN_PASSWORD (PIA account creds) come from the
