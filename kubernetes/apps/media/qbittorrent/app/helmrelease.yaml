@@ -128,11 +128,12 @@ spec:
               runAsGroup: 0
               runAsNonRoot: false
               allowPrivilegeEscalation: false
-              # NET_ADMIN to manage the tunnel/routes; MKNOD to create
-              # /dev/net/tun (drop: ALL removes MKNOD, which is a default cap).
+              # Keep the default capability set — gluetun and the openvpn process
+              # need CHOWN/SETUID/SETGID/DAC_OVERRIDE to write the config and drop
+              # privileges — and add NET_ADMIN for tunnel/route management. Do NOT
+              # drop: ALL here (that broke chown of the ovpn config).
               capabilities:
-                add: ["NET_ADMIN", "MKNOD"]
-                drop: ["ALL"]
+                add: ["NET_ADMIN"]
             resources:
               requests:
                 cpu: 25m
