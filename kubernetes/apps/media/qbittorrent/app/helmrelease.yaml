@@ -128,8 +128,10 @@ spec:
               runAsGroup: 0
               runAsNonRoot: false
               allowPrivilegeEscalation: false
+              # NET_ADMIN to manage the tunnel/routes; MKNOD to create
+              # /dev/net/tun (drop: ALL removes MKNOD, which is a default cap).
               capabilities:
-                add: ["NET_ADMIN"]
+                add: ["NET_ADMIN", "MKNOD"]
                 drop: ["ALL"]
             resources:
               requests:
