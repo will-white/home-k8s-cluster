@@ -13,14 +13,18 @@ spec:
         name: bjw-s
         namespace: flux-system
       interval: 1h
+  # Longer timeout: gluetun must establish the VPN tunnel before qBittorrent's
+  # WebUI (and thus the readiness probe) can pass.
+  timeout: 10m
   install:
     remediation:
       retries: 3
   upgrade:
     cleanupOnFail: true
+    # No rollback: a failed upgrade must NOT revert to the previous (leaky)
+    # release. Leave the new pod in place so its logs are observable.
     remediation:
-      strategy: rollback
-      retries: 3
+      retries: 0
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph
