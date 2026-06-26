@@ -57,8 +57,9 @@ tolerations:
     operator: Exists
     effect: NoSchedule
 resources:
+  # No CPU limit: throttling cluster DNS adds latency cluster-wide. Keep the
+  # memory limit (OOM protection) and CPU/memory requests for scheduling.
   limits:
-    cpu: 500m
     memory: 170Mi
   requests:
     cpu: 100m
