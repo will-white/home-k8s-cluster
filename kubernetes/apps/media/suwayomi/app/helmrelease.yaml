@@ -31,7 +31,7 @@ spec:
           app:
             image:
               repository: ghcr.io/suwayomi/suwayomi-server
-              tag: stable@sha256:6bb8fa8cf1cf86589e5851f2f1c2ede5c8248d53982ec1795a715dcde85b1da2
+              tag: stable@sha256:553eb2db2723c91717bc0f3e292fd2e80460a1658ad8d98f387440e53966ce67
             env:
               TZ: ${TIMEZONE}
               AUTH_MODE: none
