@@ -15,7 +15,7 @@ spec:
       # Service has no ready endpoints -> all MQTT clients get ECONNREFUSED.
       # DO NOT bump without verifying the operator no longer calls the enterprise
       # load_rebalance API against OSS EMQX (renovate: this is intentionally held back).
-      version: 2.2.29
+      version: 2.3.2
       sourceRef:
         kind: HelmRepository
         name: emqx
