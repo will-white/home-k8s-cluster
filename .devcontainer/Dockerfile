@@ -13,7 +13,7 @@ ARG KUBECONFORM_VERSION=v0.8.0
 # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.+)$
 ARG KUSTOMIZE_VERSION=v5.8.1
 # renovate: datasource=github-releases depName=siderolabs/talos
-ARG TALOSCTL_VERSION=v1.13.4
+ARG TALOSCTL_VERSION=v1.13.7
 # renovate: datasource=github-releases depName=budimanjojo/talhelper
 ARG TALHELPER_VERSION=v3.1.11
 # renovate: datasource=github-releases depName=mikefarah/yq
