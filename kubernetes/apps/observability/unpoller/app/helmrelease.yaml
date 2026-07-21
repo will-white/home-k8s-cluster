@@ -41,7 +41,7 @@ spec:
                   name: unpoller-secret
             image:
               repository: ghcr.io/unpoller/unpoller
-              tag: v3.3.0@sha256:1c03bc25d83c5dde54e7436a010851d2db4831f8afe4f2ee60699d52dd01c5c4
+              tag: v3.3.3@sha256:e84e0fa3427548df4cc1f4e1922dd93fab5a67ae774b80b69e3a52041e88ef05
             probes:
               liveness:
                 enabled: true
