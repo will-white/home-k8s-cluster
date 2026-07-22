@@ -42,7 +42,7 @@ spec:
             image:
               # renovate: datasource=docker
               repository: docker.io/kometateam/kometa
-              tag: v2.3.1
+              tag: v2.4.5@sha256:a376a1818196cde159b5a4d5a6ad55411415f7b5bc38d8a27e8c718bae7f0ddd
             args: ["--run", "--read-only-config"]
             env:
               TZ: ${TIMEZONE}
