@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Full history for scheduled scan; PRs only need the diff range
           fetch-depth: ${{ github.event_name == 'schedule' && 0 || 1 }}
