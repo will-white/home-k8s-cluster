@@ -20,7 +20,7 @@
     "ghcr.io/devcontainers/features/go:1": {
       "version": "1.24"
     },
-    "ghcr.io/devcontainers/features/docker-in-docker:3@sha256:62e04ec83d944da4fd2830f68a677d1f5466c0654aea1e4baa30232d16029ac1": {
+    "ghcr.io/devcontainers/features/docker-in-docker@sha256:62e04ec83d944da4fd2830f68a677d1f5466c0654aea1e4baa30232d16029ac1": {
       "moby": "true",
       "installDockerBuildx": "true",
       "version": "latest",
