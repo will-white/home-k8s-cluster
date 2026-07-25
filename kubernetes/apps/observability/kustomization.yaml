@@ -9,6 +9,7 @@ resources:
   - ./grafana/ks.yaml
   - ./kube-prometheus-stack/ks.yaml
   - ./loki/ks.yaml
+  - ./node-exporter-lab/ks.yaml
   - ./node-exporter-truenas/ks.yaml
   - ./opnsense-exporter/ks.yaml
   - ./promtail/ks.yaml
