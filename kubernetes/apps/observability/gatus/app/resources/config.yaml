@@ -9,17 +9,17 @@ debug: false
 ui:
   title: Status | Gatus
   header: Status
-# alerting:
-#   pushover:
-#     title: Gatus
-#     application-token: ${PUSHOVER_TOKEN}
-#     user-key: ${PUSHOVER_USER_KEY}
-#     priority: 1
-#     default-alert:
-#       description: health-check failed
-#       send-on-resolved: true
-#       failure-threshold: 3
-#       success-threshold: 3
+alerting:
+  pushover:
+    title: Gatus
+    application-token: ${PUSHOVER_TOKEN}
+    user-key: ${PUSHOVER_USER_KEY}
+    priority: 1
+    default-alert:
+      description: health-check failed
+      send-on-resolved: true
+      failure-threshold: 3
+      success-threshold: 3
 connectivity:
   checker:
     target: 1.1.1.1:53
@@ -153,6 +153,99 @@ endpoints:
       timeout: 10s
     conditions:
       - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  # Non-K8s lab hosts — canonical list: home-lab/docs/monitoring.md
+  - name: plex
+    group: home-lab
+    url: http://plex.internal:32400/identity
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      timeout: 10s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: truenas
+    group: home-lab
+    url: http://truenas.internal
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: adguard-dns
+    group: home-lab
+    url: 192.168.5.2
+    interval: 1m
+    dns:
+      query-name: plex.internal
+      query-type: A
+    conditions:
+      - "[DNS_RCODE] == NOERROR"
+    alerts:
+      - type: pushover
+
+  - name: adguard-ui
+    group: home-lab
+    url: http://adguard.internal:8083
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: portainer
+    group: home-lab
+    url: http://skylab.internal:9002
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: pikvm
+    group: home-lab
+    url: https://pikvm.internal
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302, 401)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: opnsense-ui
+    group: home-lab
+    url: https://opnsense.internal:8443
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302)"
       - "[RESPONSE_TIME] < 5000"
     alerts:
       - type: pushover

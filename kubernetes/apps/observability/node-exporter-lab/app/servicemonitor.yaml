@@ -1,0 +1,212 @@
+# Scrape node_exporter (and smartctl_exporter on plex) on non-K8s lab hosts.
+# Agents are managed in the home-lab repo (ansible/playbooks/monitoring.yml);
+# canonical host/target list: home-lab/docs/monitoring.md
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lab-node-plex
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: lab-node-plex
+    app.kubernetes.io/instance: plex
+spec:
+  clusterIP: None
+  ports:
+    - name: node
+      port: 9100
+      protocol: TCP
+      targetPort: 9100
+    - name: smartctl
+      port: 9633
+      protocol: TCP
+      targetPort: 9633
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: lab-node-plex
+  namespace: observability
+subsets:
+  - addresses:
+      - ip: ${PLEX_IP}
+    ports:
+      - name: node
+        port: 9100
+        protocol: TCP
+      - name: smartctl
+        port: 9633
+        protocol: TCP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: lab-node-plex
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: lab-node-plex
+    app.kubernetes.io/instance: plex
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lab-node-plex
+  endpoints:
+    - port: node
+      scheme: http
+      interval: 30s
+      relabelings:
+        - targetLabel: instance
+          replacement: plex
+    - port: smartctl
+      scheme: http
+      interval: 60s
+      relabelings:
+        - targetLabel: instance
+          replacement: plex
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lab-node-adguard
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: lab-node-adguard
+    app.kubernetes.io/instance: adguard
+spec:
+  clusterIP: None
+  ports:
+    - name: node
+      port: 9100
+      protocol: TCP
+      targetPort: 9100
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: lab-node-adguard
+  namespace: observability
+subsets:
+  - addresses:
+      - ip: ${ADGUARD_IP}
+    ports:
+      - name: node
+        port: 9100
+        protocol: TCP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: lab-node-adguard
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: lab-node-adguard
+    app.kubernetes.io/instance: adguard
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lab-node-adguard
+  endpoints:
+    - port: node
+      scheme: http
+      interval: 30s
+      relabelings:
+        - targetLabel: instance
+          replacement: adguard
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lab-node-skylab
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: lab-node-skylab
+    app.kubernetes.io/instance: skylab
+spec:
+  clusterIP: None
+  ports:
+    - name: node
+      port: 9100
+      protocol: TCP
+      targetPort: 9100
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: lab-node-skylab
+  namespace: observability
+subsets:
+  - addresses:
+      - ip: ${SKYLAB_IP}
+    ports:
+      - name: node
+        port: 9100
+        protocol: TCP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: lab-node-skylab
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: lab-node-skylab
+    app.kubernetes.io/instance: skylab
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lab-node-skylab
+  endpoints:
+    - port: node
+      scheme: http
+      interval: 30s
+      relabelings:
+        - targetLabel: instance
+          replacement: skylab
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lab-node-opnsense
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: lab-node-opnsense
+    app.kubernetes.io/instance: opnsense
+spec:
+  clusterIP: None
+  ports:
+    - name: node
+      port: 9100
+      protocol: TCP
+      targetPort: 9100
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: lab-node-opnsense
+  namespace: observability
+subsets:
+  - addresses:
+      - ip: ${OPNSENSE_IP}
+    ports:
+      - name: node
+        port: 9100
+        protocol: TCP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: lab-node-opnsense
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: lab-node-opnsense
+    app.kubernetes.io/instance: opnsense
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lab-node-opnsense
+  endpoints:
+    - port: node
+      scheme: http
+      interval: 30s
+      relabelings:
+        - targetLabel: instance
+          replacement: opnsense
