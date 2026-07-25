@@ -20,15 +20,54 @@ spec:
           containers:
             - name: rclone
               image: rclone/rclone:1.74@sha256:c61954aaa32328a5486715dd063a81c7879f5195ad3505cd362deddd509dc4a1
+              # Each Ceph RGW bucket is owned by its own OBC user; the shared
+              # backup-user cannot read them (403). Sync each bucket with its own
+              # credentials (supplied via RCLONE_CONFIG_* env from the OBC secrets)
+              # to the matching Garage bucket. [garage] comes from /config/rclone.conf.
+              command: ["/bin/sh", "-c"]
               args:
-                - sync
-                - --config=/config/rclone.conf
-                - --verbose
-                - --transfers=4
-                - --checkers=8
-                - --fast-list
-                - "ceph:"
-                - "garage:"
+                - |
+                  set -e
+                  RCLONE_OPTS="--config=/config/rclone.conf --verbose --transfers=4 --checkers=8 --fast-list"
+                  echo "Syncing cloudnative-pg -> garage"
+                  rclone $RCLONE_OPTS sync cnpg:cloudnative-pg garage:cloudnative-pg
+                  echo "Syncing volsync-backups -> garage"
+                  rclone $RCLONE_OPTS sync volsync:volsync-backups garage:volsync-backups
+              env:
+                # Source remote: cloudnative-pg bucket (OBC secret in this namespace)
+                - name: RCLONE_CONFIG_CNPG_TYPE
+                  value: s3
+                - name: RCLONE_CONFIG_CNPG_PROVIDER
+                  value: Ceph
+                - name: RCLONE_CONFIG_CNPG_ENDPOINT
+                  value: http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc:80
+                - name: RCLONE_CONFIG_CNPG_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: cloudnative-pg
+                      key: AWS_ACCESS_KEY_ID
+                - name: RCLONE_CONFIG_CNPG_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: cloudnative-pg
+                      key: AWS_SECRET_ACCESS_KEY
+                # Source remote: volsync-backups bucket (OBC creds mirrored from volsync-system)
+                - name: RCLONE_CONFIG_VOLSYNC_TYPE
+                  value: s3
+                - name: RCLONE_CONFIG_VOLSYNC_PROVIDER
+                  value: Ceph
+                - name: RCLONE_CONFIG_VOLSYNC_ENDPOINT
+                  value: http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc:80
+                - name: RCLONE_CONFIG_VOLSYNC_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: volsync-obc-creds
+                      key: AWS_ACCESS_KEY_ID
+                - name: RCLONE_CONFIG_VOLSYNC_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: volsync-obc-creds
+                      key: AWS_SECRET_ACCESS_KEY
               resources:
                 requests:
                   cpu: 100m
@@ -43,42 +82,3 @@ spec:
             - name: rclone-config
               secret:
                 secretName: rclone-rgw-backup
----
-# One-time job for initial sync or disaster recovery hydration
-# Uncomment and apply manually when needed
-# apiVersion: batch/v1
-# kind: Job
-# metadata:
-#   name: rclone-rgw-restore
-# spec:
-#   ttlSecondsAfterFinished: 86400
-#   template:
-#     spec:
-#       restartPolicy: OnFailure
-#       containers:
-#         - name: rclone
-#           image: rclone/rclone:1.68
-#           args:
-#             - sync
-#             - --config=/config/rclone.conf
-#             - --verbose
-#             - --transfers=4
-#             - --checkers=8
-#             - --fast-list
-#             # NOTE: Reverse direction - Garage to Ceph for restore
-#             - garage:
-#             - ceph:
-#           resources:
-#             requests:
-#               cpu: 100m
-#               memory: 256Mi
-#             limits:
-#               memory: 1Gi
-#           volumeMounts:
-#             - name: rclone-config
-#               mountPath: /config
-#               readOnly: true
-#       volumes:
-#         - name: rclone-config
-#           secret:
-#             secretName: rclone-rgw-backup

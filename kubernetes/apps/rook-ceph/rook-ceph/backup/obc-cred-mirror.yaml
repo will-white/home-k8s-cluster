@@ -1,0 +1,75 @@
+---
+# The rclone backup runs in rook-ceph, but the volsync-backups bucket is owned by
+# the kopia-bucket OBC user whose credentials live in the volsync-system namespace.
+# These resources let External Secrets mirror those credentials into rook-ceph so the
+# CronJob can read the bucket with least privilege (the bucket's own OBC user).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rclone-obc-secret-reader
+  namespace: rook-ceph
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rclone-obc-secret-reader
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+    resourceNames: ["kopia-bucket"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: rclone-obc-secret-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: rclone-obc-secret-reader
+subjects:
+  - kind: ServiceAccount
+    name: rclone-obc-secret-reader
+    namespace: rook-ceph
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/external-secrets.io/secretstore_v1.json
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: volsync-obc
+  namespace: rook-ceph
+spec:
+  provider:
+    kubernetes:
+      remoteNamespace: volsync-system
+      server:
+        caProvider:
+          type: ConfigMap
+          name: kube-root-ca.crt
+          key: ca.crt
+      auth:
+        serviceAccount:
+          name: rclone-obc-secret-reader
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: volsync-obc-creds
+  namespace: rook-ceph
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: volsync-obc
+  target:
+    name: volsync-obc-creds
+  data:
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef:
+        key: kopia-bucket
+        property: AWS_ACCESS_KEY_ID
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: kopia-bucket
+        property: AWS_SECRET_ACCESS_KEY
