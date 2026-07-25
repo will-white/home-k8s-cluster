@@ -27,7 +27,7 @@ ARG HELM_VERSION=v3.21.1
 # renovate: datasource=github-releases depName=stern/stern
 ARG STERN_VERSION=v1.34.0
 # renovate: datasource=github-releases depName=cli/cli
-ARG GH_VERSION=v2.94.0
+ARG GH_VERSION=v2.96.0
 
 # Install system packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
