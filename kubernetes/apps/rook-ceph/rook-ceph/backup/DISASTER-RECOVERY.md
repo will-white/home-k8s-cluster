@@ -1,328 +1,163 @@
 # Ceph RGW Disaster Recovery Runbook
 
-This document describes how to backup Ceph RGW to Garage (TrueNAS) and restore in a disaster scenario.
+How Ceph RGW object data is backed up to Garage (on the NAS) and how to
+rehydrate it in a disaster.
 
-## Architecture Overview
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         Normal Operation                             │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌──────────────┐    Daily Sync     ┌──────────────┐                │
-│  │   Ceph RGW   │ ───────────────►  │    Garage    │                │
-│  │  (Primary)   │    (rclone)       │  (TrueNAS)   │                │
-│  └──────────────┘                   └──────────────┘                │
-│         ▲                                                           │
-│         │                                                           │
-│    ┌────┴────┐                                                      │
-│    │ Volsync │                                                      │
-│    │  CNPG   │                                                      │
-│    └─────────┘                                                      │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+Normal operation (nightly CronJob rclone-rgw-backup, 03:00):
 
-┌─────────────────────────────────────────────────────────────────────┐
-│                       Disaster Recovery                              │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌──────────────┐    Restore Sync   ┌──────────────┐                │
-│  │  Fresh RGW   │ ◄───────────────  │    Garage    │                │
-│  │  (New Ceph)  │    (rclone)       │  (TrueNAS)   │                │
-│  └──────────────┘                   └──────────────┘                │
-│         ▲                                  ▲                        │
-│         │                                  │                        │
-│    Option A                           Option B                      │
-│    (after sync)                       (direct restore)              │
-│         │                                  │                        │
-│    ┌────┴────┐                       ┌─────┴─────┐                  │
-│    │ Volsync │                       │  Volsync  │                  │
-│    │  CNPG   │                       │   CNPG    │                  │
-│    └─────────┘                       └───────────┘                  │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+  Ceph RGW bucket            Garage bucket
+  ─────────────────          ─────────────
+  cloudnative-pg   ── sync ─► cloudnative-pg      (CNPG barman: base + WAL)
+  volsync-backups  ── sync ─► volsync-backups     (volsync kopia repo)
+
+Restore (manual Job rclone-rgw-restore): same, reversed (garage: ─► ceph:).
 ```
+
+Each bucket is synced with **its own OBC credentials**, not a shared user.
+This matters: the app buckets are owned by their OBC-provisioned users, and a
+shared `backup-user` gets `403 AccessDenied` on them (S3 does not grant
+cross-owner access from admin *caps*). Because the job reads credentials live
+from the OBC secrets, it keeps working after a rebuild, when Rook re-creates
+the OBCs with the same bucket names but fresh users and keys.
+
+### Components (in `backup/`)
+
+| File | Purpose |
+|------|---------|
+| `cronjob.yaml` | Nightly backup. Per-bucket source remotes via `RCLONE_CONFIG_*` env from the OBC secrets; `[garage]` destination from `rclone.conf`. |
+| `externalsecret.yaml` | Renders `rclone.conf` with only the `[garage]` remote (Bitwarden `rclone-rgw-backup`: endpoint + keys). Note `region = garage` — Garage validates the SigV4 scope against its `s3_region`; without it you get `AuthorizationHeaderMalformed`. |
+| `obc-cred-mirror.yaml` | The `volsync-backups` OBC secret lives in `volsync-system`. This mirrors it into `rook-ceph` via an ESO Kubernetes-provider `SecretStore` + scoped RBAC (`ServiceAccount`/`ClusterRole`/`ClusterRoleBinding` reading only the `kopia-bucket` secret). |
+| `restore-job.yaml` | **Manual** restore Job (garage → ceph). NOT in `kustomization.yaml`, so Flux never runs it. |
+
+### Credentials
+
+| Bucket | Source of creds | Namespace |
+|--------|-----------------|-----------|
+| `cloudnative-pg` | OBC secret `cloudnative-pg` | `rook-ceph` |
+| `volsync-backups` | OBC secret `kopia-bucket`, mirrored to `volsync-obc-creds` | `volsync-system` → `rook-ceph` |
+| Garage endpoint/keys | Bitwarden `rclone-rgw-backup` (`GARAGE_ENDPOINT`, `GARAGE_ACCESS_KEY`, `GARAGE_SECRET_KEY`) | — |
+
+Garage endpoint is currently `http://nas.internal:30188`.
 
 ---
 
-## Prerequisites
+## ⚠ Golden rule
 
-### 1. Bitwarden Secrets Manager
+The backup is a **mirror** (`rclone sync`, which deletes). If it runs while Ceph
+RGW is empty (e.g. mid-rebuild), it will **wipe the good copy in Garage**.
 
-Create a secret named `rclone-rgw-backup` with these keys:
-
-| Key | Description | Example |
-|-----|-------------|---------|
-| `CEPH_ACCESS_KEY` | Ceph RGW access key | From `backup-user` ObjectStoreUser |
-| `CEPH_SECRET_KEY` | Ceph RGW secret key | From `backup-user` ObjectStoreUser |
-| `GARAGE_ENDPOINT` | Garage S3 endpoint | `http://truenas.local:3900` |
-| `GARAGE_ACCESS_KEY` | Garage access key | From Garage admin |
-| `GARAGE_SECRET_KEY` | Garage secret key | From Garage admin |
-
-### 2. Garage Setup on TrueNAS
-
-1. Install Garage on TrueNAS (Docker/VM/App)
-2. Create buckets matching Ceph:
-   - `volsync-backups`
-   - `cloudnative-pg`
-   - Any other buckets you use
-3. Create access keys with write permissions
-
----
-
-## Enabling Backup Sync
-
-### Step 1: Verify Secrets
-
-Ensure the `rclone-rgw-backup` secret exists in Bitwarden Secrets Manager.
-
-### Step 2: Enable the Kustomization
-
-Add the backup ks.yaml to the main kustomization:
-
-```yaml
-# kubernetes/apps/rook-ceph/rook-ceph/ks.yaml
-# Add this new Kustomization block at the end
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: rook-ceph-backup
-  namespace: flux-system
-spec:
-  # ... (already created in backup/ks.yaml)
-```
-
-### Step 3: Unsuspend the CronJob
-
-Edit `backup/cronjob.yaml`:
-
-```yaml
-spec:
-  suspend: false  # Change from true to false
-```
-
-### Step 4: Verify Sync
+**Before any restore, suspend the backup and leave it suspended until RGW is
+repopulated and verified:**
 
 ```bash
-# Check CronJob status
+kubectl patch cronjob -n rook-ceph rclone-rgw-backup \
+  --type merge -p '{"spec":{"suspend":true}}'
+```
+
+Re-enable afterwards by setting `suspend: false` in `cronjob.yaml` (Flux owns
+the field, so change it in git, not just live).
+
+---
+
+## Verifying the backup
+
+```bash
+# CronJob should not be suspended and should have run in the last 24h
 kubectl get cronjob -n rook-ceph rclone-rgw-backup
 
-# Trigger a manual sync
-kubectl create job --from=cronjob/rclone-rgw-backup -n rook-ceph rclone-test
+# Manual run
+kubectl create job --from=cronjob/rclone-rgw-backup -n rook-ceph rclone-manual
+kubectl logs -n rook-ceph -l job-name=rclone-manual -f
 
-# Watch the logs
-kubectl logs -n rook-ceph -l job-name=rclone-test -f
+# Compare sizes (radosgw-admin: always pass the zone, see gotcha below)
+```
+
+### radosgw-admin zone gotcha
+
+The tools pod defaults to the empty `default` zone, so bare `radosgw-admin
+bucket list` / `user list` return `[]` and look like data loss. Always pass the
+real zone:
+
+```bash
+Z="--rgw-realm=ceph-objectstore --rgw-zonegroup=ceph-objectstore --rgw-zone=ceph-objectstore"
+kubectl exec -n rook-ceph deploy/rook-ceph-tools -- radosgw-admin bucket list $Z
+kubectl exec -n rook-ceph deploy/rook-ceph-tools -- radosgw-admin bucket stats --bucket=cloudnative-pg $Z
 ```
 
 ---
 
-## Disaster Recovery Procedures
+## Rehydration
 
-### Scenario 1: Complete Cluster Loss
+Restore is two layers: **object layer** (Garage → Ceph RGW) then **app layer**
+(bucket → running database / PVC).
 
-**Situation:** Entire Kubernetes cluster is gone. You need to restore from scratch.
+### Layer 1 — Object restore (Garage → Ceph RGW)
 
-#### Option A: Restore to Fresh Ceph RGW
-
-1. **Bootstrap new cluster with Ceph**
+1. **Suspend the backup** (golden rule above).
+2. Confirm the OBCs are Bound and their secrets exist:
    ```bash
-   # Deploy Talos + Flux as normal
-   # Wait for Ceph to be healthy
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph status
+   kubectl get objectbucketclaim -A
+   kubectl get secret -n rook-ceph cloudnative-pg volsync-obc-creds
    ```
-
-2. **Create the restore job**
+   On a fresh cluster, wait for Flux to reconcile `rook-ceph` (OBCs + the
+   `obc-cred-mirror.yaml` ExternalSecret) before continuing.
+3. Run the restore Job:
    ```bash
-   # Apply the restore job (uncomment from cronjob.yaml or create manually)
-   kubectl apply -f - <<EOF
-   apiVersion: batch/v1
-   kind: Job
-   metadata:
-     name: rclone-rgw-restore
-     namespace: rook-ceph
-   spec:
-     ttlSecondsAfterFinished: 86400
-     template:
-       spec:
-         restartPolicy: OnFailure
-         containers:
-           - name: rclone
-             image: rclone/rclone:1.68
-             args:
-               - sync
-               - --config=/config/rclone.conf
-               - --verbose
-               - --transfers=4
-               - --checkers=8
-               - --fast-list
-               - garage:
-               - ceph:
-             volumeMounts:
-               - name: rclone-config
-                 mountPath: /config
-                 readOnly: true
-         volumes:
-           - name: rclone-config
-             secret:
-               secretName: rclone-rgw-backup
-   EOF
-   ```
-
-3. **Wait for sync to complete**
-   ```bash
+   kubectl apply -f kubernetes/apps/rook-ceph/rook-ceph/backup/restore-job.yaml
    kubectl logs -n rook-ceph -l job-name=rclone-rgw-restore -f
    ```
+4. Verify object counts match Garage, then `kubectl delete -f restore-job.yaml`.
 
-4. **Deploy applications**
-   - Volsync will find existing restic repos and can restore PVCs
-   - CloudNative-PG will find WAL archives and can recover databases
+### Layer 2a — CloudNativePG (Postgres)
 
-#### Option B: Restore Directly from Garage (Faster)
+CNPG recovers from the barman store in the `cloudnative-pg` bucket. In
+`kubernetes/apps/database/cloudnative-pg/cluster/cluster16.yaml`:
 
-1. **Bootstrap new cluster WITHOUT Ceph Object Store**
-   - Deploy Ceph for block storage only
-   - Skip RGW deployment initially
+1. Bump `serverName` (e.g. `postgres16-v1` → `postgres16-v2`) so the recovered
+   cluster writes to a new WAL prefix and does not clobber the archive it is
+   recovering from.
+2. Uncomment the `bootstrap.recovery` + `externalClusters` block; set
+   `previousCluster` to the OLD `serverName` (`postgres16-v1`).
+3. Commit; let Flux create the cluster. It restores the base backup and replays
+   WAL from `s3://cloudnative-pg/`.
+4. Once healthy, revert to the normal (non-recovery) spec in a follow-up commit.
 
-2. **Update Volsync to point to Garage**
-   
-   Temporarily modify `kubernetes/templates/volsync/minio.yaml`:
-   ```yaml
-   AWS_S3_ENDPOINT: "http://truenas.local:3900"  # Garage endpoint
-   ```
+### Layer 2b — volsync (PVCs, kopia)
 
-3. **Update CloudNative-PG to point to Garage**
-   
-   Modify `kubernetes/apps/database/cloudnative-pg/cluster/cluster16.yaml`:
-   ```yaml
-   endpointURL: http://truenas.local:3900  # Garage endpoint
-   ```
+Each app's PVC bootstraps from a `ReplicationDestination` named
+`<app>-bootstrap` (see `kubernetes/templates/volsync/`), which restores from the
+kopia repo in `volsync-backups`. Normal app reconciliation triggers this via the
+PVC `dataSourceRef`; no manual step beyond having the bucket restored (Layer 1)
+and applying the app.
 
-4. **Restore applications from Garage**
-   - Volsync restores PVCs from Garage
-   - CNPG recovers from Garage
+### After restore
 
-5. **Later: Set up RGW and migrate back** (optional)
-
----
-
-### Scenario 2: Single OSD Failure
-
-**Situation:** One drive failed, cluster is degraded but operational.
-
-1. **Check cluster health**
-   ```bash
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph status
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- ceph osd tree
-   ```
-
-2. **Verify backups are current**
-   ```bash
-   kubectl get cronjob -n rook-ceph rclone-rgw-backup
-   kubectl get jobs -n rook-ceph -l job-name=rclone-rgw-backup
-   ```
-
-3. **Replace drive and let Ceph rebalance**
-   - See OSD replacement procedure (separate doc)
+- Verify apps are healthy and data is intact.
+- Set `suspend: false` on the backup CronJob (in git) and confirm the next run
+  is a small incremental, not a full re-upload or a mass deletion.
 
 ---
 
-### Scenario 3: RGW Data Corruption
+## Full-cluster-loss checklist
 
-**Situation:** RGW is running but data is corrupted.
-
-1. **Stop applications writing to RGW**
-   ```bash
-   flux suspend ks volsync-system
-   flux suspend ks cloudnative-pg-cluster
-   ```
-
-2. **Clear corrupted buckets**
-   ```bash
-   kubectl -n rook-ceph exec -it deploy/rook-ceph-tools -- \
-     radosgw-admin bucket rm --bucket=volsync-backups --purge-objects
-   ```
-
-3. **Restore from Garage**
-   ```bash
-   kubectl create job --from=cronjob/rclone-rgw-backup -n rook-ceph rclone-restore
-   # Note: Modify args to sync garage: → ceph: direction
-   ```
-
-4. **Resume applications**
-   ```bash
-   flux resume ks volsync-system
-   flux resume ks cloudnative-pg-cluster
-   ```
-
----
-
-## Verification Checklist
-
-### Regular Health Checks
-
-- [ ] CronJob ran successfully in last 24 hours
-- [ ] No failed jobs in `kubectl get jobs -n rook-ceph`
-- [ ] Garage accessible from cluster
-- [ ] Bucket sizes match between Ceph and Garage
-
-### Monthly DR Test
-
-- [ ] Spin up test cluster
-- [ ] Restore one PVC from Garage
-- [ ] Verify data integrity
-- [ ] Document any issues
-
----
-
-## Key Endpoints & Credentials
-
-| Resource | Location | Notes |
-|----------|----------|-------|
-| Ceph RGW (internal) | `http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc:80` | In-cluster only |
-| Ceph RGW (external) | `https://rgw.${SECRET_DOMAIN}` | Via ingress |
-| Garage | `http://truenas.local:3900` | Update with your TrueNAS IP |
-| RGW Credentials | Bitwarden: `rclone-rgw-backup` | CEPH_ACCESS_KEY, CEPH_SECRET_KEY |
-| Garage Credentials | Bitwarden: `rclone-rgw-backup` | GARAGE_ACCESS_KEY, GARAGE_SECRET_KEY |
+1. Rebuild Talos + Flux + Rook; wait for Ceph healthy and RGW `Ready`.
+2. **Suspend** the backup CronJob before it can fire.
+3. Wait for OBCs Bound + `volsync-obc-creds` synced.
+4. Layer 1 object restore (`restore-job.yaml`), verify counts.
+5. Layer 2a CNPG recovery, Layer 2b volsync — bring apps up, verify.
+6. Resume the backup (git `suspend: false`); confirm the next run is incremental.
 
 ---
 
 ## Troubleshooting
 
-### Rclone sync is slow
-
-```bash
-# Check transfer stats
-kubectl logs -n rook-ceph -l job-name=rclone-rgw-backup -f
-
-# Increase parallelism (edit cronjob.yaml)
-args:
-  - --transfers=8
-  - --checkers=16
-```
-
-### Permission denied errors
-
-```bash
-# Verify credentials
-kubectl get secret -n rook-ceph rclone-rgw-backup -o yaml
-
-# Test manually
-kubectl run -it --rm rclone-test --image=rclone/rclone:1.68 -- \
-  --config=/dev/stdin lsd ceph: <<EOF
-[ceph]
-type = s3
-provider = Ceph
-endpoint = http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc:80
-access_key_id = YOUR_KEY
-secret_access_key = YOUR_SECRET
-EOF
-```
-
-### Bucket doesn't exist on Garage
-
-```bash
-# Create bucket via rclone
-kubectl run -it --rm rclone-test --image=rclone/rclone:1.68 -- \
-  --config=/config/rclone.conf mkdir garage:volsync-backups
-```
+| Symptom | Cause / fix |
+|---------|-------------|
+| `AuthorizationHeaderMalformed … expected scope …/garage/…` | Missing `region = garage` on the `[garage]` remote. |
+| Backup transfers 0 bytes, no errors | Source remote can't see the bucket — check it uses the bucket's OBC creds, not `backup-user` (which 403s). |
+| `403 AccessDenied` listing a bucket | Wrong credentials for that bucket's owner. |
+| `radosgw-admin` shows no buckets/users | Wrong zone — pass the `$Z` realm/zonegroup/zone flags. |
+| `volsync-obc-creds` missing/not synced | Check the `volsync-obc` SecretStore is `Valid` and the RBAC in `obc-cred-mirror.yaml` is applied. |

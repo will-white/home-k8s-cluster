@@ -1,0 +1,106 @@
+---
+# =============================================================================
+# MANUAL RESTORE JOB — Garage -> Ceph RGW (object-layer rehydration)
+# =============================================================================
+# This file is intentionally NOT listed in kustomization.yaml, so Flux never
+# applies it. Run it by hand during disaster recovery:
+#
+#     kubectl apply -f restore-job.yaml
+#     kubectl logs -n rook-ceph -l job-name=rclone-rgw-restore -f
+#     kubectl delete -f restore-job.yaml   # when done
+#
+# It mirrors each Garage bucket back into the matching Ceph RGW bucket using
+# that bucket's OWN OBC credentials (read live from the OBC secrets), so it
+# works unchanged after a full cluster rebuild — Rook re-provisions the OBCs
+# with the same bucket names but fresh users/keys, and this job picks those up.
+#
+# ⚠ CRITICAL — before running restore:
+#   1. SUSPEND the backup CronJob first:
+#        kubectl patch cronjob -n rook-ceph rclone-rgw-backup \
+#          --type merge -p '{"spec":{"suspend":true}}'
+#      The backup is a `sync` (mirror). If it fires while RGW is empty during a
+#      rebuild, it will DELETE the good data in Garage. Keep it suspended until
+#      RGW is repopulated and verified, then resume (set suspend:false via Flux).
+#   2. Ensure the OBCs are Bound and their secrets exist:
+#        kubectl get objectbucketclaim -A
+#        kubectl get secret -n rook-ceph cloudnative-pg volsync-obc-creds
+#   3. This job uses `sync`, making Ceph EXACTLY match Garage (extra objects in
+#      Ceph are deleted). That is the intended behaviour for a clean rehydrate.
+#
+# After the object layer is restored, do the app-layer restore (see
+# DISASTER-RECOVERY.md): CNPG bootstrap.recovery for Postgres, and volsync
+# ReplicationDestination for PVCs.
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rclone-rgw-restore
+  namespace: rook-ceph
+spec:
+  ttlSecondsAfterFinished: 86400
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: rclone
+          image: rclone/rclone:1.74@sha256:c61954aaa32328a5486715dd063a81c7879f5195ad3505cd362deddd509dc4a1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              RCLONE_OPTS="--config=/config/rclone.conf --verbose --transfers=4 --checkers=8 --fast-list"
+              echo "Restoring garage -> cloudnative-pg"
+              rclone $RCLONE_OPTS sync garage:cloudnative-pg cnpg:cloudnative-pg
+              echo "Restoring garage -> volsync-backups"
+              rclone $RCLONE_OPTS sync garage:volsync-backups volsync:volsync-backups
+              echo "Restore complete"
+          env:
+            # Destination remote: cloudnative-pg bucket (OBC secret in this namespace)
+            - name: RCLONE_CONFIG_CNPG_TYPE
+              value: s3
+            - name: RCLONE_CONFIG_CNPG_PROVIDER
+              value: Ceph
+            - name: RCLONE_CONFIG_CNPG_ENDPOINT
+              value: http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc:80
+            - name: RCLONE_CONFIG_CNPG_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: cloudnative-pg
+                  key: AWS_ACCESS_KEY_ID
+            - name: RCLONE_CONFIG_CNPG_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cloudnative-pg
+                  key: AWS_SECRET_ACCESS_KEY
+            # Destination remote: volsync-backups bucket (OBC creds mirrored from volsync-system)
+            - name: RCLONE_CONFIG_VOLSYNC_TYPE
+              value: s3
+            - name: RCLONE_CONFIG_VOLSYNC_PROVIDER
+              value: Ceph
+            - name: RCLONE_CONFIG_VOLSYNC_ENDPOINT
+              value: http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc:80
+            - name: RCLONE_CONFIG_VOLSYNC_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: volsync-obc-creds
+                  key: AWS_ACCESS_KEY_ID
+            - name: RCLONE_CONFIG_VOLSYNC_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: volsync-obc-creds
+                  key: AWS_SECRET_ACCESS_KEY
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: rclone-config
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: rclone-config
+          secret:
+            secretName: rclone-rgw-backup
