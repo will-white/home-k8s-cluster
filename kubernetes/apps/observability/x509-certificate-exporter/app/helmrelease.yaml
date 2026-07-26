@@ -1,0 +1,70 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app x509-certificate-exporter
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: x509-certificate-exporter
+      version: 4.1.0
+      sourceRef:
+        kind: HelmRepository
+        name: enix
+        namespace: flux-system
+      interval: 1h
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  dependsOn:
+    - name: kube-prometheus-stack
+      namespace: observability
+  values:
+    fullnameOverride: *app
+    # Scan in-cluster TLS Secrets for expiring certificates. This covers
+    # certs that cert-manager does NOT own (and thus that
+    # certmanager_certificate_expiration_timestamp_seconds misses) — e.g. the
+    # Cilium/Hubble self-signed mTLS certs, webhook CA bundles, and any other
+    # kubernetes.io/tls Secret. cert-manager Certificates are already alerted
+    # on separately via the cert-manager PrometheusRules.
+    secretsExporter:
+      enabled: true
+      # Default watches kubernetes.io/tls Secrets' tls.crt across all namespaces.
+      secretTypes:
+        - type: kubernetes.io/tls
+          key: tls.crt
+      resources:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
+    # Only the Secrets exporter is needed; node-filesystem (kubelet/etcd) certs
+    # are managed by Talos and would require hostPath mounts Talos restricts.
+    hostPathsExporter:
+      daemonSets: {}
+    service:
+      create: true
+    # kube-prometheus-stack selectors are empty ({}), so the chart's own
+    # ServiceMonitor and PrometheusRule are picked up without extra labels.
+    prometheusServiceMonitor:
+      create: true
+    prometheusRules:
+      create: true
+      # Warn well before expiry, critical when renewal is genuinely overdue.
+      warningDaysLeft: 21
+      criticalDaysLeft: 7
+      # Alert if the exporter itself can't read Secrets / reach the API —
+      # otherwise a monitoring regression would go silent.
+      alertOnReadErrors: true
+      readErrorsSeverity: warning
+      certificateRenewalsSeverity: warning
+      certificateExpirationsSeverity: critical
+  driftDetection:
+    mode: enabled
