@@ -249,3 +249,120 @@ endpoints:
       - "[RESPONSE_TIME] < 5000"
     alerts:
       - type: pushover
+
+  # Synthetic end-to-end checks of user-facing apps via their real ingress
+  # URLs (ingress -> app). Catches "pod is Ready but the app is unreachable"
+  # (e.g. HA loading over HTTP but its runtime broken) — which pod/HelmRelease
+  # health alone does not detect. any(200,302,401) = app is serving (auth-gated
+  # apps redirect/challenge); a 5xx/timeout/conn-refused fails the check.
+  - name: home-assistant
+    group: applications
+    url: https://hass.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302, 401)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: frigate
+    group: applications
+    url: https://frigate.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302, 401)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: paperless
+    group: applications
+    url: https://paperless.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302, 401)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: mealie
+    group: applications
+    url: https://mealie.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302, 401)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: homebox
+    group: applications
+    url: https://homebox.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302, 401)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: komga
+    group: applications
+    url: https://komga.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302, 401)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: radarr
+    group: applications
+    url: https://radarr.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302, 401)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
+  - name: sonarr
+    group: applications
+    url: https://sonarr.${SECRET_DOMAIN}
+    interval: 2m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      insecure: true
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 302, 401)"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
