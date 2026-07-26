@@ -3,4 +3,3 @@ kind: Kustomization
 resources:
   - ./cluster.yaml
   - ./networkpolicy.yaml
-  - ./podmonitor.yaml
