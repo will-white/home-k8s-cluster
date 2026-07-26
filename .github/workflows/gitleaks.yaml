@@ -24,8 +24,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          # Full history for scheduled scan; PRs only need the diff range
-          fetch-depth: ${{ github.event_name == 'schedule' && 0 || 1 }}
+          # Full history required: gitleaks-action diffs PRs as `base^..head`,
+          # so the base commit (and its parent) must be present in the clone.
+          # A shallow (depth 1) checkout omits it and the scan fails with
+          # "unknown revision or path not in the working tree".
+          fetch-depth: 0
 
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v3
