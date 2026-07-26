@@ -9,6 +9,7 @@ resources:
   - ./coredns.yaml
   - ./descheduler.yaml
   - ./emqx.yaml
+  - ./enix.yaml
   - ./external-dns.yaml
   - ./external-secrets.yaml
   - ./grafana.yaml
