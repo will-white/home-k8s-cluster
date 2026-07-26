@@ -27,6 +27,15 @@ spec:
       namespace: volsync-system
   values:
     csi:
+      # CRITICAL (Talos + Ceph tentacle v20+): the CephFS kernel client must pin
+      # ms_mode or the msgr2 handshake to the MDS fails ("mount error: no mds is
+      # up... or you may not be authorized") and NO cephfs volume can mount. RBD
+      # already pins the same via rbd_default_map_options. The rook 1.20 CSI
+      # migration to ceph-csi-operator dropped this from the live Driver CR once
+      # (2026-07) and broke every cephfs mount cluster-wide. Do NOT remove, and
+      # after any rook upgrade verify:
+      #   kubectl -n rook-ceph get driver rook-ceph.cephfs.csi.ceph.com \
+      #     -o jsonpath='{.spec.kernelMountOptions}'  # must be {"ms_mode":"prefer-crc"}
       cephFSKernelMountOptions: ms_mode=prefer-crc
       enableLiveness: true
       serviceMonitor:
