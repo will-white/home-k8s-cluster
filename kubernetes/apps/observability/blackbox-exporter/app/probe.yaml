@@ -1,0 +1,30 @@
+# ICMP latency/loss trends. Auto-scraped by kube-prometheus-stack
+# (probeSelectorNilUsesHelmValues: false). Yields probe_success,
+# probe_duration_seconds, probe_icmp_duration_seconds per target.
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: blackbox-icmp
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: blackbox-exporter
+spec:
+  interval: 30s
+  module: icmp
+  prober:
+    url: blackbox-exporter.observability.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      static:
+        - 1.1.1.1 # internet — Cloudflare (WAN quality / packet loss trend)
+        - 8.8.8.8 # internet — Google
+        - 192.168.5.1 # OPNsense — LAN gateway
+        - 192.168.5.10 # truenas
+        - 192.168.5.2 # adguard — DNS resolver
+        - 192.168.5.172 # plex
+      labels:
+        probe: icmp
+      relabelingConfigs:
+        - sourceLabels: [__param_target]
+          targetLabel: instance
