@@ -65,6 +65,21 @@ spec:
                   timeoutSeconds: 1
                   failureThreshold: 3
               readiness: *probes
+              # bazarr 1.6.0 (Python 3.14) takes >30s to start serving /health,
+              # so the liveness probe (0s delay + 3x10s) was SIGTERM-killing it
+              # mid-boot in a crashloop. A startup probe holds liveness/readiness
+              # off until /health responds, allowing up to ~5m to come up.
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *port
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                  timeoutSeconds: 1
+                  failureThreshold: 30
             securityContext: &securityContext
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
