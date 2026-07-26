@@ -106,13 +106,16 @@ spec:
           requests:
             cpu: 250m
             memory: 2Gi
-        # The chart default of 1Gi was being exceeded once the insights /
-        # prometheus / dashboard modules + diskprediction warm up, causing
-        # both mgr-a and mgr-b to OOMKill (which fired the OomKilled critical
-        # alert). Bump headroom; mgr is a singleton workload anyway.
+        # mgr memory keeps outgrowing its limit (1Gi -> 2Gi -> now 4Gi). The
+        # insights / prometheus / dashboard modules warm up, and post-Ceph-
+        # tentacle (v20) the cephfs volumes/nfs connection pool grows under
+        # CSI/volsync subvolume clone load, spiking mgr-a to ~2Gi -> OOMKill.
+        # Bump headroom; mgr is a singleton (mgr-b standby). If it still OOMs
+        # at 4Gi, investigate the cephfs connection-pool leak / disable unused
+        # modules (e.g. nfs) rather than raising further.
         mgr:
           limits:
-            memory: 2Gi
+            memory: 4Gi
           requests:
             cpu: 500m
             memory: 1Gi
