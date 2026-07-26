@@ -4,10 +4,6 @@ metadata:
   name: &app litellm
 spec:
   interval: 30m
-  # litellm's readiness (/health/readiness) cold-start loads all configured
-  # model endpoints + checks the DB, taking ~5m — right at Helm's default 5m
-  # wait, so upgrades raced the timeout and rolled back in a loop. Give headroom.
-  timeout: 15m
   chart:
     spec:
       chart: app-template
@@ -44,9 +40,12 @@ spec:
             resources:
               requests:
                 cpu: 10m
-                memory: 512Mi
-              limits:
+                # The main-stable image (bumped to a1745e6 in 890c9dfb) OOMKills
+                # on startup at the old 1Gi limit (exit 137), so every upgrade
+                # crashlooped and rolled back to the previous image. Raised.
                 memory: 1Gi
+              limits:
+                memory: 2Gi
             probes:
               liveness:
                 enabled: true
