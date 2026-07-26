@@ -4,6 +4,10 @@ metadata:
   name: &app litellm
 spec:
   interval: 30m
+  # litellm's readiness (/health/readiness) cold-start loads all configured
+  # model endpoints + checks the DB, taking ~5m — right at Helm's default 5m
+  # wait, so upgrades raced the timeout and rolled back in a loop. Give headroom.
+  timeout: 15m
   chart:
     spec:
       chart: app-template

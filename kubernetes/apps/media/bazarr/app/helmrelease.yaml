@@ -6,6 +6,10 @@ metadata:
   name: &app bazarr
 spec:
   interval: 30m
+  # Recreate strategy + RWO Ceph RBD volume handoff + multi-container init
+  # (init-db, subcleaner) push the rollout past Helm's default 5m wait, so
+  # every upgrade timed out and rolled back in a loop. Give it real headroom.
+  timeout: 15m
   chart:
     spec:
       chart: app-template
