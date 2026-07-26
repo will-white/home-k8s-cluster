@@ -4,3 +4,6 @@ kind: Kustomization
 resources:
   - ./flux.yaml
   - ./cluster.yaml
+  # PodMonitor for the Flux controllers — without this, gotk_* metrics are not
+  # scraped and the FluxReconciliation* alerts (kube-prometheus-stack) never fire.
+  - ./podmonitors.yaml
