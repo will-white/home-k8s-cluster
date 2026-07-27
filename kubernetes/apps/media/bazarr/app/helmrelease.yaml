@@ -62,7 +62,10 @@ spec:
                     port: &port 6767
                   initialDelaySeconds: 0
                   periodSeconds: 10
-                  timeoutSeconds: 1
+                  # waitress is single-threaded WSGI; during disk indexing a 1s
+                  # timeout (3 fails = 30s) can liveness-kill a busy-but-alive
+                  # bazarr and cause a needless ~3min-boot restart.
+                  timeoutSeconds: 5
                   failureThreshold: 3
               readiness: *probes
               # bazarr 1.6.0 (Python 3.14) takes >30s to start serving /health,
@@ -78,7 +81,7 @@ spec:
                     port: *port
                   initialDelaySeconds: 5
                   periodSeconds: 10
-                  timeoutSeconds: 1
+                  timeoutSeconds: 5
                   failureThreshold: 30
             securityContext: &securityContext
               allowPrivilegeEscalation: false
@@ -86,7 +89,10 @@ spec:
               capabilities: {drop: ["ALL"]}
             resources:
               requests:
-                cpu: 10m
+                # 10m starved the CPU-heavy Python init under node CPU
+                # contention, stretching boot to ~2m40s (silent gap before
+                # waitress binds :6767). A real floor keeps boot time bounded.
+                cpu: 200m
               limits:
                 memory: 1Gi
           exportarr:
