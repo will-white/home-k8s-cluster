@@ -1,0 +1,91 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-logs-overview-dashboard
+  namespace: observability
+  labels:
+    grafana_dashboard: "true"
+  annotations:
+    grafana_folder: "Observability"
+data:
+  # Custom dashboard surfacing the Loki recording rules
+  # (loki:app_log_errors:1m, loki:app_log_lines:1m, loki:namespace_log_bytes:5m,
+  #  loki:ingress_5xx:5m, loki:ingress_requests:5m) that the Loki ruler
+  # remote-writes into Prometheus, plus a live error-log stream from Loki.
+  logs-overview.json: |-
+    {
+      "annotations": { "list": [] },
+      "editable": true,
+      "graphTooltip": 1,
+      "links": [],
+      "time": { "from": "now-6h", "to": "now" },
+      "refresh": "1m",
+      "schemaVersion": 39,
+      "title": "Logs / Overview",
+      "uid": "logs-overview",
+      "panels": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 4, "w": 8, "x": 0, "y": 0 },
+          "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+          "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 10 }, { "color": "red", "value": 50 }] } } },
+          "title": "Error log rate (lines/min)",
+          "type": "stat",
+          "targets": [{ "expr": "sum(loki:app_log_errors:1m)", "legendFormat": "errors" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 4, "w": 8, "x": 8, "y": 0 },
+          "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+          "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } },
+          "title": "Ingress 5xx (5m)",
+          "type": "stat",
+          "targets": [{ "expr": "sum(loki:ingress_5xx:5m)", "legendFormat": "5xx" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 4, "w": 8, "x": 16, "y": 0 },
+          "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+          "fieldConfig": { "defaults": { "unit": "percent", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] } } },
+          "title": "Ingress error ratio",
+          "type": "stat",
+          "targets": [{ "expr": "100 * sum(loki:ingress_5xx:5m) / clamp_min(sum(loki:ingress_requests:5m), 1)", "legendFormat": "error %" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
+          "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+          "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } } },
+          "title": "Error log rate by app (top 10)",
+          "type": "timeseries",
+          "targets": [{ "expr": "topk(10, loki:app_log_errors:1m)", "legendFormat": "{{namespace}}/{{app}}" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 9, "w": 12, "x": 12, "y": 4 },
+          "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+          "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never", "stacking": { "mode": "normal" } } } },
+          "title": "Log lines/min by namespace",
+          "type": "timeseries",
+          "targets": [{ "expr": "sum by (namespace) (loki:app_log_lines:1m)", "legendFormat": "{{namespace}}" }]
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 13 },
+          "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] } },
+          "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "continuous-GrYlRd" } } },
+          "title": "Log bytes ingested by namespace (5m)",
+          "type": "bargauge",
+          "targets": [{ "expr": "sum by (namespace) (loki:namespace_log_bytes:5m)", "legendFormat": "{{namespace}}", "instant": true }]
+        },
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 8, "w": 16, "x": 8, "y": 13 },
+          "options": { "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true, "enableLogDetails": true, "dedupStrategy": "none" },
+          "title": "Recent error logs (all apps)",
+          "type": "logs",
+          "targets": [{ "expr": "{app=~\".+\"} |~ \"(?i)(error|fatal|panic|exception)\"", "queryType": "range" }]
+        }
+      ]
+    }
