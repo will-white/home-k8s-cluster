@@ -185,7 +185,21 @@ spec:
           # renovate: depName="VolSync Dashboard"
           gnetId: 21356
           revision: 3
+        x509-certificate-exporter:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="Certificates Expiration (X509 Certificate Exporter)"
+          gnetId: 13922
+          revision: 4
       networking:
+        blackbox-exporter:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="Prometheus Blackbox Exporter"
+          gnetId: 7587
+          revision: 3
         cloudflared:
           datasource:
             - name: DS_PROMETHEUS
@@ -272,6 +286,13 @@ spec:
           # renovate: depName="Ceph - Pools"
           gnetId: 5342
           revision: 9
+        ceph-rgw:
+          datasource:
+            - name: DS_PROMETHEUS
+              value: Prometheus
+          # renovate: depName="Ceph_RGW"
+          gnetId: 17600
+          revision: 2
         dragonfly:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/dragonflydb/dragonfly/main/tools/local/monitoring/grafana/provisioning/dashboards/dashboard.json
