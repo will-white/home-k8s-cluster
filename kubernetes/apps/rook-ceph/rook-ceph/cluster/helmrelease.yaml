@@ -79,11 +79,23 @@ spec:
       mgr:
         modules:
           - enabled: true
-            name: insights
-          - enabled: true
             name: pg_autoscaler
           - enabled: true
             name: rook
+          # Trim optional mgr modules to reduce active-mgr memory pressure after
+          # the Ceph tentacle 20.2.2 upgrade started OOMKilling the active mgr
+          # (grows to the 4Gi limit in ~14h). The prometheus module (usual leak
+          # culprit) is already patched in 20.2.2 and tuned (exclude_perf_counters
+          # true, rbd_stats_pools empty), so trim the other enabled-but-unused
+          # modules: insights (chatty health_history writer), nfs (no exports /
+          # CephNFS CRs), restful (legacy REST API, has its own historical leak).
+          # See rook/rook#17786 (matching mgr OOM on rook 1.20 + ceph 20.2.2).
+          - enabled: false
+            name: insights
+          - enabled: false
+            name: nfs
+          - enabled: false
+            name: restful
       network:
         connections:
           requireMsgr2: true
