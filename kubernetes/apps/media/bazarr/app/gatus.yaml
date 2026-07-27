@@ -10,7 +10,9 @@ data:
     endpoints:
       - name: bazarr
         group: guarded
-        url: http://bazarr.media.svc.cluster.local:6767/
+        # /health is a cheap 200; / renders the SPA and can blip the 5s
+        # response-time threshold while bazarr is busy indexing subtitles.
+        url: http://bazarr.media.svc.cluster.local:6767/health
         interval: 1m
         ui:
           hide-hostname: true

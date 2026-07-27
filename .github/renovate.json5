@@ -132,6 +132,23 @@
       ],
     },
     {
+      description: [
+        // bazarr 1.6.0 ships on Python 3.14, which upstream explicitly flags
+        // as unsupported ("you're on your own"). Downgrading is unsafe (1.6.0
+        // migrated the shared Postgres schema), so hold here and review each
+        // bump by hand until home-operations/upstream moves back to <=3.13.
+        'bazarr: manual approval (unsupported Python 3.14 image)',
+      ],
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        '/home-operations/bazarr/',
+      ],
+      automerge: false,
+      dependencyDashboardApproval: true,
+    },
+    {
       matchDatasources: [
         'helm',
       ],
