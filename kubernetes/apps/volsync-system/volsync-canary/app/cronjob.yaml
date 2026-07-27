@@ -158,13 +158,14 @@ data:
       #   `  2026-05-03 19:00:25 UTC k0495... 1.6 GB ...`           (a snapshot)
       #   `  + 9 identical snapshots until 2026-05-03 18:00:24 UTC` (a span)
       # The most recent snapshot in the block is the LAST date of either kind.
-      # NOTE: unbraced $identity (not ${identity}). Flux postBuild var
+      # NOTE: 'identity' is referenced UNBRACED on purpose. Flux postBuild
       # substitution (substituteFrom in kubernetes/flux/apps.yaml) rewrites only
-      # BRACED ${...} tokens in this ConfigMap; an undefined ${identity} was
-      # replaced with "" so the awk matched ":/data" and every identity reported
-      # "no snapshots". Unbraced $identity is left alone by Flux (same reason the
-      # $AWS_* env vars below survive) and the shell still expands it ($ stops at
-      # the ':'). Do NOT use $${identity} — drone/envsubst fails to parse it.
+      # braced dollar-brace tokens in this ConfigMap, so writing it braced made
+      # Flux replace it with an empty string and the awk matched ":/data" for
+      # every identity ("no snapshots"). Unbraced is left untouched (like the
+      # AWS/KOPIA env vars below) and the shell still expands it (the colon ends
+      # the name). Do not brace or double-dollar it here -- and keep such tokens
+      # out of these comments too, since envsubst parses the whole ConfigMap.
       latest=$(printf '%s\n' "$ALL" \
         | awk -v id="$identity:/data" '
             $0 == id { in_block=1; next }
