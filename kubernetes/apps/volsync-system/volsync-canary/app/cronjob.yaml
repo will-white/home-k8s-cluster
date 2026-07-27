@@ -158,8 +158,13 @@ data:
       #   `  2026-05-03 19:00:25 UTC k0495... 1.6 GB ...`           (a snapshot)
       #   `  + 9 identical snapshots until 2026-05-03 18:00:24 UTC` (a span)
       # The most recent snapshot in the block is the LAST date of either kind.
+      # NOTE: $${identity} (not ${identity}) — Flux postBuild var substitution
+      # (substituteFrom in kubernetes/flux/apps.yaml) rewrites ${...} tokens in
+      # this ConfigMap; an undefined ${identity} was being replaced with "" so
+      # the awk matched ":/data" and every identity reported "no snapshots".
+      # $$ escapes to a literal $ so the shell sees ${identity} at runtime.
       latest=$(printf '%s\n' "$ALL" \
-        | awk -v id="${identity}:/data" '
+        | awk -v id="$${identity}:/data" '
             $0 == id { in_block=1; next }
             in_block && /^[a-zA-Z]/ { in_block=0 }
             in_block && /^  [0-9]{4}-[0-9]{2}-[0-9]{2} / { last=$1 " " $2 " " $3 }
