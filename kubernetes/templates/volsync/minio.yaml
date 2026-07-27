@@ -40,6 +40,12 @@ spec:
     accessModes: ["${VOLSYNC_SNAP_ACCESSMODES:-ReadWriteOnce}"]
     capacity: ${VOLSYNC_CAPACITY:-2Gi}
     copyMethod: Snapshot
+    # One-time restore: drop the temp dest + cache PVCs once the snapshot is
+    # taken, otherwise every app leaves a volsync-<app>-bootstrap-dest PVC
+    # bound forever. (Not set on the ReplicationSource — its cache is reused
+    # across scheduled backups.)
+    cleanupCachePVC: true
+    cleanupTempPVC: true
     moverResources:
       requests:
         cpu: 100m
