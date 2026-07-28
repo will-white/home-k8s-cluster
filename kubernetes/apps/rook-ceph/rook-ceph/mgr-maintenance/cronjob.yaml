@@ -40,50 +40,55 @@ spec:
                 - |
                   set -euo pipefail
 
+                  # NOTE: use UNBRACED shell vars ($VAR, not ${VAR}). Flux
+                  # postBuild substitution (cluster-settings, injected into every
+                  # Kustomization via kubernetes/flux/apps.yaml) eats ${VAR} tokens
+                  # and replaces unknown ones with empty strings. Unbraced $VAR
+                  # survives, matching the rclone backup cronjob convention.
+
                   # --- Replicate the rook toolbox setup so `ceph` works without
                   # the toolbox pod (mon endpoints + client.admin keyring). ---
-                  CEPH_CONFIG="/etc/ceph/ceph.conf"
-                  MON_CONFIG="/etc/rook/mon-endpoints"
-                  KEYRING_FILE="/etc/ceph/keyring"
-                  CONFIG_OVERRIDE="/etc/rook-config-override/config"
+                  CEPH_CONFIG=/etc/ceph/ceph.conf
+                  MON_CONFIG=/etc/rook/mon-endpoints
+                  KEYRING_FILE=/etc/ceph/keyring
+                  CONFIG_OVERRIDE=/etc/rook-config-override/config
 
-                  endpoints=$(cat "${MON_CONFIG}")
-                  mon_endpoints=$(echo "${endpoints}" | sed 's/[a-z0-9_-]\+=//g')
-                  cat <<EOF > "${CEPH_CONFIG}"
+                  endpoints=$(cat "$MON_CONFIG")
+                  mon_endpoints=$(echo "$endpoints" | sed 's/[a-z0-9_-]\+=//g')
+                  cat <<EOF > "$CEPH_CONFIG"
                   [global]
-                  mon_host = ${mon_endpoints}
+                  mon_host = $mon_endpoints
 
                   [client.admin]
-                  keyring = ${KEYRING_FILE}
+                  keyring = $KEYRING_FILE
                   EOF
-                  if [ -f "${CONFIG_OVERRIDE}" ] && [ -s "${CONFIG_OVERRIDE}" ]; then
-                    echo "" >> "${CEPH_CONFIG}"
-                    cat "${CONFIG_OVERRIDE}" >> "${CEPH_CONFIG}"
+                  if [ -f "$CONFIG_OVERRIDE" ] && [ -s "$CONFIG_OVERRIDE" ]; then
+                    echo "" >> "$CEPH_CONFIG"
+                    cat "$CONFIG_OVERRIDE" >> "$CEPH_CONFIG"
                   fi
 
-                  ceph_secret="${ROOK_CEPH_SECRET:-}"
-                  if [ -z "${ceph_secret}" ]; then
-                    ceph_secret=$(cat /var/lib/rook-ceph-mon/secret.keyring)
-                  fi
-                  cat <<EOF > "${KEYRING_FILE}"
-                  [${ROOK_CEPH_USERNAME}]
-                  key = ${ceph_secret}
+                  # ROOK_CEPH_SECRET is not set on this pod; read the admin key
+                  # straight from the mounted mon secret.
+                  ceph_secret=$(cat /var/lib/rook-ceph-mon/secret.keyring)
+                  cat <<EOF > "$KEYRING_FILE"
+                  [$ROOK_CEPH_USERNAME]
+                  key = $ceph_secret
                   EOF
 
                   # --- Guard + fail the active mgr. ---
                   stat_json=$(ceph mgr stat -f json)
-                  active=$(echo "${stat_json}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["active_name"])')
-                  standbys=$(echo "${stat_json}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["num_standby"])')
-                  echo "active mgr=${active} num_standby=${standbys}"
+                  active=$(echo "$stat_json" | python3 -c 'import json,sys;print(json.load(sys.stdin)["active_name"])')
+                  standbys=$(echo "$stat_json" | python3 -c 'import json,sys;print(json.load(sys.stdin)["num_standby"])')
+                  echo "active mgr=$active num_standby=$standbys"
 
-                  if [ "${standbys}" -lt 1 ]; then
+                  if [ "$standbys" -lt 1 ]; then
                     echo "no standby mgr available; refusing to fail the sole active mgr"
                     exit 1
                   fi
 
-                  echo "failing active mgr ${active} to reset leaked heap (rook#17786)"
+                  echo "failing active mgr $active to reset leaked heap (rook#17786)"
                   ceph mgr fail
-                  echo "done; standby will take over and ${active} respawns with a fresh heap"
+                  echo "done; standby will take over and $active respawns with a fresh heap"
               env:
                 - name: ROOK_CEPH_USERNAME
                   valueFrom:
