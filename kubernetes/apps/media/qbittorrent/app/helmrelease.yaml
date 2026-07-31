@@ -137,8 +137,13 @@ spec:
             resources:
               requests:
                 cpu: 25m
-              limits:
                 memory: 128Mi
+              # gluetun builds its DNS malware/ad block lists in memory at
+              # startup and every UPDATER_PERIOD (24h). That transient spike
+              # blew past 128Mi and OOMKilled the sidecar in a crashloop,
+              # taking the whole pod's VPN egress (and thus qBittorrent) down.
+              limits:
+                memory: 256Mi
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
