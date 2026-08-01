@@ -12,7 +12,7 @@ spec:
         kind: HelmRepository
         name: rook-ceph
         namespace: flux-system
-      version: v1.20.2
+      version: v1.20.3
       interval: 1h
   dependsOn:
     - name: rook-ceph-operator
