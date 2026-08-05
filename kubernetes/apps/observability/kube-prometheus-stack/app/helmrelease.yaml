@@ -392,8 +392,11 @@ spec:
         resources:
           requests:
             cpu: 100m
-        retention: 14d
-        retentionSize: 100GB
+        # Retention relaxed 14d/100GB -> 90d/300GB after Ceph capacity
+        # expansion (~3.6TiB, ~6% used). retentionSize stays below the PVC
+        # size (350Gi) so Prometheus keeps WAL/compaction headroom.
+        retention: 90d
+        retentionSize: 300GB
         ruleSelectorNilUsesHelmValues: false
         scrapeConfigSelectorNilUsesHelmValues: false
         serviceMonitorSelectorNilUsesHelmValues: false
@@ -402,7 +405,7 @@ spec:
             spec:
               resources:
                 requests:
-                  storage: 100Gi
+                  storage: 350Gi
               storageClassName: ceph-block
         walCompression: true
     prometheus-node-exporter:

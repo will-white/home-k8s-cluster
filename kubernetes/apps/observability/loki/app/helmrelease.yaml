@@ -50,7 +50,8 @@ spec:
       ingester:
         chunk_encoding: snappy
       limits_config:
-        retention_period: 3d
+        # Relaxed 3d -> 30d after Ceph capacity expansion (~3.6TiB, ~6% used).
+        retention_period: 30d
       schemaConfig:
         configs:
           - from: '2024-04-01'

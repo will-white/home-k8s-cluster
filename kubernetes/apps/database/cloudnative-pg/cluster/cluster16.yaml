@@ -24,7 +24,8 @@ spec:
   monitoring:
     enablePodMonitor: true
   backup:
-    retentionPolicy: 30d
+    # Relaxed 30d -> 90d after Ceph capacity expansion (~3.6TiB, ~6% used).
+    retentionPolicy: 90d
     barmanObjectStore: &barmanObjectStore
       data:
         compression: bzip2
