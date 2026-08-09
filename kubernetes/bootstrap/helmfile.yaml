@@ -22,6 +22,11 @@ releases:
     values:
       - annotations:
           helm.sh/resource-policy: keep
+  # NOTE: the bootstrap:apps task applies the vendored Gateway API CRDs
+  # (kubernetes/apps/network/cilium-gateway/crds) before running this helmfile.
+  # Cilium has gatewayAPI.enabled and its operator only checks for those CRDs
+  # once at startup — installing them later leaves the Gateway controller
+  # silently disabled until the operator is restarted.
   - name: cilium
     namespace: kube-system
     chart: cilium/cilium

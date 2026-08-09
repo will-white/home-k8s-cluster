@@ -23,3 +23,5 @@ rules:
 ignore:
   - "**/*.sops.*"
   - "**/secret*.yaml"
+  # Vendored upstream manifests — not ours to lint
+  - "kubernetes/apps/network/cilium-gateway/crds/vendor/**"
