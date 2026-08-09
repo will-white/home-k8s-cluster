@@ -10,9 +10,7 @@ data:
   POSTGRES_LB: 192.168.5.23
   SKYLAB_IP: 192.168.5.5
   TIMEZONE: America/Denver
-  TORRENTS_LB: 192.168.5.24
   UNIFI_LB: 192.168.5.25
-  AMBIENTWEATHER_LB: 192.168.5.26
 kind: ConfigMap
 metadata:
   name: cluster-settings

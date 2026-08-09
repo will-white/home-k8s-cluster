@@ -47,7 +47,6 @@ You are responsible for maintaining a Home Kubernetes cluster running on Talos L
 - **GitOps:** Flux CD
 - **Secrets Management:** SOPS (with Age encryption)
 - **Task Runner:** Task (Go-Task)
-- **Templating:** Python (makejinja), Jinja2
 - **Validation:** Kubeconform, Yamllint, Kustomize
 - **Networking:** Cilium, Cert-Manager, External-DNS, Ingress-Nginx
 - **Storage:** Rook-CEPH, OpenEBS

@@ -33,25 +33,3 @@ spec:
       VOLSYNC_STORAGECLASS: ceph-filesystem
       VOLSYNC_SNAPSHOTCLASS: csi-ceph-filesystem
       VOLSYNC_BOOTSTRAP_TRIGGER: restore-cephfs-2026-05-03
-# ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
-# apiVersion: kustomize.toolkit.fluxcd.io/v1
-# kind: Kustomization
-# metadata:
-#   name: &app qbittorrent-tools
-#   namespace: flux-system
-# spec:
-#   targetNamespace: media
-#   commonMetadata:
-#     labels:
-#       app.kubernetes.io/name: *app
-#   dependsOn:
-#     - name: external-secrets-stores
-#   path: ./kubernetes/apps/media/qbittorrent/tools
-#   prune: true
-#   sourceRef:
-#     kind: GitRepository
-#     name: home-kubernetes
-#   wait: false
-#   interval: 30m
-#   timeout: 5m
