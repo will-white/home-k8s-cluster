@@ -1,0 +1,19 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app media-network-policies
+  namespace: flux-system
+spec:
+  targetNamespace: media
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  path: ./kubernetes/apps/media/network-policies/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  timeout: 5m

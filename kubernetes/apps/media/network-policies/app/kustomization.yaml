@@ -10,5 +10,3 @@ resources:
   - ../../../../templates/network-policies/allow-from-monitoring
   - ../../../../templates/network-policies/allow-egress-open
   - ../../../../templates/network-policies/allow-ingress-lan
-  - ./ingress-webhook.yaml
-  - ./ingress-flux-alerts.yaml

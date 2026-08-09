@@ -1,5 +1,5 @@
 ---
-# Observability legitimately talks to EVERYTHING: Prometheus scrapes every
+# Some namespaces legitimately talks to EVERYTHING: Prometheus scrapes every
 # namespace plus host-network targets (node-exporter, kubelet, Talos, LAN
 # hosts), gatus probes cluster services, LAN endpoints, and external URLs,
 # alertmanager pushes to Pushover, Grafana reaches its datasources. An
