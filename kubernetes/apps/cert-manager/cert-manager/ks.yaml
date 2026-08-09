@@ -38,3 +38,30 @@ spec:
   wait: true
   interval: 30m
   timeout: 5m
+---
+# The ACME issuer lives in its own Kustomization AFTER external-secrets-stores
+# because its Cloudflare token arrives via ExternalSecret. It cannot live in
+# cert-manager-issuers: ESO's bitwarden-sdk-server certificate depends on the
+# self-signed issuer there, so issuers must reconcile before ESO exists (the
+# ExternalSecret CRD wouldn't even be installed yet on a fresh bootstrap).
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app cert-manager-acme
+  namespace: flux-system
+spec:
+  targetNamespace: cert-manager
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: cert-manager-issuers
+    - name: external-secrets-stores
+  path: ./kubernetes/apps/cert-manager/cert-manager/acme
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 30m
+  timeout: 5m
