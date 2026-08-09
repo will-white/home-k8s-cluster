@@ -1,0 +1,21 @@
+---
+# The kube-apiserver calls the external-secrets webhook (conversion +
+# validation for every ExternalSecret/ClusterSecretStore operation). Same
+# pattern and rationale as cert-manager's phase-1 policy: the apiserver is
+# host-network, so Cilium's kube-apiserver entity is the correct selector.
+# Service external-secrets-webhook:443 -> containerPort 10250.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-webhook-from-apiserver
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: external-secrets-webhook
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "10250"
+              protocol: TCP
