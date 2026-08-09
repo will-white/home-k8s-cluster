@@ -25,6 +25,11 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      NAMESPACE: media
+      GATUS_PORT: "6767"
+      # /health is a cheap 200; / renders the SPA and can blip the 5s
+      # response-time threshold while bazarr is busy indexing subtitles.
+      GATUS_PATH: /health
       VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: media
       VOLSYNC_CAPACITY: 5Gi
       VOLSYNC_ACCESSMODES: ReadWriteMany

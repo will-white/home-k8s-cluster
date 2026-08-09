@@ -10,6 +10,8 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
+  dependsOn:
+    - name: external-secrets-stores
   path: ./kubernetes/apps/default/go2rtc/app
   prune: true
   sourceRef:
@@ -21,3 +23,6 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      NAMESPACE: default
+      GATUS_PORT: "1984"
+      GATUS_PATH: /api

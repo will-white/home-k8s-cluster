@@ -26,6 +26,8 @@ spec:
   values:
     controllers:
       zigbee2mqtt-ota:
+        annotations:
+          reloader.stakater.com/auto: "true"
         type: cronjob
         cronjob:
           # Run weekly on Sundays at 3:00 AM

@@ -73,6 +73,12 @@ spec:
             matchLabels:
               apps.emqx.io/instance: emqx
               apps.emqx.io/db-role: core
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
       envFrom:
         - secretRef:
             name: emqx-secret

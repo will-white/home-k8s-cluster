@@ -21,3 +21,5 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      NAMESPACE: observability
+      GATUS_PATH: /api/health

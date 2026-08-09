@@ -25,6 +25,9 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      NAMESPACE: default
+      GATUS_PORT: "5000"
+      GATUS_PATH: /api/version
       VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 5Gi
       # explicit: matches the live PVC class (claim class is immutable)

@@ -22,6 +22,8 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      NAMESPACE: default
+      GATUS_PORT: "3000"
       VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 10Gi
       # Reduced retention - low priority backup

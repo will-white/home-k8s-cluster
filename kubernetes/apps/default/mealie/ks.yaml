@@ -23,6 +23,8 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      NAMESPACE: default
+      GATUS_PORT: "9000"
       VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 5Gi
       VOLSYNC_ACCESSMODES: ReadWriteMany
