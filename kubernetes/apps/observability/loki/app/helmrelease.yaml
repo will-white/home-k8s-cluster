@@ -106,6 +106,12 @@ spec:
         repository: ghcr.io/kiwigrid/k8s-sidecar
       rules:
         searchNamespace: ALL
+        # The ruler's `local` store reads <directory>/<tenant>, and with
+        # auth_enabled: false the tenant is `fake`. The chart's sidecar folder
+        # defaults to /rules, so every rule file landed one level too high and
+        # Loki logged "unable to read rule dir /rules/fake: no such file or
+        # directory" and evaluated nothing — no alerts, no recording rules.
+        folder: /rules/fake
     singleBinary:
       persistence:
         enabled: true
