@@ -1,0 +1,17 @@
+---
+# LAN hosts push into this namespace directly: the Prometheus remote-write
+# receiver (enabled in fc7bed75) ingests from non-cluster machines, and LAN
+# clients hit dashboards via LoadBalancer IPs. The LAN is the trust boundary
+# of this homelab; other CLUSTER namespaces remain blocked by default-deny.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-lan
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 192.168.5.0/24

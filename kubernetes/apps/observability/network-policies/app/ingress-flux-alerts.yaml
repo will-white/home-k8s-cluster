@@ -1,0 +1,22 @@
+---
+# Flux's notification-controller (flux-system) POSTs to
+# alertmanager-operated:9093 for every namespace's Alert provider — without
+# this, default-deny silently kills all Flux alerting.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-alertmanager-from-flux
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: alertmanager
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: flux-system
+      ports:
+        - port: 9093
+          protocol: TCP
