@@ -50,7 +50,7 @@
     {
       "label": "Flux: Diff Cluster",
       "type": "shell",
-      "command": "flux diff kustomization cluster --path ./kubernetes",
+      "command": "flux diff kustomization cluster --path ./kubernetes/flux",
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",

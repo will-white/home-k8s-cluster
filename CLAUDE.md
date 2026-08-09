@@ -10,7 +10,7 @@ A home Kubernetes cluster running on **Talos Linux**, managed entirely via **Flu
 
 ## Commands
 
-Task runner is **Go-Task** (`Taskfile.yaml` + `.taskfiles/`). `KUBECONFIG`, `SOPS_AGE_KEY_FILE`, and `VIRTUAL_ENV` are set automatically by Task from repo-root files.
+Task runner is **Go-Task** (`Taskfile.yaml` + `.taskfiles/`). `KUBECONFIG` and `SOPS_AGE_KEY_FILE` are set automatically by Task from repo-root files.
 
 ```bash
 task                              # list all tasks

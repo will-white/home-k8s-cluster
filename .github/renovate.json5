@@ -49,11 +49,6 @@
       '/(^|/)kustomization\\.ya?ml(?:\\.j2)?$/',
     ],
   },
-  pip_requirements: {
-    managerFilePatterns: [
-      '/(^|/)[\\w-]*requirements(-\\w+)?\\.(txt|pip)(?:\\.j2)?$/',
-    ],
-  },
   commitMessageTopic: '{{depName}}',
   commitMessageExtra: 'to {{newVersion}}',
   commitMessageSuffix: '',

@@ -84,15 +84,6 @@ tasks:
     preconditions:
       - which age-keygen
 
-  template:
-    internal: true
-    cmd: '{{.VIRTUAL_ENV}}/bin/makejinja'
-    preconditions:
-      - test -d {{.VIRTUAL_ENV}}
-      - test -f {{.BOOTSTRAP_CONFIG_FILE}}
-      - test -f {{.BOOTSTRAP_DIR}}/scripts/plugin.py
-      - test -f {{.MAKEJINJA_CONFIG_FILE}}
-
   secrets:
     internal: true
     cmds:
@@ -193,25 +184,3 @@ tasks:
       - msg: BWS_ACCESS_TOKEN must be set
         sh: test -n "${BWS_ACCESS_TOKEN}"
       - which bws jq ssh-keygen
-
-  clean:
-    desc: Clean files and directories no longer needed after cluster bootstrap
-    cmds:
-      # Create backup directory
-      - mkdir -p {{.ROOT_DIR}}/.private
-      # Clean up CI
-      - rm -rf {{.ROOT_DIR}}/.github/tests
-      - rm -rf {{.ROOT_DIR}}/.github/workflows/e2e.yaml
-      # Clean up devcontainer
-      - rm -rf {{.ROOT_DIR}}/.devcontainer/ci
-      - rm -rf {{.ROOT_DIR}}/.github/workflows/devcontainer.yaml
-      # Move bootstrap directory to gitignored directory
-      - mv {{.BOOTSTRAP_DIR}} {{.ROOT_DIR}}/.private/bootstrap-{{.TS}}
-      - mv {{.MAKEJINJA_CONFIG_FILE}} {{.ROOT_DIR}}/.private/makejinja-{{.TS}}.toml
-      # Update renovate.json5
-      - sed -i {{if eq OS "darwin"}}''{{end}} 's/(..\.j2)\?//g' {{.ROOT_DIR}}/.github/renovate.json5
-    vars:
-      TS: '{{now | unixEpoch}}'
-    preconditions:
-      - test -d {{.BOOTSTRAP_DIR}}
-      - test -f {{.ROOT_DIR}}/.github/renovate.json5

@@ -69,17 +69,3 @@ tasks:
       MINIJINJA_CLI_UNMANAGED_INSTALL: 'true'
       HELM_INSTALL_DIR: '.'
       USE_SUDO: 'false'
-
-  venv:
-    desc: Set up virtual environment
-    cmds:
-      - python3 -m venv {{.VIRTUAL_ENV}}
-      - '{{.VIRTUAL_ENV}}/bin/python3 -m pip install --upgrade pip setuptools wheel'
-      - '{{.VIRTUAL_ENV}}/bin/python3 -m pip install --upgrade --requirement "{{.ROOT_DIR}}/requirements.txt"'
-    sources:
-      - '{{.ROOT_DIR}}/requirements.txt'
-    generates:
-      - '{{.VIRTUAL_ENV}}/pyvenv.cfg'
-    preconditions:
-      - test -f {{.ROOT_DIR}}/requirements.txt
-      - which python3
