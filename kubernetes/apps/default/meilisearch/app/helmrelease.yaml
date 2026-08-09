@@ -45,7 +45,12 @@ spec:
               # In-place DB migration when engine version > on-disk DB version
               # (required to move past v1.41.0 -> v1.46.1). Safe to keep set;
               # only acts when a version mismatch is detected on startup.
-              MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE: "true"
+              #
+              # Renamed upstream from MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE when
+              # the feature left experimental. The old name is silently ignored
+              # rather than rejected, so v1.52.0 simply refused to open the
+              # v1.50.0 database and crashlooped.
+              MEILI_UPGRADE_DB: "true"
             resources:
               requests:
                 cpu: 25m
