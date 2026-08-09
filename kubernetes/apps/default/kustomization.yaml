@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./namespace.yaml
-  # Removed: convertx, manyfold, sosse, spoolman (unused apps)
+  - ./convertx/ks.yaml
   - ./dahua-companion/ks.yaml
   - ./frigate/ks.yaml
   - ./go2rtc/ks.yaml
@@ -11,10 +11,13 @@ resources:
   - ./homepage/ks.yaml
   - ./karakeep/ks.yaml
   - ./litellm/ks.yaml
+  - ./manyfold/ks.yaml
   - ./mealie/ks.yaml
   - ./meilisearch/ks.yaml
   - ./paperless/ks.yaml
   # paperless-gpt/ks.yaml missing — re-add when the Flux Kustomization is authored
+  - ./sosse/ks.yaml
+  - ./spoolman/ks.yaml
   - ./stirling-pdf/ks.yaml
   - ./unifi/ks.yaml
   - ./zigbee2mqtt/ks.yaml
