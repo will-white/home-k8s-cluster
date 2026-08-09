@@ -28,5 +28,7 @@ spec:
       GATUS_SUBDOMAIN: zigbee
       VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 1Gi
+      # explicit: matches the live PVC class (claim class is immutable)
+      PVC_VOLSYNC_STORAGECLASS: ceph-block
       # Device DB only changes on pair/unpair; daily backup is sufficient.
       VOLSYNC_SCHEDULE: "0 4 * * *"

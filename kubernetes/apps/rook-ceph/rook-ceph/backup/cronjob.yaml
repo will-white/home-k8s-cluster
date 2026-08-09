@@ -29,10 +29,29 @@ spec:
                 - |
                   set -e
                   RCLONE_OPTS="--config=/config/rclone.conf --verbose --transfers=4 --checkers=8 --fast-list"
+                  # rclone sync is a DESTRUCTIVE mirror: on a freshly rebuilt
+                  # cluster with an empty RGW it would delete every backup in
+                  # Garage (the DR runbook's golden rule). Two guards:
+                  #  1. refuse to run when the source looks wiped
+                  #  2. --max-delete caps deletions even when the source is
+                  #     merely diminished (kopia maintenance legitimately
+                  #     deletes packs, so the cap is generous)
+                  check_min() { # check_min <remote:bucket> <min-objects>
+                    N=$(rclone $RCLONE_OPTS size --json "$1" | sed 's/.*"count":\([0-9]*\).*/\1/')
+                    if [ "$N" -lt "$2" ]; then
+                      echo "ABORT: $1 has only $N objects (< $2) - source looks empty/wiped, refusing to mirror" >&2
+                      exit 1
+                    fi
+                    echo "$1: $N objects (>= $2, ok)"
+                  }
+                  check_min cnpg:cloudnative-pg 50
+                  check_min volsync:volsync-backups 200
                   echo "Syncing cloudnative-pg -> garage"
-                  rclone $RCLONE_OPTS sync cnpg:cloudnative-pg garage:cloudnative-pg
+                  rclone $RCLONE_OPTS --max-delete=5000 sync cnpg:cloudnative-pg garage:cloudnative-pg
                   echo "Syncing volsync-backups -> garage"
-                  rclone $RCLONE_OPTS sync volsync:volsync-backups garage:volsync-backups
+                  # NOTE: never mirror-delete the etcd-snapshots/ prefix — it is
+                  # written to Garage directly by talos-backup, not via RGW.
+                  rclone $RCLONE_OPTS --max-delete=5000 --exclude "etcd-snapshots/**" sync volsync:volsync-backups garage:volsync-backups
               env:
                 # Source remote: cloudnative-pg bucket (OBC secret in this namespace)
                 - name: RCLONE_CONFIG_CNPG_TYPE

@@ -36,3 +36,7 @@ data:
     # media namespace
     bazarr@media:30:daily Volsync RS
     qbittorrent@media:3:hourly Volsync RS
+    kavita@media:3:hourly Volsync RS
+    komga@media:3:hourly Volsync RS
+    seerr@media:3:hourly Volsync RS
+    suwayomi@media:3:hourly Volsync RS
