@@ -9,8 +9,9 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  dependsOn:
-    - name: cilium
+  # No dependsOn: these are plain CRDs and need nothing from Cilium. The
+  # reverse edge (cilium dependsOn gateway-api-crds) is what matters, since
+  # the operator only probes for Gateway API CRDs at startup.
   path: ./kubernetes/apps/network/cilium-gateway/crds
   prune: false
   sourceRef:
