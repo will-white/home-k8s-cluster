@@ -1,0 +1,20 @@
+---
+# ESO's Bitwarden Secrets Manager provider talks to the Bitwarden SaaS API
+# (vault/api/identity.bitwarden.com) — 443/tcp egress. Every secret in the
+# cluster flows through this namespace, so this is the one internet egress
+# that must never be accidentally cut.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-bitwarden
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 443
+          protocol: TCP
