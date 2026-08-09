@@ -62,8 +62,18 @@ spec:
       criticalDaysLeft: 7
       # Alert if the exporter itself can't read Secrets / reach the API —
       # otherwise a monitoring regression would go silent.
-      alertOnReadErrors: true
-      readErrorsSeverity: warning
+      #
+      # Chart 4.2.0 split the old single X509ExporterReadErrors alert (and its
+      # alertOnReadErrors / readErrorsSeverity keys, now rejected by the chart's
+      # values.schema.json) into two families: SourceErrors (can't read/parse a
+      # source) and KubeTransportErrors (can't reach the Kubernetes API). Each
+      # gained a *Sustained variant that fires after 30m instead of 5m.
+      alertOnSourceErrors: true
+      sourceErrorsSeverity: warning
+      sourceErrorsSustainedSeverity: critical
+      alertOnKubeTransportErrors: true
+      kubeTransportErrorsSeverity: warning
+      kubeTransportErrorsSustainedSeverity: critical
       certificateRenewalsSeverity: warning
       certificateExpirationsSeverity: critical
   driftDetection:
