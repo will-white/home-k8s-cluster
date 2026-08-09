@@ -1,35 +1,25 @@
 ---
-# Allow egress to the Kubernetes API server. The API server runs on the
-# node IPs (control-plane host network), so we cannot use a pod selector;
-# we egress to the kubernetes.default service which Cilium translates
-# correctly. For non-Cilium clusters, replace with explicit CIDRs of
-# control-plane nodes.
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
+# Allow egress to the Kubernetes API server. The apiserver's endpoints are
+# host IPs on the control-plane nodes; Cilium classifies traffic to them as
+# the kube-apiserver/host/remote-node IDENTITIES, which plain NetworkPolicy
+# pod/namespace selectors (and ipBlock CIDRs) can never match. The previous
+# KNP-based version of this template silently blocked NEW apiserver
+# connections — long-lived operators kept working on pre-policy conntrack
+# entries and then hung on their first restart (CNPG, 2026-08-09).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
 metadata:
   name: allow-kube-apiserver
 spec:
-  podSelector: {}
-  policyTypes:
-    - Egress
+  endpointSelector: {}
   egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: default
-          podSelector:
-            matchLabels:
-              component: apiserver
-              provider: kubernetes
-      ports:
-        - protocol: TCP
-          port: 6443
-    # Fallback: allow the kubernetes service ClusterIP range (rfc1918
-    # private link). Kept narrow on purpose; if you have a different
-    # service CIDR, override per-namespace.
-    - to:
-        - ipBlock:
-            cidr: 10.96.0.1/32
-      ports:
-        - protocol: TCP
-          port: 443
+    - toEntities:
+        - kube-apiserver
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
