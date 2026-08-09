@@ -1,0 +1,70 @@
+---
+# Backup-only variant of ../minio.yaml: ExternalSecret + ReplicationSource,
+# WITHOUT the claim/ReplicationDestination pair. For apps that already own
+# their PVC (hand-rolled pvc.yaml) — the claim's dataSourceRef is immutable,
+# so retrofitting the full template onto an existing PVC is impossible without
+# a migrate-and-restore. This gets their data into kopia today; converting to
+# the full restore-first template is a per-app follow-up.
+# Keep the ES/RS specs in sync with ../minio.yaml.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/external-secrets.io/externalsecret_v1.json
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: ${APP}-volsync
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: bitwarden-secrets-manager
+  target:
+    name: ${APP}-volsync
+    template:
+      data:
+        KOPIA_PASSWORD: "{{ .password }}"
+        KOPIA_REPOSITORY: "s3://volsync-backups"
+        AWS_ACCESS_KEY_ID: "{{ .accessKey }}"
+        AWS_SECRET_ACCESS_KEY: "{{ .secretKey }}"
+        AWS_S3_ENDPOINT: "http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc"
+        KOPIA_S3_DISABLE_TLS: "true"
+      engineVersion: v2
+  data:
+    - secretKey: password
+      remoteRef:
+        key: VOLSYNC_KOPIA_PASSWORD
+    - secretKey: accessKey
+      remoteRef:
+        key: VOLSYNC_BUCKET_ACCESS_KEY
+    - secretKey: secretKey
+      remoteRef:
+        key: VOLSYNC_BUCKET_SECRET_KEY
+---
+# yaml-language-server: $schema=https://kube-schemas.pages.dev/volsync.backube/replicationsource_v1alpha1.json
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: ${APP}
+spec:
+  kopia:
+    accessModes: ["${VOLSYNC_SNAP_ACCESSMODES:-ReadWriteOnce}"]
+    copyMethod: ${VOLSYNC_COPYMETHOD:-Snapshot}
+    moverResources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: ${VOLSYNC_MOVER_MEMORY_LIMIT:-2Gi}
+    moverSecurityContext:
+      fsGroup: ${VOLSYNC_PGID:-1000}
+      runAsGroup: ${VOLSYNC_PGID:-1000}
+      runAsUser: ${VOLSYNC_PUID:-1000}
+    repository: ${APP}-volsync
+    username: ${APP}
+    retain:
+      daily: ${VOLSYNC_RETAIN_DAILY:-3}
+      hourly: ${VOLSYNC_RETAIN_HOURLY:-6}
+      monthly: ${VOLSYNC_RETAIN_MONTHLY:-1}
+      weekly: ${VOLSYNC_RETAIN_WEEKLY:-2}
+    storageClassName: ${VOLSYNC_STORAGECLASS:-ceph-block}
+    volumeSnapshotClassName: ${VOLSYNC_SNAPSHOTCLASS:-csi-ceph-blockpool}
+  sourcePVC: ${CLAIM:-${APP}}
+  trigger:
+    schedule: ${VOLSYNC_SCHEDULE:-0 * * * *}

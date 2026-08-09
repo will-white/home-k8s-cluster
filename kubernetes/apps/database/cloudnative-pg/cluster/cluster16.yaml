@@ -50,10 +50,13 @@ spec:
   #   #   owner: Worried1669
   #   #   secret:
   #   #     name: postgres-appuser-secret
-  #   # Note: previousCluster needs to be set to the name of the previous
-  #   # cluster when recovering from an existing cnpg cluster
+  #   # Note: previousCluster is the OLD serverName you are recovering FROM.
+  #   # The live serverName above is postgres16-v1, so a recovery bumps the
+  #   # live one to postgres16-v2 and points this at postgres16-v1 (the
+  #   # DISASTER-RECOVERY.md runbook walks through this). The example below
+  #   # is written for that first recovery.
   #   recovery:
-  #     source: &previousCluster postgres16-v2
+  #     source: &previousCluster postgres16-v1
   # # Note: externalClusters is needed when recovering from an existing cnpg cluster
   # externalClusters:
   #   - name: *previousCluster

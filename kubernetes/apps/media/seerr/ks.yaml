@@ -12,6 +12,8 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: rook-ceph-cluster
+    - name: external-secrets-stores
+    - name: volsync
   path: ./kubernetes/apps/media/seerr/app
   prune: true
   sourceRef:
@@ -23,3 +25,7 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      # source-only volsync backup of the existing PVC (SQLite user state)
+      VOLSYNC_STORAGECLASS: ceph-filesystem
+      VOLSYNC_SNAPSHOTCLASS: csi-ceph-filesystem
+      VOLSYNC_SNAP_ACCESSMODES: ReadWriteMany

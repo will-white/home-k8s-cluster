@@ -1,0 +1,76 @@
+---
+# etcd disaster backups — the one thing Flux cannot recreate. Snapshots go
+# DIRECTLY to Garage on the NAS (not Ceph RGW: an etcd backup that dies with
+# the cluster is pointless) and are age-encrypted to the cluster recovery key,
+# so possession of the bucket alone reveals nothing.
+#
+# Restore (full quorum loss): decrypt with age.key, then
+#   talosctl bootstrap --recover-from=./db.snapshot --recover-skip-hash-check
+# on a single fresh control-plane node. See docs/runbooks/bare-metal-rebuild.md.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: talos-backup
+spec:
+  schedule: "15 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile: { type: RuntimeDefault }
+          containers:
+            - name: talos-backup
+              image: ghcr.io/siderolabs/talos-backup:v0.1.0-beta.3
+              env:
+                - name: TALOSCONFIG
+                  value: /var/run/secrets/talos.dev/config
+                - name: AWS_REGION
+                  value: garage
+                - name: CUSTOM_S3_ENDPOINT
+                  value: http://nas.internal:30188
+                - name: BUCKET
+                  value: volsync-backups
+                - name: S3_PREFIX
+                  value: etcd-snapshots
+                - name: CLUSTER_NAME
+                  value: home-kubernetes
+                - name: USE_PATH_STYLE
+                  value: "true"
+                # Public half of the cluster Age key (age.key decrypts).
+                - name: AGE_X25519_PUBLIC_KEY
+                  value: age17tn5txs6m4kdq4cfk9t7k5mcr58svuf0uwlrrmsxc9aslj4x9y4skkzs74
+              envFrom:
+                - secretRef:
+                    name: talos-backup
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: false
+                capabilities: { drop: ["ALL"] }
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: talos-secrets
+                  mountPath: /var/run/secrets/talos.dev
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: talos-secrets
+              secret:
+                secretName: talos-backup-secrets
+            - name: tmp
+              emptyDir: {}

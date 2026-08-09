@@ -25,6 +25,8 @@ spec:
       APP: *app
       VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 10Gi
+      # explicit: matches the live PVC class (claim class is immutable)
+      PVC_VOLSYNC_STORAGECLASS: ceph-block
       # Stats DB writes constantly but losing a few hours of network stats is
       # acceptable. Back up every 6 hours instead of hourly.
       VOLSYNC_SCHEDULE: "0 */6 * * *"

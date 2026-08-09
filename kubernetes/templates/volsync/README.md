@@ -36,7 +36,11 @@ resources:
 ## Optional `postBuild` vars:
 
 - `VOLSYNC_MOVER_MEMORY_LIMIT`: Memory limit for mover pods (default: `2Gi`)
-- `VOLSYNC_STORAGECLASS`: Storage class for volumes (default: `ceph-block`)
+- `VOLSYNC_STORAGECLASS`: Storage class for mover cache/temp volumes (default: `ceph-block`)
+- `PVC_VOLSYNC_STORAGECLASS`: Storage class for the app's claim itself (default: `ceph-block`).
+  These are TWO separate knobs — setting only `VOLSYNC_STORAGECLASS` leaves the
+  claim on `ceph-block`. Always set both explicitly; the claim's class is
+  immutable once the PVC exists.
 - `VOLSYNC_SNAPSHOTCLASS`: Snapshot class (default: `csi-ceph-blockpool`)
 - `VOLSYNC_SNAP_ACCESSMODES`: Access modes for snapshots (default: `ReadWriteOnce`)
 - `VOLSYNC_COPYMETHOD`: Copy method (default: `Snapshot`)
