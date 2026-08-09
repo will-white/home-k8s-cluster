@@ -6,7 +6,7 @@ metadata:
   name: talos-workers
   namespace: system-upgrade
 spec:
-  version: v1.13.0
+  version: v1.13.8
   serviceAccountName: system-upgrade
   concurrency: 1
   exclusive: true
@@ -18,7 +18,7 @@ spec:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
   upgrade:
-    image: ghcr.io/siderolabs/installer:v1.13.8@sha256:1c6a41e8324d85742ba97968c427a10122a47273244c209e5dd2d4b207516e7d
+    image: ghcr.io/siderolabs/installer:v1.13.8
   drain:
     force: true
     disableEviction: true
