@@ -33,7 +33,7 @@ agent_policy:
     configure: 120
     install_tools: 300
   agent_behavior: |
-    The cluster owner has granted standing approval for cluster-affecting actions (merging Renovate PRs and letting Flux reconcile). Agents may run apply/reconcile commands. Still prefer dry-run to preview where practical, monitor rollouts after changes, and log actions taken. Secret-handling, no-sudo, and no-exfiltration boundaries remain in force.
+    The cluster owner has granted standing approval for cluster-affecting actions (merging Renovate PRs, merging the agent's own PRs once ALL CI checks pass, and letting Flux reconcile). Agents may run apply/reconcile commands. Agent-authored PRs must never be merged with failing or skipped checks, and the agent must monitor the rollout after merging and report the outcome. Still prefer dry-run to preview where practical, monitor rollouts after changes, and log actions taken. Secret-handling, no-sudo, and no-exfiltration boundaries remain in force.
 ---
 
 # AGENTS.md
