@@ -1,0 +1,22 @@
+---
+# The kube-apiserver calls the cert-manager webhook for admission of every
+# cert-manager.io resource. Under default-deny that call is dropped and ALL
+# Certificate/Issuer operations cluster-wide start failing — this is the
+# single most dangerous gap when locking down this namespace. The apiserver
+# runs on host network, so a plain NetworkPolicy cannot select it; Cilium's
+# kube-apiserver entity handles it correctly.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-webhook-from-apiserver
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: webhook
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "10250"
+              protocol: TCP
