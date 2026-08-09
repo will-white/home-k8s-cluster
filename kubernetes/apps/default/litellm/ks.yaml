@@ -11,6 +11,7 @@ spec:
   path: ./kubernetes/apps/default/litellm/app
   dependsOn:
     - name: external-secrets-stores
+    - name: cloudnative-pg-cluster
   prune: true
   sourceRef:
     kind: GitRepository
