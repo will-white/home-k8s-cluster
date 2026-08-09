@@ -1,0 +1,19 @@
+---
+# Allow ingress from the cluster nodes themselves (Cilium host/remote-node
+# identities). REQUIRED in any namespace that serves NodePort/LoadBalancer
+# traffic: LB/NodePort flows SNAT through a node and arrive carrying the
+# node's identity — Cilium ipBlock CIDR rules deliberately NEVER match node
+# identities, so an allow-ingress-lan ipBlock alone silently drops every
+# LB-fronted LAN client (discovered live 2026-08-09: MQTT clients and the
+# CNPG admission webhook). Health-check probes (kubelet) also ride on the
+# host identity.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-from-nodes
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node

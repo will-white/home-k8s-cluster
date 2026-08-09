@@ -16,6 +16,8 @@ spec:
   ingress:
     - fromEntities:
         - kube-apiserver
+        - host
+        - remote-node
       toPorts:
         - ports:
             - port: "10250"
