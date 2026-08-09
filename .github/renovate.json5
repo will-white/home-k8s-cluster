@@ -149,6 +149,29 @@
       dependencyDashboardApproval: true,
     },
     {
+      description: [
+        // emqx-operator 2.3.0+ polls the Enterprise-only endpoint
+        // /api/v5/load_rebalance/global_status, which 404s on OSS EMQX 5.8.9
+        // (the last open-source release). The reconcile then aborts before the
+        // readiness-gate step, so new core pods hang on apps.emqx.io/on-serving
+        // forever -> emqx-listeners has no ready endpoints -> every MQTT client
+        // gets ECONNREFUSED. This is latent: it only bites when pods restart.
+        // Bumped to 2.3.1 in #1002 (reverted), then to 2.3.2 in #1081 which took
+        // down MQTT at the next full cluster restart. Hold below 2.3.0 until the
+        // operator stops calling the enterprise API against OSS EMQX.
+        'emqx-operator: hold <2.3.0 (enterprise load_rebalance API breaks OSS EMQX)',
+      ],
+      matchDatasources: [
+        'helm',
+      ],
+      matchPackageNames: [
+        'emqx-operator',
+      ],
+      allowedVersions: '<2.3.0',
+      automerge: false,
+      dependencyDashboardApproval: true,
+    },
+    {
       matchDatasources: [
         'helm',
       ],
