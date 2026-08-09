@@ -14,87 +14,271 @@ data:
   # exists for Prowlarr, unlike Sonarr/Radarr.
   prowlarr.json: |-
     {
-      "annotations": { "list": [] },
+      "annotations": {
+        "list": []
+      },
       "editable": true,
       "graphTooltip": 1,
       "links": [],
-      "time": { "from": "now-24h", "to": "now" },
+      "time": {
+        "from": "now-24h",
+        "to": "now"
+      },
       "refresh": "1m",
       "schemaVersion": 39,
       "title": "Prowlarr",
       "uid": "prowlarr-exportarr",
       "panels": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
-          "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
-          "fieldConfig": { "defaults": { "unit": "short" } },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 8,
+            "x": 0,
+            "y": 0
+          },
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short"
+            }
+          },
           "title": "Indexers",
           "type": "stat",
-          "targets": [{ "expr": "sum(prowlarr_indexer_total)", "legendFormat": "total" }]
+          "targets": [
+            {
+              "expr": "sum(prowlarr_indexer_total)",
+              "legendFormat": "total"
+            }
+          ]
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
-          "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
-          "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } } },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 8,
+            "x": 8,
+            "y": 0
+          },
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            }
+          },
           "title": "Enabled indexers",
           "type": "stat",
-          "targets": [{ "expr": "sum(prowlarr_indexer_enabled_total)", "legendFormat": "enabled" }]
+          "targets": [
+            {
+              "expr": "sum(prowlarr_indexer_enabled_total)",
+              "legendFormat": "enabled"
+            }
+          ]
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
-          "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
-          "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 8,
+            "x": 16,
+            "y": 0
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 1
+                  }
+                ]
+              }
+            }
+          },
           "title": "Unavailable indexers",
           "type": "stat",
-          "targets": [{ "expr": "sum(prowlarr_indexer_unavailable)", "legendFormat": "unavailable" }]
+          "targets": [
+            {
+              "expr": "sum(prowlarr_indexer_unavailable)",
+              "legendFormat": "unavailable"
+            }
+          ]
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
-          "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
-          "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } },
-          "title": "Collector errors",
-          "type": "stat",
-          "targets": [{ "expr": "sum(prowlarr_collector_error)", "legendFormat": "error" }]
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
-          "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
-          "fieldConfig": { "defaults": { "unit": "ms", "custom": { "drawStyle": "line", "fillOpacity": 10, "showPoints": "never" } } },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 4
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "right",
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "showPoints": "never"
+              }
+            }
+          },
           "title": "Average response time by indexer",
           "type": "timeseries",
-          "targets": [{ "expr": "prowlarr_indexer_average_response_time_ms", "legendFormat": "{{indexer}}" }]
+          "targets": [
+            {
+              "expr": "prowlarr_indexer_average_response_time_ms",
+              "legendFormat": "{{indexer}}"
+            }
+          ]
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "gridPos": { "h": 9, "w": 12, "x": 12, "y": 4 },
-          "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] } },
-          "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "continuous-BlPu" } } },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 12,
+            "y": 4
+          },
+          "options": {
+            "displayMode": "gradient",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "continuous-BlPu"
+              }
+            }
+          },
           "title": "Queries by indexer",
           "type": "bargauge",
-          "targets": [{ "expr": "topk(20, prowlarr_indexer_queries_total)", "legendFormat": "{{indexer}}", "instant": true }]
+          "targets": [
+            {
+              "expr": "topk(20, prowlarr_indexer_queries_total)",
+              "legendFormat": "{{indexer}}",
+              "instant": true
+            }
+          ]
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
-          "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] } },
-          "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "continuous-RdYlGr", "seriesBy": "last" } } },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 13
+          },
+          "options": {
+            "displayMode": "gradient",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ]
+            }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "continuous-RdYlGr",
+                "seriesBy": "last"
+              }
+            }
+          },
           "title": "Failed queries by indexer",
           "type": "bargauge",
-          "targets": [{ "expr": "topk(20, prowlarr_indexer_failed_queries_total)", "legendFormat": "{{indexer}}", "instant": true }]
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
-          "options": { "displayMode": "lcd", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] } },
-          "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 604800 }, { "color": "green", "value": 2592000 }] } } },
-          "title": "Indexer VIP expiry",
-          "type": "bargauge",
-          "targets": [{ "expr": "prowlarr_indexer_vip_expires_in_seconds > 0", "legendFormat": "{{indexer}}", "instant": true }]
+          "targets": [
+            {
+              "expr": "topk(20, prowlarr_indexer_failed_queries_total)",
+              "legendFormat": "{{indexer}}",
+              "instant": true
+            }
+          ]
         }
       ]
     }
