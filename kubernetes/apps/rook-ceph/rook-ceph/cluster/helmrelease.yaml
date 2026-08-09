@@ -60,6 +60,18 @@ spec:
       isDefault: false
       name: csi-ceph-blockpool
     cephClusterSpec:
+      # The rook orchestrator module logs every Kubernetes API response body at
+      # DEBUG. A full PodList is ~1.5MiB and it polls every 15s (~6MiB/min,
+      # ~8.6GiB/day). Loki rejected each one against its 256KiB max entry size
+      # ("max entry size '262144' bytes exceeded ... entry with length
+      # '1574250' bytes"), so ceph-mgr logs were dropped outright rather than
+      # truncated — the active mgr was effectively unlogged.
+      #
+      # The option only takes effect when the module reloads, which the
+      # 8-hourly `ceph mgr fail` in mgr-maintenance/ already does.
+      cephConfig:
+        mgr:
+          mgr/rook/log_level: info
       crashCollector:
         disable: false
       csi:
