@@ -1,0 +1,24 @@
+---
+# cert-manager-specific egress on top of the shared default-deny stack:
+# - 443/tcp anywhere: Let's Encrypt ACME API + Cloudflare API (DNS-01)
+# - 53/udp+tcp anywhere: cert-manager checks DNS-01 propagation by querying
+#   the AUTHORITATIVE nameservers directly, not just cluster DNS
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-acme
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 443
+          protocol: TCP
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
