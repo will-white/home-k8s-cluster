@@ -1,2 +1,15 @@
-- op: remove
-  path: /cluster/apiServer/admissionControl
+# Strip Talos's default PodSecurity admission plugin.
+#
+# This was an RFC6902 (JSON) patch, but talhelper refuses JSON6902 patches once
+# the machine config becomes multi-document — which it now is, since the
+# nut-client ExtensionServiceConfig (see talconfig.yaml) adds a second document.
+# So it's expressed as a strategic-merge patch using Talos's `$patch: delete`
+# directive, which removes the whole admissionControl key (same net effect as
+# the old `op: remove`).
+#
+# NOTE: written as `$$patch` because talhelper runs envsubst over patch files;
+# `$$` escapes to a literal `$`, so Talos receives `$patch: delete`.
+cluster:
+  apiServer:
+    admissionControl:
+      $$patch: delete
