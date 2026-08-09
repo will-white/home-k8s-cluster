@@ -43,12 +43,14 @@ jobs:
         run: |
           set -e
           echo "Installing kubeconform..."
+          # renovate: datasource=github-releases depName=yannh/kubeconform
           KUBECONFORM_VERSION="v0.7.0"
           curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
           chmod +x kubeconform
           sudo mv kubeconform /usr/local/bin/
 
           echo "Installing kustomize..."
+          # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.+)$
           KUSTOMIZE_VERSION="v5.5.0"
           curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
           chmod +x kustomize
@@ -169,85 +171,11 @@ jobs:
             echo "status=passed" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run Full Repository Validation
-        id: full-validation
-        continue-on-error: true
-        run: |
-          set -e
-          mkdir -p ./validation-results
-
-          # Check if kubeconform script exists
-          if [ ! -f ./scripts/kubeconform.sh ]; then
-            echo "⚠ Warning: ./scripts/kubeconform.sh not found, skipping full validation"
-            echo "status=skipped" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          echo "Running full repository validation using existing script..."
-          if bash ./scripts/kubeconform.sh ./kubernetes 2>&1 | tee ./validation-results/full-kubeconform.txt; then
-            echo "✓ Full repository validation passed"
-            echo "status=passed" >> $GITHUB_OUTPUT
-          else
-            echo "✗ Full repository validation failed"
-            echo "status=failed" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
-      - name: Check for Unencrypted Secrets
-        id: secret-check
-        continue-on-error: true
-        run: |
-          set -e
-          mkdir -p ./validation-results
-
-          echo "Checking for unencrypted secrets..."
-          CHANGED_FILES=$(cat /tmp/changed-k8s-files.txt)
-
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "No Kubernetes files changed, skipping secret check"
-            echo "status=skipped" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          UNENCRYPTED_SECRETS=""
-          for file in $CHANGED_FILES; do
-            if [ -f "$file" ]; then
-              # Check if file contains Secret kind as a standalone resource
-              # Use grep with word boundaries and account for YAML indentation
-              if grep -E "^[[:space:]]*kind:[[:space:]]*Secret[[:space:]]*$" "$file" > /dev/null; then
-                # Check if it's encrypted with SOPS (has sops metadata)
-                if ! grep -q "sops:" "$file"; then
-                  echo "⚠ WARNING: Potential unencrypted secret in $file"
-                  UNENCRYPTED_SECRETS="$UNENCRYPTED_SECRETS $file"
-                fi
-              fi
-            fi
-          done
-
-          if [ -n "$UNENCRYPTED_SECRETS" ]; then
-            echo "Found potential unencrypted secrets in:" | tee ./validation-results/secret-check.txt
-            echo "$UNENCRYPTED_SECRETS" | tee -a ./validation-results/secret-check.txt
-            echo "status=warning" >> $GITHUB_OUTPUT
-          else
-            echo "✓ No unencrypted secrets detected" | tee ./validation-results/secret-check.txt
-            echo "status=passed" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run YAML Lint
-        id: yamllint
-        continue-on-error: true
-        run: |
-          set -e
-          mkdir -p ./validation-results
-
-          echo "Running yamllint on Kubernetes manifests..."
-          if yamllint -f parsable kubernetes/ 2>&1 | tee ./validation-results/yamllint.txt; then
-            echo "✓ YAML lint passed"
-            echo "status=passed" >> $GITHUB_OUTPUT
-          else
-            echo "⚠ YAML lint found issues"
-            echo "status=warning" >> $GITHUB_OUTPUT
-          fi
+      # NOTE: the full-repo kubeconform sweep, the SOPS encryption check, and
+      # yamllint each have their own dedicated workflow (kubeconform.yaml,
+      # sops-check.yaml, yamllint.yaml) that runs on the same triggers and CAN
+      # fail the build — the weaker inline duplicates that used to live here
+      # ran everything twice and could only warn.
 
       - name: Upload Validation Results
         if: always()
@@ -278,36 +206,6 @@ jobs:
           fi
           echo "" >> validation-summary.md
 
-          echo "### Kubeconform (Full Repository)" >> validation-summary.md
-          if [ "${{ steps.full-validation.outputs.status }}" = "passed" ]; then
-            echo "✅ Passed" >> validation-summary.md
-          elif [ "${{ steps.full-validation.outputs.status }}" = "failed" ]; then
-            echo "❌ Failed" >> validation-summary.md
-          else
-            echo "⏭️ Skipped" >> validation-summary.md
-          fi
-          echo "" >> validation-summary.md
-
-          echo "### Secret Encryption Check" >> validation-summary.md
-          if [ "${{ steps.secret-check.outputs.status }}" = "passed" ]; then
-            echo "✅ Passed - No unencrypted secrets detected" >> validation-summary.md
-          elif [ "${{ steps.secret-check.outputs.status }}" = "warning" ]; then
-            echo "⚠️ Warning - Potential unencrypted secrets found" >> validation-summary.md
-          else
-            echo "⏭️ Skipped" >> validation-summary.md
-          fi
-          echo "" >> validation-summary.md
-
-          echo "### YAML Lint" >> validation-summary.md
-          if [ "${{ steps.yamllint.outputs.status }}" = "passed" ]; then
-            echo "✅ Passed" >> validation-summary.md
-          elif [ "${{ steps.yamllint.outputs.status }}" = "warning" ]; then
-            echo "⚠️ Warning - Style issues found" >> validation-summary.md
-          else
-            echo "⏭️ Skipped" >> validation-summary.md
-          fi
-          echo "" >> validation-summary.md
-
           echo "### Details" >> validation-summary.md
           echo "Validation artifacts are available in the workflow run." >> validation-summary.md
           echo "" >> validation-summary.md
@@ -318,19 +216,9 @@ jobs:
         if: always()
         run: |
           # Fail the job if critical validations failed
-          if [ "${{ steps.kubeconform.outputs.status }}" = "failed" ] || \
-             [ "${{ steps.full-validation.outputs.status }}" = "failed" ]; then
+          if [ "${{ steps.kubeconform.outputs.status }}" = "failed" ]; then
             echo "❌ Critical validations failed"
             exit 1
-          fi
-
-          # Warn but don't fail on non-critical issues
-          if [ "${{ steps.secret-check.outputs.status }}" = "warning" ]; then
-            echo "⚠️ Warning: Review potential unencrypted secrets"
-          fi
-
-          if [ "${{ steps.yamllint.outputs.status }}" = "warning" ]; then
-            echo "⚠️ Warning: YAML lint found style issues"
           fi
 
           echo "✅ All critical validations passed"

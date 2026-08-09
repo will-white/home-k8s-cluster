@@ -377,6 +377,8 @@
       ],
       matchStrings: [
         '# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( extractVersion=(?<extractVersion>.+?))?\\nARG \\w+_VERSION=(?<currentValue>\\S+)',
+        // shell-style pins in workflow run blocks: TOOL_VERSION="v1.2.3"
+        '# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( extractVersion=(?<extractVersion>.+?))?\\n\\s*\\w+_VERSION="(?<currentValue>[^"]+)"',
       ],
       datasourceTemplate: '{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}',
     },

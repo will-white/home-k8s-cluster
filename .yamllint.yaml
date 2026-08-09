@@ -25,3 +25,6 @@ ignore:
   - "**/secret*.yaml"
   # Vendored upstream manifests — not ours to lint
   - "kubernetes/apps/network/cilium-gateway/crds/vendor/**"
+  # Grafana dashboards are exported JSON wrapped in YAML — long lines inherent
+  - "**/dashboard*.yaml"
+  - "**/*-dashboard.yaml"
