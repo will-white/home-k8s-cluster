@@ -15,11 +15,17 @@ kind: Kustomization
 #
 # grpcroutes was present in-cluster but missing here (drift); tlsroutes moved
 # from the experimental channel to standard.
+#
+# CRDs are vendored under vendor/ (from the URLs below with vendor.sh) rather
+# than fetched from raw.githubusercontent.com at reconcile time: the remote
+# fetch has failed before (see the lookup exclusion in the flux-system Alert),
+# and bootstrap's apps task applies this same kustomization before Cilium
+# starts, which must work without GitHub reachability.
 resources:
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_backendtlspolicies.yaml
-  - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/standard/gateway.networking.k8s.io_tlsroutes.yaml
+  - vendor/gateway.networking.k8s.io_gatewayclasses.yaml
+  - vendor/gateway.networking.k8s.io_gateways.yaml
+  - vendor/gateway.networking.k8s.io_httproutes.yaml
+  - vendor/gateway.networking.k8s.io_grpcroutes.yaml
+  - vendor/gateway.networking.k8s.io_referencegrants.yaml
+  - vendor/gateway.networking.k8s.io_backendtlspolicies.yaml
+  - vendor/gateway.networking.k8s.io_tlsroutes.yaml

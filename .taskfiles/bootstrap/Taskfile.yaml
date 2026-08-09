@@ -28,11 +28,17 @@ tasks:
     vars:
       TALHELPER_SECRET_EXISTS:
         sh: test -f {{.TALHELPER_SECRET_FILE}} && echo true || echo false
+      # ${nut_monpwd} for talconfig.yaml — canonical copy lives only in
+      # Bitwarden SM (CLUSTER_NUT_MONPWD); see scripts/bws-secret.sh.
+      NUT_MONPWD:
+        sh: test -n "${nut_monpwd:-}" && printf %s "$nut_monpwd" || {{.ROOT_DIR}}/scripts/bws-secret.sh CLUSTER_NUT_MONPWD
+    env:
+      nut_monpwd: '{{.NUT_MONPWD}}'
     preconditions:
       - test -f {{.SOPS_CONFIG_FILE}}
       - test -f {{.SOPS_AGE_KEY_FILE}}
       - test -f {{.TALHELPER_CONFIG_FILE}}
-      - which talhelper sops
+      - which talhelper sops bws jq
 
   flux:
     desc: Bootstrap Flux into the Talos cluster
@@ -59,6 +65,10 @@ tasks:
     dir: '{{.KUBERNETES_DIR}}/bootstrap/talos'
     cmds:
       - until kubectl wait --for=condition=Ready=False nodes --all --timeout=600s; do sleep 10; done
+      # Gateway API CRDs must exist before Cilium starts: cilium-operator probes
+      # for them once at startup and silently disables its Gateway controller for
+      # the life of the process if any are missing (no crash, no retry).
+      - kubectl apply --server-side --kustomize {{.KUBERNETES_DIR}}/apps/network/cilium-gateway/crds
       - helmfile --file {{.KUBERNETES_DIR}}/bootstrap/helmfile.yaml apply --skip-diff-on-install --suppress-diff
       - until kubectl wait --for=condition=Ready nodes --all --timeout=600s; do sleep 10; done
     preconditions:

@@ -180,9 +180,13 @@ controlPlane:
   # signals FSD (~2 min after LOWBATT) the secondary runs SHUTDOWNCMD; Talos's
   # poweroff path cordons+drains best-effort before powering off.
   #
-  # The upsmon password is injected from talenv.sops.yaml as ${nut_monpwd} at
-  # `talhelper genconfig` time — never committed in plaintext. This is the same
-  # nut_monpwd the other (non-K8s) secondaries use.
+  # The upsmon password resolves as ${nut_monpwd} from the environment at
+  # `talhelper genconfig` time — never committed, not even encrypted. The
+  # generate-config/bootstrap tasks fetch it from Bitwarden SM
+  # (CLUSTER_NUT_MONPWD, via scripts/bws-secret.sh using the repo's SOPS'd
+  # machine token); it is the same password the other (non-K8s) NUT
+  # secondaries and the TrueNAS master use — Bitwarden is the single
+  # canonical store.
   #
   # The &nutClient anchor is reused by the worker group below so all 8 nodes
   # get an identical upsmon.conf.

@@ -8,6 +8,28 @@ _... managed with Flux, Renovate, and GitHub Actions_ 🤖
 
 > **For AI Agents and Developers**: See [AGENTS.md](./AGENTS.md) for comprehensive setup, validation, and operational instructions.
 
+## 🚨 Disaster recovery
+
+Everything needed to rebuild lives in this repo **except `age.key`** — the SOPS
+Age key at the repo root that decrypts the Talos PKI, the Flux deploy key, and
+the Bitwarden bootstrap token. Losing it is unrecoverable, so:
+
+- `task bootstrap:secrets-push` uploads `age.key`, `github-deploy.key`, and
+  `config.yaml` to Bitwarden Secrets Manager; **run it after any rotation**.
+  `task bootstrap:secrets-pull` restores them on a fresh workstation.
+- Both need `BWS_ACCESS_TOKEN` exported in your shell — keep that token (and
+  ideally a printed copy of `age.key`) in your personal password manager, NOT
+  only on the workstation.
+- All other secrets are flat values in Bitwarden SM delivered via
+  ExternalSecrets — see [docs/secrets.md](./docs/secrets.md) for the naming
+  schema. The NUT upsmon password (`CLUSTER_NUT_MONPWD`) is fetched from
+  Bitwarden at `talhelper genconfig` time.
+
+Runbooks:
+- [Bare-metal rebuild](./docs/runbooks/bare-metal-rebuild.md) — nuke & repave from blank nodes
+- [Full cluster shutdown](./docs/runbooks/full-cluster-shutdown.md) — graceful power-down/up for maintenance
+- [Ceph / data restore](./kubernetes/apps/rook-ceph/rook-ceph/backup/DISASTER-RECOVERY.md) — Garage → RGW → CNPG/Volsync rehydration
+
 ## 🔧 Tools
 
 | Tool                                             | Purpose                                                            |

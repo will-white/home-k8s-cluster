@@ -16,11 +16,19 @@ tasks:
   generate-config:
     desc: Generate Talos configuration
     cmd: talhelper genconfig --config-file {{.TALHELPER_CONFIG_FILE}} --secret-file {{.TALHELPER_SECRET_FILE}} --out-dir {{.TALHELPER_CLUSTER_DIR}}
+    vars:
+      # ${nut_monpwd} in talconfig.yaml resolves from the environment; the
+      # canonical copy lives ONLY in Bitwarden SM (CLUSTER_NUT_MONPWD).
+      # Export nut_monpwd manually to override/work offline.
+      NUT_MONPWD:
+        sh: test -n "${nut_monpwd:-}" && printf %s "$nut_monpwd" || {{.ROOT_DIR}}/scripts/bws-secret.sh CLUSTER_NUT_MONPWD
+    env:
+      nut_monpwd: '{{.NUT_MONPWD}}'
     preconditions:
       - test -f {{.TALHELPER_CONFIG_FILE}}
       - test -f {{.SOPS_CONFIG_FILE}}
       - test -f {{.SOPS_AGE_KEY_FILE}}
-      - which talhelper
+      - which talhelper bws jq
 
   apply-node:
     desc: Apply Talos config to a node [HOSTNAME=required]
@@ -82,9 +90,14 @@ tasks:
     desc: Resets nodes back to maintenance mode
     dir: "{{.KUBERNETES_DIR}}/bootstrap/talos"
     prompt: This will destroy your cluster and reset the nodes back to maintenance mode... continue?
-    cmd: talhelper gencommand reset --config-file {{.TALHELPER_CONFIG_FILE}} --out-dir {{.TALHELPER_CLUSTER_DIR}} --extra-flags="--reboot {{- if eq .CLI_FORCE false }} --system-labels-to-wipe STATE --system-labels-to-wipe EPHEMERAL{{ end }} --graceful=false --wait=false" | bash
-  preconditions:
-    - which talhelper
+    cmd: >-
+      talhelper gencommand reset --config-file {{.TALHELPER_CONFIG_FILE}}
+      --out-dir {{.TALHELPER_CLUSTER_DIR}}
+      --extra-flags="--reboot
+      {{- if eq .CLI_FORCE false }} --system-labels-to-wipe STATE --system-labels-to-wipe EPHEMERAL{{ end }}
+      --graceful=false --wait=false" | bash
+    preconditions:
+      - which talhelper
 
   down:
     internal: true
