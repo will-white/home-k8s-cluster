@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: default
 resources:
   - ./externalsecret.yaml
+  - ./ocirepository.yaml
   - ./helmrelease.yaml
   - ../../../../templates/gatus/guarded
   - ../../../../templates/volsync

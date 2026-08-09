@@ -4,5 +4,6 @@ kind: Kustomization
 resources:
   - ../../../../templates/volsync
   - ./redirect-configmap.yaml
+  - ./ocirepository.yaml
   - ./helmrelease.yaml
   - ../../../../templates/gatus/external

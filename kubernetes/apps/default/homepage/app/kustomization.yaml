@@ -4,6 +4,7 @@ namespace: default
 resources:
   - ./configmap.yaml
   - ./externalsecret.yaml
+  - ./ocirepository.yaml
   - ./helmrelease.yaml
   - ./rbac.yaml
   - ../../../../templates/gatus/guarded
