@@ -382,7 +382,14 @@ spec:
         enableAdminAPI: true
         enableFeatures:
           - memory-snapshot-on-shutdown
-          - remote-write-receiver
+        # Prometheus 3 dropped `remote-write-receiver` as a feature flag in
+        # favour of --web.enable-remote-write-receiver, which the operator
+        # exposes as this field. Listing it under enableFeatures silently did
+        # nothing, so Loki's ruler remote_write got
+        #   404: remote write receiver needs to be enabled with
+        #        --web.enable-remote-write-receiver
+        # and no loki:* recording-rule series ever reached Prometheus.
+        enableRemoteWriteReceiver: true
         podMonitorSelectorNilUsesHelmValues: false
         probeSelectorNilUsesHelmValues: false
         query:
