@@ -1,0 +1,19 @@
+---
+# The kube-apiserver calls the prometheus-operator admission webhook to
+# validate every PrometheusRule apply — same pattern as cert-manager and
+# external-secrets phases. containerPort 10250 verified live.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-operator-webhook-from-apiserver
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kube-prometheus-stack-prometheus-operator
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "10250"
+              protocol: TCP
