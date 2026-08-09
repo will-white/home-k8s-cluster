@@ -25,7 +25,11 @@ metadata:
 data:
   identities: |
     # default namespace
+    convertx@default:3:hourly Volsync RS
     frigate@default:3:hourly Volsync RS
+    manyfold@default:3:hourly Volsync RS
+    sosse@default:3:hourly Volsync RS
+    spoolman@default:3:hourly Volsync RS
     home-assistant@default:3:hourly Volsync RS
     homebox@default:30:daily Volsync RS
     karakeep@default:30:daily Volsync RS
