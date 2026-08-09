@@ -1,6 +1,14 @@
 machine:
   time:
     disabled: false
+    # The LAN gateway MUST stay first. Talos blocks the boot sequence on time
+    # sync, and it does so *before* apid starts -- a node that cannot reach any
+    # NTP server hangs with no API to connect to, so there is no remote fix.
+    # With only WAN servers listed, an ISP/WAN outage (which commonly accompanies
+    # the power event that caused the reboot in the first place) prevents the
+    # entire cluster from booting. Seen 2026-08-09: mj05ajfj hung repeating
+    # "time query error with server 162.159.200.1" until its link was restored.
     servers:
+      - 192.168.5.1
       - 162.159.200.1
       - 162.159.200.123

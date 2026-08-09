@@ -97,3 +97,47 @@ tasks:
     cmd: flux --namespace flux-system resume kustomization --all
     preconditions:
       - which flux
+
+  cluster-down:
+    desc: Gracefully power off the WHOLE cluster for maintenance
+    prompt: This powers off all 8 nodes. Continue?
+    cmds:
+      # 1. Stop Flux fighting the shutdown / hammering reconcile on the way back.
+      - task: down
+      # 2. Ceph maintenance flags. Deliberately NOT nodown: if some nodes fail to
+      #    come back, nodown keeps their OSDs marked up, PGs cannot peer, and all
+      #    client I/O blocks. That turned a partial outage into a total one on
+      #    2026-08-08. noout+norebalance is enough to stop data movement.
+      - kubectl -n rook-ceph exec deploy/rook-ceph-tools -- bash -c 'for f in noout norebalance nobackfill norecover; do ceph osd set $f; done; ceph status'
+      # 3. --force skips the k8s cordon/drain. This is CORRECT for a full
+      #    shutdown: drain evacuates pods to other nodes, but every node is going
+      #    down, and PDBs (postgres16-primary, emqx-core at 0 disruptions) would
+      #    deadlock it for the full 30m timeout. The OS shutdown is still orderly.
+      - talosctl -n {{.WORKERS}} shutdown --force --wait=false
+      - echo "Workers powering off. Nodes with kernel CephFS/RBD mounts can take ~12min (libceph retries until the sequencer times out) -- do NOT reach for the power button."
+      - talosctl -n {{.CONTROLPLANES}} shutdown --force --wait=false
+    vars:
+      WORKERS: '{{.WORKERS | default "192.168.5.50,192.168.5.51,192.168.5.52,192.168.5.53,192.168.5.54"}}'
+      CONTROLPLANES: '{{.CONTROLPLANES | default "192.168.5.40,192.168.5.41,192.168.5.42"}}'
+    preconditions:
+      - talosctl config info &>/dev/null
+      - which talosctl kubectl flux
+
+  cluster-up:
+    desc: Post-power-on recovery — clear shutdown taints, unset Ceph flags, resume Flux
+    cmds:
+      - kubectl wait --for=condition=Ready nodes --all --timeout=15m
+      # Kubernetes NEVER clears node.kubernetes.io/out-of-service itself; an admin
+      # must. Nodes look perfectly healthy (Ready, kubelet OK) while this taint
+      # silently blocks every pod, including their OSDs. This cost the most
+      # diagnosis time on 2026-08-09.
+      - for n in $(kubectl get nodes -o name); do kubectl taint $n node.kubernetes.io/out-of-service- 2>/dev/null || true; done
+      - for n in $(kubectl get nodes -o name); do kubectl uncordon ${n#node/} 2>/dev/null || true; done
+      - echo "Waiting for Ceph to settle BEFORE unsetting flags..."
+      - kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
+      - kubectl -n rook-ceph exec deploy/rook-ceph-tools -- bash -c 'for f in norecover nobackfill norebalance noout; do ceph osd unset $f; done; ceph status'
+      # Flux last: recovery must not compete with 96 reconciling apps for disk.
+      - task: up
+    preconditions:
+      - kubectl get nodes &>/dev/null
+      - which talosctl kubectl flux
