@@ -3,7 +3,7 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ./gatus.yaml
+  - ../../../../templates/gatus/external
   - ../../../../templates/volsync
 configMapGenerator:
   - name: home-assistant-loki-rules

@@ -23,6 +23,9 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      NAMESPACE: media
+      GATUS_PORT: "25600"
+      GATUS_PATH: /actuator/health
       # source-only volsync backup of the existing PVC (SQLite user state)
       VOLSYNC_STORAGECLASS: ceph-filesystem
       VOLSYNC_SNAPSHOTCLASS: csi-ceph-filesystem

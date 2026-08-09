@@ -23,6 +23,7 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      GATUS_URL: https://unifi.default.svc.cluster.local:8443/status
       VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 10Gi
       # explicit: matches the live PVC class (claim class is immutable)

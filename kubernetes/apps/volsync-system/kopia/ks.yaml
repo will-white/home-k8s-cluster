@@ -13,6 +13,8 @@ spec:
   dependsOn:
     - name: volsync
       namespace: flux-system
+    - name: external-secrets-stores
+      namespace: flux-system
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
@@ -23,6 +25,8 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      NAMESPACE: volsync-system
+      GATUS_PORT: "51515"
   prune: true
   retryInterval: 2m
   sourceRef:

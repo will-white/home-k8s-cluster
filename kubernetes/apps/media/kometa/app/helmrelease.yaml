@@ -29,6 +29,8 @@ spec:
   values:
     controllers:
       kometa:
+        annotations:
+          reloader.stakater.com/auto: "true"
         type: cronjob
         cronjob:
           schedule: "0 0 * * *"

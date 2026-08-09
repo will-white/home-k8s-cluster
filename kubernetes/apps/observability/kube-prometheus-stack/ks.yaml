@@ -21,4 +21,5 @@ spec:
   postBuild:
     substitute:
       APP: *app
+      GATUS_URL: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090/-/healthy
       GATUS_SUBDOMAIN: prometheus

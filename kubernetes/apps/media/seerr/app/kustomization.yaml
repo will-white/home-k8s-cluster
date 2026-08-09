@@ -6,4 +6,4 @@ resources:
   - ./redirect-configmap.yaml
   - ./pvc.yaml
   - ./helmrelease.yaml
-  - ./gatus.yaml
+  - ../../../../templates/gatus/external

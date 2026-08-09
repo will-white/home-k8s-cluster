@@ -37,6 +37,12 @@ spec:
             envFrom: &envFrom
               - secretRef:
                   name: sonarr-secret
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
         containers:
           app:
             image:

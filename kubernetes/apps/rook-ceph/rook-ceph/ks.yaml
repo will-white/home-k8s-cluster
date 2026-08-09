@@ -29,6 +29,8 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: rook-ceph-cluster
+  dependsOn:
+    - name: external-secrets-stores
   interval: 30m
   path: ./kubernetes/apps/rook-ceph/rook-ceph/cluster
   postBuild:

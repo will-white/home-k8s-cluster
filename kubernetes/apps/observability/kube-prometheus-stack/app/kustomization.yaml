@@ -4,5 +4,5 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   # - ./scrapeconfig.yaml
-  - ./gatus.yaml
+  - ../../../../templates/gatus/guarded
   - ./prometheusrules

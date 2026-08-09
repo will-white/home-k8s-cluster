@@ -3,5 +3,5 @@ kind: Kustomization
 namespace: default
 resources:
   - ./helmrelease.yaml
-  - ./gatus.yaml
+  - ../../../../templates/gatus/guarded
   - ../../../../templates/volsync
