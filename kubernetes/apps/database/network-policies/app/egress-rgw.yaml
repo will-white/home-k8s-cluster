@@ -1,0 +1,24 @@
+---
+# The ONLY external egress this namespace legitimately needs: CNPG's barman
+# WAL archiving and base backups to Ceph RGW (rook-ceph namespace, port 80).
+# Unlike media/default/observability, database gets NO open egress — the
+# blast radius of an exfiltrating compromised datastore is worth the
+# stricter posture. If a new legitimate flow appears, itemize it here.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-rgw
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: rook-ceph
+      ports:
+        - port: 80
+          protocol: TCP
+        - port: 8080
+          protocol: TCP
