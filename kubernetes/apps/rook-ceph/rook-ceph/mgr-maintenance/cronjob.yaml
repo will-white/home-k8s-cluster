@@ -40,11 +40,14 @@ spec:
                 - |
                   set -euo pipefail
 
-                  # NOTE: use UNBRACED shell vars ($VAR, not ${VAR}). Flux
-                  # postBuild substitution (cluster-settings, injected into every
-                  # Kustomization via kubernetes/flux/apps.yaml) eats ${VAR} tokens
-                  # and replaces unknown ones with empty strings. Unbraced $VAR
-                  # survives, matching the rclone backup cronjob convention.
+                  # NOTE: use UNBRACED shell vars ($VAR only). Flux postBuild
+                  # substitution (cluster-settings, injected into every
+                  # Kustomization via kubernetes/flux/apps.yaml) consumes the
+                  # dollar-brace form and, in strict mode, fails the build for
+                  # unknown names. Unbraced $VAR survives, matching the rclone
+                  # backup cronjob convention. Do not write the braced form
+                  # anywhere in this block -- not even inside a comment, which
+                  # is what broke this Kustomization once already.
 
                   # --- Replicate the rook toolbox setup so `ceph` works without
                   # the toolbox pod (mon endpoints + client.admin keyring). ---
