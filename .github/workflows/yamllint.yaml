@@ -1,0 +1,26 @@
+---
+# Enforced yamllint — unlike the old copy buried in agent-validation.yml
+# (continue-on-error), this one fails the build.
+name: YAML Lint
+on:
+  pull_request:
+    paths:
+      - "kubernetes/**.yaml"
+      - ".taskfiles/**"
+      - "Taskfile.yaml"
+      - ".yamllint.yaml"
+  push:
+    branches: ["main"]
+    paths:
+      - "kubernetes/**.yaml"
+
+jobs:
+  yamllint:
+    name: yamllint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install yamllint
+        run: pipx install yamllint
+      - name: Lint
+        run: yamllint -f github kubernetes/ .taskfiles/ Taskfile.yaml
