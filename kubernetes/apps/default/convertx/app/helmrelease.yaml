@@ -24,6 +24,18 @@ spec:
       strategy: rollback
       retries: 3
   values:
+    defaultPodOptions:
+      # Added 2026-08-09: without this the volsync-restored (empty) PVC mounts
+      # root-owned and the non-root bun process cannot create its SQLite DB at
+      # /app/data (SQLITE_CANTOPEN crash-loop). fsGroup lets the app own the
+      # fresh volume; matches the house-standard block used across app-template.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: {type: RuntimeDefault}
     controllers:
       convertx:
         annotations:
