@@ -39,7 +39,7 @@ jobs:
           sudo mv kubeconform /usr/local/bin/
           
           # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.+)$
-          KUSTOMIZE_VERSION="v5.5.0"
+          KUSTOMIZE_VERSION="v5.8.1"
           curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
           chmod +x kustomize
           sudo mv kustomize /usr/local/bin/
