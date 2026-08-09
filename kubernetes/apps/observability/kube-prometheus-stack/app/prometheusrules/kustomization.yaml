@@ -5,4 +5,5 @@ resources:
   - ./cert-manager.yaml
   - ./external-secrets.yaml
   - ./node-and-storage.yaml
+  - ./service-endpoints.yaml
   - ./volsync.yaml

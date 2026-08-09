@@ -14,8 +14,11 @@ spec:
       # core pods stuck on apps.emqx.io/on-serving (0/1 forever) -> emqx-listeners
       # Service has no ready endpoints -> all MQTT clients get ECONNREFUSED.
       # DO NOT bump without verifying the operator no longer calls the enterprise
-      # load_rebalance API against OSS EMQX (renovate: this is intentionally held back).
-      version: 2.3.2
+      # load_rebalance API against OSS EMQX. Held back in .github/renovate.json5
+      # (allowedVersions '<2.3.0'); a comment alone did not stop #1081 from
+      # re-bumping this to 2.3.2 on 2026-07-25, which then broke MQTT cluster-wide
+      # on the next pod restart.
+      version: 2.2.29
       sourceRef:
         kind: HelmRepository
         name: emqx

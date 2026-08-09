@@ -1,0 +1,97 @@
+---
+# Catches the failure mode that hid a broken EMQX for two weeks (2026-07-25 ->
+# 2026-08-09): pods reported 1/1 Running and the EMQX CR reported Ready, but the
+# emqx-listeners Service had zero *ready* endpoints, because the operator never
+# granted the apps.emqx.io/on-serving readiness gate. Every MQTT client got
+# ECONNREFUSED against a perfectly healthy 3-node broker, and nothing alerted.
+#
+# "Pods are Running" is not "the Service is reachable". These rules alert on
+# what clients actually experience: a Service with no usable backends.
+#
+# NOTE on the `or ... * 0` idiom below: this kube-state-metrics exposes
+# endpointslice metrics (there is no kube_endpoint_address here). A naive
+# `sum(...{ready="true"}) == 0` can NEVER fire, because when nothing is ready
+# the filtered selector returns no series at all rather than zero. The `or`
+# branch supplies an explicit 0 in that case. Verified against live Prometheus.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: service-endpoint-rules
+spec:
+  groups:
+    - name: service-endpoints.rules
+      rules:
+        # Services whose loss breaks the house rather than one app.
+        - alert: CriticalServiceNoReadyEndpoints
+          annotations:
+            summary:
+              Service backing {{ $labels.endpointslice }} in {{ $labels.namespace }}
+              has had no ready endpoints for 10m. Clients get connection refused
+              even if its pods report Running.
+          expr: |
+            (
+              sum by (namespace, endpointslice) (
+                kube_endpointslice_endpoints{endpointslice=~"(emqx-listeners|postgres16-rw|dragonfly|ingress-nginx-internal-controller|ingress-nginx-external-controller)-.*", ready="true"}
+              )
+              or
+              sum by (namespace, endpointslice) (
+                kube_endpointslice_endpoints{endpointslice=~"(emqx-listeners|postgres16-rw|dragonfly|ingress-nginx-internal-controller|ingress-nginx-external-controller)-.*"}
+              ) * 0
+            ) == 0
+          for: 10m
+          labels:
+            severity: critical
+        # The slice vanishing entirely is a different shape of the same outage:
+        # the expression above has no series to evaluate, so it stays silent.
+        - alert: CriticalServiceEndpointSliceMissing
+          annotations:
+            summary:
+              No endpointslice metrics for emqx-listeners for 15m -- the Service
+              or its slices have disappeared entirely.
+          expr: |
+            absent(kube_endpointslice_endpoints{endpointslice=~"emqx-listeners-.*"})
+          for: 15m
+          labels:
+            severity: critical
+        # Broad, deliberately slow net for everything else.
+        #
+        # Excludes rook-ceph-active-mons-*: Rook maintains that EndpointSlice by
+        # hand (conditions={}, no targetRef) because it points at mon host IPs
+        # rather than pods, so it carries no readiness data at all and always
+        # looks "not ready" here even with full mon quorum. Verified 2026-08-09.
+        # Add further exclusions the same way rather than loosening the rule --
+        # an alert people learn to ignore is worse than no alert.
+        - alert: ServiceNoReadyEndpoints
+          annotations:
+            summary:
+              Service backing {{ $labels.endpointslice }} in {{ $labels.namespace }}
+              has had zero ready endpoints for 30m.
+          expr: |
+            (
+              sum by (namespace, endpointslice) (
+                kube_endpointslice_endpoints{ready="true", endpointslice!~"rook-ceph-active-mons-.*"}
+              )
+              or
+              sum by (namespace, endpointslice) (
+                kube_endpointslice_endpoints{endpointslice!~"rook-ceph-active-mons-.*"}
+              ) * 0
+            ) == 0
+          for: 30m
+          labels:
+            severity: warning
+        # Readiness gates are operator-controlled and fail silently: containers
+        # pass their probes while the pod never reaches Ready, so it is dropped
+        # from Service endpoints. This is what EMQX looked like for two weeks.
+        - alert: PodRunningNotReady
+          annotations:
+            summary:
+              Pod {{ $labels.namespace }}/{{ $labels.pod }} has been Running but
+              not Ready for 20m -- check for an unsatisfied readiness gate whose
+              controller is failing to reconcile.
+          expr: |
+            kube_pod_status_ready{condition="true"} == 0
+            and on (namespace, pod)
+            kube_pod_status_phase{phase="Running"} == 1
+          for: 20m
+          labels:
+            severity: warning

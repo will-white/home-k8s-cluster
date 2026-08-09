@@ -12,7 +12,7 @@ spec:
         kind: HelmRepository
         name: grafana
         namespace: flux-system
-      version: 7.1.0
+      version: 7.2.0
       interval: 1h
   dependsOn:
     - name: rook-ceph-cluster
@@ -50,7 +50,15 @@ spec:
       ingester:
         chunk_encoding: snappy
       limits_config:
-        retention_period: 3d
+        # Relaxed 3d -> 30d after Ceph capacity expansion (~3.6TiB, ~6% used).
+        retention_period: 30d
+        # Keep oversized lines instead of discarding them. By default Loki
+        # rejects any entry over max_line_size (256KB) outright, so a single
+        # chatty container silently loses ALL of its logs — which is what the
+        # rook mgr module's 1.5MiB DEBUG dumps did to ceph-mgr (see #1203).
+        # Truncating degrades one line instead of blinding a whole stream.
+        max_line_size: 256KB
+        max_line_size_truncate: true
       schemaConfig:
         configs:
           - from: '2024-04-01'
@@ -105,6 +113,12 @@ spec:
         repository: ghcr.io/kiwigrid/k8s-sidecar
       rules:
         searchNamespace: ALL
+        # The ruler's `local` store reads <directory>/<tenant>, and with
+        # auth_enabled: false the tenant is `fake`. The chart's sidecar folder
+        # defaults to /rules, so every rule file landed one level too high and
+        # Loki logged "unable to read rule dir /rules/fake: no such file or
+        # directory" and evaluated nothing — no alerts, no recording rules.
+        folder: /rules/fake
     singleBinary:
       persistence:
         enabled: true

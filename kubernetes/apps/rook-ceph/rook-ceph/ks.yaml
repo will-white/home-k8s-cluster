@@ -64,3 +64,24 @@ spec:
   targetNamespace: rook-ceph
   timeout: 5m
   wait: false
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: rook-ceph-mgr-maintenance
+  namespace: flux-system
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: rook-ceph-mgr-maintenance
+  dependsOn:
+    - name: rook-ceph-cluster
+  interval: 30m
+  path: ./kubernetes/apps/rook-ceph/rook-ceph/mgr-maintenance
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  targetNamespace: rook-ceph
+  timeout: 5m
+  wait: false

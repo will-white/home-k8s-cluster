@@ -57,3 +57,31 @@ tasks:
     preconditions:
       - test -f {{.KUBECONFIG}}
       - which kubectl
+
+  crd-drift:
+    desc: Report CRDs whose status.storedVersions contain versions no longer served
+    # A CRD keeps every version it has ever used as a storage version in
+    # status.storedVersions. When a chart upgrade drops one from spec.versions,
+    # the API server rejects the apply and the owning Kustomization silently
+    # stops reconciling. On 2026-08-09 this had stopped Flux managing its own
+    # components (imagepolicies/imagerepositories/imageupdateautomations, all
+    # with v1beta2 stranded) and blocked the emqx operator rollback (emqxes/v2).
+    # Nothing surfaces it until something forces a re-apply, so check it after
+    # chart upgrades and before/after any full restart.
+    cmds:
+      - |
+        kubectl get crd -o json | jq -r '
+          .items[] | . as $c
+          | ($c.spec.versions | map(.name)) as $spec
+          | (($c.status.storedVersions // []) - $spec) as $orphan
+          | select($orphan | length > 0)
+          | "DRIFT \($c.metadata.name)\n  served:  \($spec | join(", "))\n  stored:  \($c.status.storedVersions | join(", "))\n  orphan:  \($orphan | join(", "))"
+        '
+      - |
+        echo "--- CRDs whose stored versions are a strict subset of served (healthy) are not listed."
+        echo "--- Any DRIFT above blocks the owning chart from applying that CRD."
+        echo "--- Before narrowing storedVersions, CONFIRM the object count for the dying"
+        echo "--- version is zero, or migrate first. See docs/runbooks/full-cluster-shutdown.md"
+    preconditions:
+      - test -f {{.KUBECONFIG}}
+      - which kubectl jq

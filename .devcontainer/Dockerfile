@@ -13,9 +13,9 @@ ARG KUBECONFORM_VERSION=v0.8.0
 # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.+)$
 ARG KUSTOMIZE_VERSION=v5.8.1
 # renovate: datasource=github-releases depName=siderolabs/talos
-ARG TALOSCTL_VERSION=v1.13.7
+ARG TALOSCTL_VERSION=v1.13.8
 # renovate: datasource=github-releases depName=budimanjojo/talhelper
-ARG TALHELPER_VERSION=v3.1.15
+ARG TALHELPER_VERSION=v3.1.16
 # renovate: datasource=github-releases depName=mikefarah/yq
 ARG YQ_VERSION=v4.53.3
 # renovate: datasource=github-releases depName=bitwarden/sdk-sm extractVersion=^bws-(?<version>.+)$
@@ -27,7 +27,7 @@ ARG HELM_VERSION=v3.21.3
 # renovate: datasource=github-releases depName=stern/stern
 ARG STERN_VERSION=v1.34.0
 # renovate: datasource=github-releases depName=cli/cli
-ARG GH_VERSION=v2.96.0
+ARG GH_VERSION=v2.97.0
 
 # Install system packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \

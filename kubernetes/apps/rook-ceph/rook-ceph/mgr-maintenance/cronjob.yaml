@@ -1,0 +1,136 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/batch/cronjob_v1.json
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rook-ceph-mgr-failover
+spec:
+  # WORKAROUND for the tentacle (ceph 20.2.2 / rook 1.20) active-mgr memory leak
+  # (rook/rook#17786). The always-on rbd_support + volumes mgr modules leak
+  # untracked Python heap on every volsync `copyMethod: Snapshot` round: RSS
+  # steps ~+250Mi per hourly backup cycle (verified as a staircase in Prometheus,
+  # NOT a time-linear ramp), hitting the 4Gi limit in ~13-14 cycles and getting
+  # OOMKilled mid-backup — which stalls CSI snapshot/clone provisioning. Module
+  # trimming (PR #1144: insights/nfs/restful) is exhausted; the leaking modules
+  # are `always on` and cannot be disabled, and no patched ceph exists yet.
+  #
+  # `ceph mgr fail` (no arg) fails the ACTIVE mgr; the failed daemon respawns
+  # in-place (re-exec, NOT a pod restart) which frees the leaked heap (~690Mi ->
+  # ~160Mi, confirmed live 2026-07-28). Running every 8h caps accumulation at
+  # ~2Gi (8 cycles) well under the 4Gi safety-net limit. Remove once 20.2.x
+  # ships a fix for rook#17786.
+  schedule: "0 */8 * * *"
+  suspend: false
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: Never
+          serviceAccountName: rook-ceph-default
+          containers:
+            - name: mgr-failover
+              image: quay.io/ceph/ceph:v20.2.3@sha256:d195020de02512030118e772cef7859e92904e91eb4cb21acb503f8b94118137
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+
+                  # NOTE: use UNBRACED shell vars ($VAR only). Flux postBuild
+                  # substitution (cluster-settings, injected into every
+                  # Kustomization via kubernetes/flux/apps.yaml) consumes the
+                  # dollar-brace form and, in strict mode, fails the build for
+                  # unknown names. Unbraced $VAR survives, matching the rclone
+                  # backup cronjob convention. Do not write the braced form
+                  # anywhere in this block -- not even inside a comment, which
+                  # is what broke this Kustomization once already.
+
+                  # --- Replicate the rook toolbox setup so `ceph` works without
+                  # the toolbox pod (mon endpoints + client.admin keyring). ---
+                  CEPH_CONFIG=/etc/ceph/ceph.conf
+                  MON_CONFIG=/etc/rook/mon-endpoints
+                  KEYRING_FILE=/etc/ceph/keyring
+                  CONFIG_OVERRIDE=/etc/rook-config-override/config
+
+                  endpoints=$(cat "$MON_CONFIG")
+                  mon_endpoints=$(echo "$endpoints" | sed 's/[a-z0-9_-]\+=//g')
+                  cat <<EOF > "$CEPH_CONFIG"
+                  [global]
+                  mon_host = $mon_endpoints
+
+                  [client.admin]
+                  keyring = $KEYRING_FILE
+                  EOF
+                  if [ -f "$CONFIG_OVERRIDE" ] && [ -s "$CONFIG_OVERRIDE" ]; then
+                    echo "" >> "$CEPH_CONFIG"
+                    cat "$CONFIG_OVERRIDE" >> "$CEPH_CONFIG"
+                  fi
+
+                  # ROOK_CEPH_SECRET is not set on this pod; read the admin key
+                  # straight from the mounted mon secret.
+                  ceph_secret=$(cat /var/lib/rook-ceph-mon/secret.keyring)
+                  cat <<EOF > "$KEYRING_FILE"
+                  [$ROOK_CEPH_USERNAME]
+                  key = $ceph_secret
+                  EOF
+
+                  # --- Guard + fail the active mgr. ---
+                  stat_json=$(ceph mgr stat -f json)
+                  active=$(echo "$stat_json" | python3 -c 'import json,sys;print(json.load(sys.stdin)["active_name"])')
+                  standbys=$(echo "$stat_json" | python3 -c 'import json,sys;print(json.load(sys.stdin)["num_standby"])')
+                  echo "active mgr=$active num_standby=$standbys"
+
+                  if [ "$standbys" -lt 1 ]; then
+                    echo "no standby mgr available; refusing to fail the sole active mgr"
+                    exit 1
+                  fi
+
+                  echo "failing active mgr $active to reset leaked heap (rook#17786)"
+                  ceph mgr fail
+                  echo "done; standby will take over and $active respawns with a fresh heap"
+              env:
+                - name: ROOK_CEPH_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: rook-ceph-mon
+                      key: ceph-username
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 256Mi
+              volumeMounts:
+                - name: ceph-config
+                  mountPath: /etc/ceph
+                - name: mon-endpoint-volume
+                  mountPath: /etc/rook
+                - name: ceph-admin-secret
+                  mountPath: /var/lib/rook-ceph-mon
+                  readOnly: true
+                - name: rook-config-override
+                  mountPath: /etc/rook-config-override
+          volumes:
+            - name: ceph-config
+              emptyDir: {}
+            - name: mon-endpoint-volume
+              configMap:
+                name: rook-ceph-mon-endpoints
+                items:
+                  - key: data
+                    path: mon-endpoints
+            - name: ceph-admin-secret
+              secret:
+                secretName: rook-ceph-mon
+                optional: false
+                items:
+                  - key: ceph-secret
+                    path: secret.keyring
+            - name: rook-config-override
+              configMap:
+                name: rook-config-override
+                optional: true

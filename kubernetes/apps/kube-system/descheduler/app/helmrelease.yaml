@@ -48,10 +48,29 @@ spec:
                 constraints:
                   - DoNotSchedule
                   - ScheduleAnyway
+            # Rebalances pods away from over-allocated nodes. Without this,
+            # a partial outage permanently skews placement: pods pile onto
+            # whichever nodes stayed up and never move back once the others
+            # return, because the scheduler only places new pods. Seen
+            # 2026-08-09 after a full restart -- mj04ew44 held 70 pods while
+            # mj0581m7 held 16, and postgres16-4 (openebs-hostpath, pinned to
+            # mj0581rw at 87% cpu / 88% mem) could not schedule at all,
+            # blocking 9 Kustomizations behind the CNPG health check.
+            - name: LowNodeUtilization
+              args:
+                thresholds:
+                  cpu: 30
+                  memory: 30
+                  pods: 30
+                targetThresholds:
+                  cpu: 70
+                  memory: 70
+                  pods: 70
           plugins:
             balance:
               enabled:
                 - RemovePodsViolatingTopologySpreadConstraint
+                - LowNodeUtilization
             deschedule:
               enabled:
                 - RemovePodsViolatingInterPodAntiAffinity
