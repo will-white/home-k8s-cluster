@@ -4,5 +4,6 @@ resources:
   - ./configmap.yaml
   - ./externalsecret.yaml
   - ./pvc.yaml
+  - ./ocirepository.yaml
   - ./helmrelease.yaml
   - ../../../../templates/gatus/guarded
