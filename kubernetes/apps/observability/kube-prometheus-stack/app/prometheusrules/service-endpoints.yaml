@@ -54,6 +54,13 @@ spec:
           labels:
             severity: critical
         # Broad, deliberately slow net for everything else.
+        #
+        # Excludes rook-ceph-active-mons-*: Rook maintains that EndpointSlice by
+        # hand (conditions={}, no targetRef) because it points at mon host IPs
+        # rather than pods, so it carries no readiness data at all and always
+        # looks "not ready" here even with full mon quorum. Verified 2026-08-09.
+        # Add further exclusions the same way rather than loosening the rule --
+        # an alert people learn to ignore is worse than no alert.
         - alert: ServiceNoReadyEndpoints
           annotations:
             summary:
@@ -61,9 +68,13 @@ spec:
               has had zero ready endpoints for 30m.
           expr: |
             (
-              sum by (namespace, endpointslice) (kube_endpointslice_endpoints{ready="true"})
+              sum by (namespace, endpointslice) (
+                kube_endpointslice_endpoints{ready="true", endpointslice!~"rook-ceph-active-mons-.*"}
+              )
               or
-              sum by (namespace, endpointslice) (kube_endpointslice_endpoints) * 0
+              sum by (namespace, endpointslice) (
+                kube_endpointslice_endpoints{endpointslice!~"rook-ceph-active-mons-.*"}
+              ) * 0
             ) == 0
           for: 30m
           labels:
