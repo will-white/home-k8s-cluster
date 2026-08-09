@@ -72,6 +72,22 @@ spec:
       cephConfig:
         mgr:
           mgr/rook/log_level: info
+        osd:
+          # BLUESTORE_SLOW_OP_ALERT ships hair-trigger defaults: a SINGLE op
+          # over bluestore_log_op_age (5s) latches HEALTH_WARN for a full 24h
+          # (threshold 1, lifetime 86400). One transient stall during a node
+          # reboot or an OSD restart therefore parks the cluster in HEALTH_WARN
+          # all day — which matters here because tuppr's TalosUpgrade gates on
+          # `status.ceph.health in ['HEALTH_OK']`, so a stale blip silently
+          # blocks node upgrades.
+          #
+          # Widen "slow" to 10s, require a handful of occurrences rather than
+          # one, and let a one-off age out in an hour. A genuinely degraded
+          # device produces slow ops continuously and still trips the alert;
+          # only the single-sample latch is suppressed.
+          bluestore_log_op_age: "10"
+          bluestore_slow_ops_warn_threshold: "5"
+          bluestore_slow_ops_warn_lifetime: "3600"
       crashCollector:
         disable: false
       csi:
