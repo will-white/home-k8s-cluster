@@ -10,6 +10,19 @@ spec:
     version: v1.13.8
   policy:
     rebootMode: powercycle
+    # Never let the upgrade Job land on the node it is upgrading. The default
+    # is `soft` — "prefers to avoid but CAN run on the target node" — and when
+    # it does, tuppr's own cordon/drain evicts the Job mid-flight and the
+    # upgrade fails with the node left at its old version.
+    #
+    # This bit us on the v1.13.0 -> v1.13.8 roll: mj04ew44 failed with
+    # "Upgrade Job failed while node remained at v1.13.0", which stopped the
+    # batch after 3 of 8 nodes and left the node cordoned with its OSD
+    # evicted (Ceph degraded until manually uncordoned).
+    #
+    # `hard` makes avoidance a scheduling requirement. With 8 nodes there is
+    # always somewhere else to run.
+    placement: hard
   healthChecks:
     - apiVersion: volsync.backube/v1alpha1
       kind: ReplicationSource
