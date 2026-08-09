@@ -50,6 +50,21 @@ spec:
         reloader.stakater.com/auto: "true"
     spec:
       replicas: 3
+      # The operator copies these straight into the emqx-core
+      # PodDisruptionBudget (add_pdb.go: MinAvailable/MaxUnavailable come from
+      # coreTemplate.spec). With both unset it emitted a PDB carrying only a
+      # selector — and a PDB with neither budget field leaves expectedPods at 0,
+      # which makes the disruption controller pin disruptionsAllowed to 0 and
+      # deny EVERY eviction, forever.
+      #
+      # That silently blocked `kubectl drain` on any node running a core pod,
+      # which stalled the Talos v1.13.8 roll: the installer succeeded but the
+      # drain timed out evicting emqx-core-1, so tuppr failed the node and
+      # stopped the batch at 3 of 8.
+      #
+      # maxUnavailable (rather than minAvailable) so it keeps scaling correctly
+      # if replicas change; 1 of 3 keeps Mnesia quorum during a rolling drain.
+      maxUnavailable: 1
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
