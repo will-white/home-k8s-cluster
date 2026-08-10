@@ -93,6 +93,42 @@
     },
     {
       description: [
+        // The pinDigests rule above matches every docker-datasource dep, but
+        // some of them live in fields that have nowhere to put a digest:
+        // helmfile's `version:` for oci:// charts (bootstrap/helmfile.yaml) and
+        // the talconfig regex pins talosVersion/kubernetesVersion. Renovate
+        // writes the value, re-reads to verify the digest landed, finds nothing,
+        // and throws update-failure -- which aborts the whole branch, blocking
+        // every other pin grouped into it (renovate/pin-dependencies,
+        // renovate/talos). Version updates still flow; only digests are off.
+        'Do not pin digests where the file format cannot hold one',
+      ],
+      matchManagers: [
+        'helmfile',
+        'custom.regex',
+      ],
+      pinDigests: false,
+    },
+    {
+      description: [
+        // Same problem inside the flux manager: a HelmRelease whose sourceRef is
+        // an OCI HelmRepository (prometheus-community, stakater, enix) is given
+        // the docker datasource, but spec.chart.spec.version holds a bare chart
+        // version with no digest syntax. Scope this to helmrelease.yaml so the
+        // OCIRepository pins in ocirepository.yaml -- which do carry ref.digest
+        // and are the reason pinDigests is on -- keep working.
+        'Do not pin digests on HelmRelease chart versions (OCI HelmRepository)',
+      ],
+      matchManagers: [
+        'flux',
+      ],
+      matchFileNames: [
+        '**/helmrelease.yaml',
+      ],
+      pinDigests: false,
+    },
+    {
+      description: [
         'Flux Group',
       ],
       groupName: 'Flux',
