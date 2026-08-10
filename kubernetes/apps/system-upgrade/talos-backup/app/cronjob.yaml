@@ -31,6 +31,9 @@ spec:
           containers:
             - name: talos-backup
               image: ghcr.io/siderolabs/talos-backup:v0.1.0-beta.3
+              # talos-backup writes the .snap.part temp file to its CWD, which
+              # defaults to / — unwritable as uid 1000.
+              workingDir: /tmp
               env:
                 - name: TALOSCONFIG
                   value: /var/run/secrets/talos.dev/config
