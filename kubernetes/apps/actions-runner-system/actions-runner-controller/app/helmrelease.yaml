@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: actions-runner-controller
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: actions-runner-controller
+  interval: 1h
+  values:
+    # Keeps the ServiceAccount name predictable so the runner scale set's
+    # controllerServiceAccount reference doesn't depend on Helm name mangling.
+    fullnameOverride: actions-runner-controller
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+  driftDetection:
+    mode: enabled
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
