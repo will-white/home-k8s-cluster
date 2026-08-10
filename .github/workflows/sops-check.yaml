@@ -16,7 +16,7 @@ permissions:
 jobs:
   sops-check:
     name: SOPS Encryption Check
-    runs-on: ubuntu-latest
+    runs-on: home-ops-runner
     steps:
       - name: Checkout
         uses: actions/checkout@v7

@@ -19,7 +19,7 @@ env:
 jobs:
   validate-manifests:
     name: Validate Kubernetes Manifests
-    runs-on: ubuntu-latest
+    runs-on: home-ops-runner
     permissions:
       contents: read  # Only need to read repository contents
     steps:
@@ -28,15 +28,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Cache validation tools to speed up workflow
+      # Cache validation tools to speed up workflow. Tools live in ~/.local/bin
+      # (not /usr/local/bin): on the ARC runner image that path is root-owned,
+      # so a cache restore there fails. Key bumped to v2 to invalidate caches
+      # archived from the old absolute path.
       - name: Cache Validation Tools
         id: cache-tools
         uses: actions/cache@v6
         with:
-          path: /usr/local/bin
-          key: agent-validation-tools-${{ runner.os }}-v1
+          path: ~/.local/bin
+          key: agent-validation-tools-${{ runner.os }}-v2
           restore-keys: |
-            agent-validation-tools-${{ runner.os }}-
+            agent-validation-tools-${{ runner.os }}-v2
+
+      - name: Add tool dir to PATH
+        run: mkdir -p "$HOME/.local/bin" && echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Install Validation Tools
         if: steps.cache-tools.outputs.cache-hit != 'true'
@@ -47,17 +53,19 @@ jobs:
           KUBECONFORM_VERSION="v0.8.0"
           curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
           chmod +x kubeconform
-          sudo mv kubeconform /usr/local/bin/
+          mv kubeconform "$HOME/.local/bin/"
 
           echo "Installing kustomize..."
           # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.+)$
           KUSTOMIZE_VERSION="v5.8.1"
           curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
           chmod +x kustomize
-          sudo mv kustomize /usr/local/bin/
+          mv kustomize "$HOME/.local/bin/"
 
-          echo "Installing yamllint..."
-          sudo apt-get update && sudo apt-get install -y yamllint
+      - name: Install yamllint
+        # Unconditional — apt installs to /usr/bin, which the tool cache never
+        # covered (hosted runners masked this by preinstalling yamllint).
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq yamllint
 
       - name: Verify Tool Installations
         run: |
