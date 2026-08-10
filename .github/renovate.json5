@@ -167,6 +167,24 @@
       dependencyDashboardApproval: true,
     },
     {
+      description: [
+        // Ceph tags encode maturity in the minor: x.0.z = dev, x.1.z = RC,
+        // x.2.z = stable. Renovate's docker versioning can't tell these apart,
+        // so it proposes RCs (e.g. v21.1.0 in #1218) as ordinary majors.
+        // Only allow stable x.2.z tags. Majors still arrive as PRs for manual
+        // review — keep this mgr-maintenance CLI image on the same major as
+        // the CephCluster daemons, which upgrade via the Rook chart, not here.
+        'ceph: stable releases only (x.2.z; x.1.z is RC, x.0.z is dev)',
+      ],
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'quay.io/ceph/ceph',
+      ],
+      allowedVersions: '/^v\\d+\\.2\\.\\d+$/',
+    },
+    {
       matchDatasources: [
         'helm',
       ],
