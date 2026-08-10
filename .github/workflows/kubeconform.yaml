@@ -13,20 +13,26 @@ env:
 jobs:
   kubeconform:
     name: Kubeconform
-    runs-on: ubuntu-latest
+    runs-on: home-ops-runner
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # Cache installed tools to speed up workflow
+      # Cache installed tools to speed up workflow. Tools live in ~/.local/bin
+      # (not /usr/local/bin): on the ARC runner image that path is root-owned,
+      # so a cache restore there fails. Key bumped to v2 to invalidate caches
+      # archived from the old absolute path.
       - name: Cache Tools
         id: cache-tools
         uses: actions/cache@v6
         with:
-          path: /usr/local/bin
-          key: kubeconform-tools-${{ runner.os }}-v1
+          path: ~/.local/bin
+          key: kubeconform-tools-${{ runner.os }}-v2
           restore-keys: |
-            kubeconform-tools-${{ runner.os }}-
+            kubeconform-tools-${{ runner.os }}-v2
+
+      - name: Add tool dir to PATH
+        run: mkdir -p "$HOME/.local/bin" && echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Setup Workflow Tools
         if: steps.cache-tools.outputs.cache-hit != 'true'
@@ -36,19 +42,19 @@ jobs:
           KUBECONFORM_VERSION="v0.8.0"
           curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
           chmod +x kubeconform
-          sudo mv kubeconform /usr/local/bin/
+          mv kubeconform "$HOME/.local/bin/"
           
           # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.+)$
           KUSTOMIZE_VERSION="v5.8.1"
           curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
           chmod +x kustomize
-          sudo mv kustomize /usr/local/bin/
+          mv kustomize "$HOME/.local/bin/"
           
           # renovate: datasource=github-releases depName=fluxcd/flux2
           FLUX_VERSION="2.9.4"
           curl -sL "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" | tar xz
           chmod +x flux
-          sudo mv flux /usr/local/bin/
+          mv flux "$HOME/.local/bin/"
 
       - name: Verify Tools
         run: |

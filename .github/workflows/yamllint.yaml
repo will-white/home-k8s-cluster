@@ -17,10 +17,11 @@ on:
 jobs:
   yamllint:
     name: yamllint
-    runs-on: ubuntu-latest
+    runs-on: home-ops-runner
     steps:
       - uses: actions/checkout@v7
       - name: Install yamllint
-        run: pipx install yamllint
+        # apt, not pipx — the ARC runner image has no python toolchain
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq yamllint
       - name: Lint
         run: yamllint -f github kubernetes/ .taskfiles/ Taskfile.yaml
