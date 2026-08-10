@@ -129,6 +129,28 @@
     },
     {
       description: [
+        // These two devcontainer features are published with a zero-byte OCI
+        // config blob (sha256:e3b0c442...b855) instead of the `{}` every other
+        // feature ships. Whenever a currentDigest is present Renovate calls
+        // _getImageArchitecture -> _getImageConfig, which JSON-parses that blob
+        // expecting an object, gets an empty body, and throws a ZodError:
+        // "Could not determine new digest for update". Keeping them unpinned
+        // avoids the digest path entirely. Revisit if the publishers rebuild
+        // with a current devcontainer CLI, or if renovatebot/renovate stops
+        // reading the config blob for application/vnd.devcontainers artifacts.
+        'devcontainer features with an empty OCI config blob cannot be digest-pinned',
+      ],
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/jsburckhardt/devcontainer-features/flux',
+        'ghcr.io/nikobockerman/devcontainer-features/fish-persistent-data',
+      ],
+      pinDigests: false,
+    },
+    {
+      description: [
         'Flux Group',
       ],
       groupName: 'Flux',
