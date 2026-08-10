@@ -7,6 +7,7 @@ resources:
   - ../../../../templates/network-policies/allow-kube-apiserver
   - ../../../../templates/network-policies/allow-intra-namespace
   - ../../../../templates/network-policies/allow-from-nodes
+  - ../../../../templates/network-policies/allow-from-integrations
   - ../../../../templates/network-policies/allow-from-ingress
   - ../../../../templates/network-policies/allow-from-monitoring
   - ../../../../templates/network-policies/allow-egress-open
