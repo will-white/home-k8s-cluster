@@ -1,0 +1,30 @@
+---
+# Allow the two cross-namespace "integration" clients into this namespace:
+#  - homepage (default): server-side dashboard widgets query app APIs
+#    directly (sonarr/radarr/qbittorrent stats, grafana/prometheus, ...)
+#  - gatus (observability): guarded health probes hit every app's endpoint
+# Both were silently broken by the phase-4 default-deny (homepage widgets
+# timed out cross-namespace, 2026-08-10). Scoped to the exact source pods,
+# not whole namespaces.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-integrations
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: default
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: homepage
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gatus
