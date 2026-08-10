@@ -13,9 +13,16 @@
 #   Best Available - Escape hatch for obscure films. SDTV floor, Remux-2160p cutoff.
 #
 # Recyclarr only manages custom format definitions and per-profile CF scores.
-# Profile structure (qualities allowed, cutoff, upgrade settings) is managed in the UI.
-# The TRaSH `quality-profile` templates are intentionally NOT included here so Recyclarr
-# will not recreate the old-named profiles ("WEB-1080p", "UHD Bluray + WEB", etc.).
+# Profile structure (qualities allowed, cutoff, upgrade settings) and quality
+# definitions (file-size limits) are managed in the UI — live instances have
+# hand-tuned sizes (no max caps), so no `quality_definition:` here or Recyclarr
+# would overwrite them.
+# No `include:` templates: upstream recyclarr/config-templates deleted its
+# includes registry in the v8 architecture (merged to master 2026-08-07), and
+# every CF this config cares about is already listed explicitly below —
+# `trash_ids` sync CF definitions straight from the TRaSH guides, no templates
+# needed. This also stops Recyclarr from recreating the old-named profiles
+# ("WEB-1080p", "UHD Bluray + WEB", etc.).
 
 sonarr:
   sonarr_main:
@@ -23,13 +30,6 @@ sonarr:
     api_key: !env_var SONARR_API_KEY
 
     delete_old_custom_formats: true
-
-    include:
-      - template: sonarr-quality-definition-series
-      - template: sonarr-v4-custom-formats-web-1080p
-      - template: sonarr-v4-custom-formats-web-2160p
-      - template: sonarr-quality-definition-anime
-      - template: sonarr-v4-custom-formats-anime
 
     custom_formats:
 ##################  HD / 4K / Best Available — shared  ##################
@@ -147,16 +147,13 @@ sonarr:
           - name: Anime
 
 ##################  TRaSH parity — release-group tiers, junk & tiebreakers  ##################
-      # Recyclarr's `include:` templates DEFINE these CFs but assign their scores to TRaSH's
-      # default profile names (WEB-1080p / WEB-2160p / UHD Bluray + WEB / Remux-1080p - Anime),
-      # which we renamed to HD / 4K / Anime / Best Available — so Recyclarr dropped every one of
-      # those scores (the "profile names ... do not exist" [WRN] lines in the sync log). The
-      # blocks below re-address them to OUR profiles at the TRaSH default score (no explicit
-      # `score:`), restoring full-guide behaviour: release-group tier ranking, junk penalties
-      # (x265-HD, upscaled, 3D, LQ-title, WEB-Scene), repack/proper, and streaming tiebreakers.
+      # The full-guide CF sets (release-group tier ranking, junk penalties, repack/proper,
+      # streaming tiebreakers) addressed to OUR profile names at the TRaSH default score
+      # (no explicit `score:`). TRaSH's stock guide assigns these to its default profile
+      # names (WEB-1080p / WEB-2160p / UHD Bluray + WEB / Remux-1080p - Anime), which we
+      # renamed to HD / 4K / Anime / Best Available.
       # "Best Available" gets the UNION of the 1080p + 2160p positive tiers so it ranks the best
       # release at ANY resolution — its whole purpose as the resolution-agnostic escape hatch.
-      # Generated from recyclarr/config-templates@master; re-sync when the includes are bumped.
       # Remux release-group tiers (TRaSH default scores)
       - trash_ids:
           - 9965a052eb87b0d10313b1cea89eb451 # Remux Tier 01
@@ -294,14 +291,6 @@ radarr:
     api_key: !env_var RADARR_API_KEY
 
     delete_old_custom_formats: true
-
-    include:
-      - template: radarr-quality-definition-movie
-      # UHD CF set is the most comprehensive 4K-tier definition pack.
-      - template: radarr-custom-formats-uhd-bluray-web
-      # 1080p CF set covers HD-tier formats.
-      - template: radarr-custom-formats-remux-web-1080p
-      - template: radarr-custom-formats-anime
 
     custom_formats:
 ##################  HD / 4K / Best Available — shared  ##################
@@ -450,16 +439,13 @@ radarr:
           - name: Anime
 
 ##################  TRaSH parity — release-group tiers, junk & tiebreakers  ##################
-      # Recyclarr's `include:` templates DEFINE these CFs but assign their scores to TRaSH's
-      # default profile names (WEB-1080p / WEB-2160p / UHD Bluray + WEB / Remux-1080p - Anime),
-      # which we renamed to HD / 4K / Anime / Best Available — so Recyclarr dropped every one of
-      # those scores (the "profile names ... do not exist" [WRN] lines in the sync log). The
-      # blocks below re-address them to OUR profiles at the TRaSH default score (no explicit
-      # `score:`), restoring full-guide behaviour: release-group tier ranking, junk penalties
-      # (x265-HD, upscaled, 3D, LQ-title, WEB-Scene), repack/proper, and streaming tiebreakers.
+      # The full-guide CF sets (release-group tier ranking, junk penalties, repack/proper,
+      # streaming tiebreakers) addressed to OUR profile names at the TRaSH default score
+      # (no explicit `score:`). TRaSH's stock guide assigns these to its default profile
+      # names (WEB-1080p / WEB-2160p / UHD Bluray + WEB / Remux-1080p - Anime), which we
+      # renamed to HD / 4K / Anime / Best Available.
       # "Best Available" gets the UNION of the 1080p + 2160p positive tiers so it ranks the best
       # release at ANY resolution — its whole purpose as the resolution-agnostic escape hatch.
-      # Generated from recyclarr/config-templates@master; re-sync when the includes are bumped.
       # Remux release-group tiers (TRaSH default scores)
       - trash_ids:
           - 3a3ff47579026e76d6504ebea39390de # Remux Tier 01
