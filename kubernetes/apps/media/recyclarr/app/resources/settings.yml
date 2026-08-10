@@ -1,12 +1,7 @@
 # yaml-language-server: $schema=https://schemas.recyclarr.dev/latest/settings-schema.json
 ---
-# Recyclarr 8.x auto-selects the `v8` branch of recyclarr/config-templates,
-# which currently has an empty includes registry. Pin to `master` (the
-# production branch maintained for current Recyclarr) so referenced template
-# IDs like `radarr-quality-definition-movie` resolve.
-resource_providers:
-  - name: config-templates-master
-    type: config-templates
-    clone_url: https://github.com/recyclarr/config-templates.git
-    reference: master
-    replace_default: true
+# No resource_providers override: this config uses no `include:` templates
+# (upstream recyclarr/config-templates deleted its includes registry in the v8
+# architecture, 2026-08-07), so the default providers are fine. CF definitions
+# sync directly from the TRaSH guides via trash_ids in recyclarr.yml.
+{}
