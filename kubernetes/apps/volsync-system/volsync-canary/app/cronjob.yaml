@@ -59,7 +59,7 @@ spec:
             - name: canary
               # Same image volsync uses for its kopia mover. Has kopia + GNU
               # coreutils available.
-              image: ghcr.io/perfectra1n/volsync:v0.17.11
+              image: ghcr.io/perfectra1n/volsync:v0.17.11@sha256:79674d3c48685e21cadaac8e0afd14268130a0a51a10c41a9dd65096c1434a0f
               command: ["/bin/sh", "/etc/canary/canary.sh"]
               securityContext:
                 allowPrivilegeEscalation: false

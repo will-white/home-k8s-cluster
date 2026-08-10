@@ -6,7 +6,7 @@ spec:
   # OSS 5.8.9 is the last open-source EMQX release; 5.9+ is Enterprise-only
   # and refuses to start in a >1-node cluster without a license. Operator
   # is pinned to 2.2.29 (see helmrelease.yaml) which still supports v2beta1.
-  image: public.ecr.aws/emqx/emqx:5.8.9
+  image: public.ecr.aws/emqx/emqx:5.8.9@sha256:35b46f7aa7a0d51f3959e4344221ac5ec7f948b03e43099286b6c40a07bb393b
   config:
     data: |
       authentication {

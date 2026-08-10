@@ -27,7 +27,7 @@ spec:
             image:
               # renovate: datasource=docker
               repository: ghcr.io/henrywhitaker3/adguard-exporter
-              tag: v1.2.1
+              tag: v1.2.1@sha256:42a9581bae4a91e6d4985415d1fe89ab9b1f50fbe2945a1c122d212d6354b747
             env:
               ADGUARD_SERVERS: "http://adguard.internal:8083"
               ADGUARD_USERNAMES:
