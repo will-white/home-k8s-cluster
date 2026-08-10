@@ -12,3 +12,6 @@ metadata:
     pod-security.kubernetes.io/enforce: privileged
     pod-security.kubernetes.io/warn: privileged
     pod-security.kubernetes.io/audit: privileged
+
+# CI smoke test: exercises kubernetes/** path-filtered workflows on the
+# in-cluster runner scale set. PR is closed unmerged.
