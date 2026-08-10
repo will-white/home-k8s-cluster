@@ -24,7 +24,6 @@ jobs:
         paths: ["kubernetes"]
         resources: ["helmrelease", "kustomization"]
       fail-fast: false
-      max-parallel: 2
     steps:
       - name: Checkout PR
         uses: actions/checkout@v7

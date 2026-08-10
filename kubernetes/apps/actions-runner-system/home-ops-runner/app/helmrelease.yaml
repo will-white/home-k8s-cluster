@@ -15,7 +15,9 @@ spec:
     # `runs-on: home-ops-runner` in workflow files targets this scale set.
     runnerScaleSetName: home-ops-runner
     minRunners: 1
-    maxRunners: 5
+    # A kubernetes/** PR fires 7 self-hosted jobs at once; 8 lets the whole
+    # suite run in parallel with one spare (~500m/512Mi requested per runner).
+    maxRunners: 8
     # dind because flux-diff runs `docker://` container actions.
     containerMode:
       type: dind
