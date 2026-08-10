@@ -69,6 +69,18 @@ spec:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
           whenUnsatisfiable: DoNotSchedule
+          # Honor (not the default Ignore) so the 3 NoSchedule-tainted
+          # control-plane nodes are not counted as spread domains. With Ignore
+          # they count as domains holding 0 core pods, which pins the global
+          # minimum at 0 -- so once all 5 workers hold one pod each, no worker
+          # can take a 2nd without skew reaching 2 > maxSkew.
+          #
+          # That deadlocks every image change: the operator does blue/green
+          # (new StatefulSet, all 3 new pods ready before retiring the old 3),
+          # so it needs a 6th pod scheduled while the old 3 still hold nodes.
+          # Hit for real on the 5.8.9 digest pin (#1242) -- 2 of 3 new pods
+          # scheduled, the 3rd sat Pending indefinitely.
+          nodeTaintsPolicy: Honor
           labelSelector:
             matchLabels:
               apps.emqx.io/instance: emqx
