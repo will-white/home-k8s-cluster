@@ -47,8 +47,11 @@ spec:
                   value: etcd-snapshots
                 - name: CLUSTER_NAME
                   value: home-kubernetes
+                # v0.1.0-beta.3 inverts this flag (config parses == "false";
+                # fixed on master, unreleased) — "false" here MEANS path-style.
+                # Flip to "true" when bumping past beta.3.
                 - name: USE_PATH_STYLE
-                  value: "true"
+                  value: "false"
                 # Public half of the cluster Age key (age.key decrypts).
                 - name: AGE_X25519_PUBLIC_KEY
                   value: age17tn5txs6m4kdq4cfk9t7k5mcr58svuf0uwlrrmsxc9aslj4x9y4skkzs74
