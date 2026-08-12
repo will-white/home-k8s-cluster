@@ -17,7 +17,6 @@ resources:
   - ./meilisearch/ks.yaml
   - ./paperless/ks.yaml
   # paperless-gpt/ks.yaml missing — re-add when the Flux Kustomization is authored
-  - ./sosse/ks.yaml
   - ./spoolman/ks.yaml
   - ./stirling-pdf/ks.yaml
   - ./unifi/ks.yaml
