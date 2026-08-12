@@ -295,7 +295,10 @@ spec:
           revision: 2
         dragonfly:
           datasource: Prometheus
-          url: https://raw.githubusercontent.com/dragonflydb/dragonfly/main/tools/local/monitoring/grafana/provisioning/dashboards/dashboard.json
+          # Upstream renamed dashboard.json -> dragonfly.json in this directory;
+          # the old path 404s and the chart's `curl -skf` silently wrote a
+          # zero-byte file, so this panel had been blank.
+          url: https://raw.githubusercontent.com/dragonflydb/dragonfly/main/tools/local/monitoring/grafana/provisioning/dashboards/dragonfly.json
       observability:
         gatus:
           datasource:
@@ -341,11 +344,16 @@ spec:
           # renovate: depName="Frigate Monitoring Dashboard"
           gnetId: 24165
           revision: 1
-        home-assistant:
-          datasource: Prometheus
-          # renovate: depName="Home Assistant"
-          gnetId: 15309
-          revision: 2
+        # home-assistant: gnetId 15309 was deleted from grafana.com (metadata
+        # 404s), which is what surfaced as the Renovate
+        # "custom.grafana-dashboards package 15309: no-result" error. It had
+        # also been writing a zero-byte file for the same reason.
+        #
+        # Not swapped for another Home Assistant dashboard because there is
+        # nothing to plot: Prometheus has no home-assistant scrape job and zero
+        # homeassistant_*/hass_* series. Restore this only after enabling the
+        # Home Assistant `prometheus:` integration and adding a ServiceMonitor
+        # for it -- then pick a dashboard matching the metrics it emits.
         home-assistant-advanced:
           datasource: Prometheus
           # renovate: depName="Home Assistant Advanced"
@@ -354,9 +362,14 @@ spec:
       media:
         qbittorrent:
           datasource: Prometheus
-          # renovate: depName="qBittorrent"
-          gnetId: 15080
-          revision: 2
+          # gnetId 15080 was never qBittorrent -- it resolves to "Exa Advanced
+          # k6 Dashboard" and has only revision 1, so the pinned rev 2 download
+          # 404'd into a zero-byte file. The grafana.com qBittorrent dashboards
+          # (e.g. 15116) target a different exporter and query
+          # qbittorrent_global_* / qbittorrent_app_version, none of which this
+          # cluster produces. Use the dashboard shipped by the exporter we
+          # actually run (esanchezm), whose metric names match ours exactly.
+          url: https://raw.githubusercontent.com/esanchezm/prometheus-qbittorrent-exporter/master/grafana/dashboard.json
         radarr:
           datasource: Prometheus
           # renovate: depName="Radarr v3"
