@@ -1,0 +1,17 @@
+---
+# Postgres images for cluster16's imageCatalogRef. The `image:` key (unlike
+# Cluster.spec.imageName, which no Renovate manager matches — how 16.6 sat
+# stale for 20 months) is picked up by Renovate's kubernetes manager, so
+# minors arrive as normal PRs. A future major upgrade = add the new major
+# here and bump imageCatalogRef.major (CNPG >=1.26 runs pg_upgrade
+# declaratively, offline in-place).
+# standard flavor (no barman binary — WAL archiving runs in the plugin
+# sidecar); bookworm pinned to keep glibc/collation stable for indexes.
+apiVersion: postgresql.cnpg.io/v1
+kind: ImageCatalog
+metadata:
+  name: postgresql
+spec:
+  images:
+    - major: 16
+      image: ghcr.io/cloudnative-pg/postgresql:16.14-standard-bookworm

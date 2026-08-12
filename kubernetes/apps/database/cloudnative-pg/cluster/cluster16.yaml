@@ -4,9 +4,11 @@ metadata:
   name: postgres16
 spec:
   instances: 3
-  # standard flavor (no barman binary — WAL archiving runs in the plugin
-  # sidecar); bookworm pinned to keep glibc/collation stable for indexes.
-  imageName: ghcr.io/cloudnative-pg/postgresql:16.14-standard-bookworm
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ImageCatalog
+    name: postgresql
+    major: 16
   primaryUpdateStrategy: unsupervised
   storage:
     size: 20Gi
