@@ -20,16 +20,16 @@ jobs:
 
       # Cache installed tools to speed up workflow. Tools live in ~/.local/bin
       # (not /usr/local/bin): on the ARC runner image that path is root-owned,
-      # so a cache restore there fails. Key bumped to v2 to invalidate caches
-      # archived from the old absolute path.
+      # so a cache restore there fails. Key bumped to v3 to force one cold
+      # install that exercises the hardened download path below.
       - name: Cache Tools
         id: cache-tools
         uses: actions/cache@v6
         with:
           path: ~/.local/bin
-          key: kubeconform-tools-${{ runner.os }}-v2
+          key: kubeconform-tools-${{ runner.os }}-v3
           restore-keys: |
-            kubeconform-tools-${{ runner.os }}-v2
+            kubeconform-tools-${{ runner.os }}-v3
 
       - name: Add tool dir to PATH
         run: mkdir -p "$HOME/.local/bin" && echo "$HOME/.local/bin" >> "$GITHUB_PATH"
