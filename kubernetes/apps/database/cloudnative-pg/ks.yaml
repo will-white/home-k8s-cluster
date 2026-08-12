@@ -10,6 +10,8 @@ spec:
       app.kubernetes.io/name: *app
   dependsOn:
     - name: external-secrets-stores
+    # plugin-barman-cloud's TLS certificates are issued by cert-manager
+    - name: cert-manager
   path: ./kubernetes/apps/database/cloudnative-pg/app
   prune: true
   sourceRef:
