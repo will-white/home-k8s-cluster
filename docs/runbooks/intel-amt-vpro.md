@@ -64,6 +64,10 @@ OPNsense DHCP pool (or add static mappings for them) before provisioning.
 
 ## 1. MEBx activation (per node, one console visit)
 
+> Same visit: do the [M900 BIOS energy pass](./m900-bios-energy.md) too —
+> **BIOS/ME firmware updates first** (they can reset MEBx settings), then
+> BIOS settings, then this section.
+
 1. Reboot, press **Ctrl+P** during POST (Lenovo Tiny: if no prompt, enable
    the MEBx hotkey in BIOS setup first).
 2. Log in with default password `admin`; it forces a change. **One shared
