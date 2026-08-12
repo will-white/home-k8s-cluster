@@ -56,8 +56,13 @@ tasks:
       - talosctl --nodes {{.HOSTNAME}} health --wait-timeout=10m --server=false
       - task: up
     vars:
+      # Schematic comes from talconfig.yaml (git), NOT the node's
+      # extensions.talos.dev/schematic annotation: a node running a stale
+      # schematic would otherwise re-pin itself forever, and extension
+      # changes committed to git would silently never roll out (this is how
+      # the 2026-08-09 v1.13.8 upgrade missed the nut-client extension).
       TALOS_SCHEMATIC_ID:
-        sh: kubectl get node {{.HOSTNAME}} --output=jsonpath='{.metadata.annotations.extensions\.talos\.dev/schematic}'
+        sh: yq '.nodes[] | select(.hostname == "{{.HOSTNAME}}") | .talosImageURL | split("/") | .[-1]' {{.TALHELPER_CONFIG_FILE}}
       TALOS_SECUREBOOT:
         sh: talosctl --nodes {{.HOSTNAME}} get securitystate --output=jsonpath='{.spec.secureBoot}'
       TALOS_VERSION:
@@ -66,10 +71,11 @@ tasks:
       vars: [HOSTNAME]
     preconditions:
       - curl -fsSL -o /dev/null --fail https://github.com/siderolabs/talos/releases/tag/{{.TALOS_VERSION}}
+      - yq --exit-status '.nodes[] | select(.hostname == "{{.HOSTNAME}}") | .talosImageURL' {{.TALHELPER_CONFIG_FILE}} >/dev/null
       - talosctl --nodes {{.HOSTNAME}} get machineconfig &>/dev/null
       - talosctl config info &>/dev/null
       - test -f {{.TALOSCONFIG}}
-      - which kubectl talosctl yq
+      - which talosctl yq
 
   upgrade-k8s:
     desc: Upgrade Kubernetes
