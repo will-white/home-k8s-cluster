@@ -84,14 +84,20 @@ and the companion PR here (#1254).
 
 ## Production-hardening TODO (ordered)
 
-1. **Offsite DB backups** — barman currently targets the in-cluster Rook
-   RGW: the backups share a failure domain with the database. Point
-   `barmanObjectStore` at R2/B2 (or sync the RGW bucket offsite). Do this
-   before real customers exist.
-2. **Restore drill** — bootstrap a recovery of a prod backup into the dev
-   namespace once (bump `serverName` per the recovery notes in the app
-   repo's `cluster.yaml`; same procedure as the shared cluster's
-   `DISASTER-RECOVERY.md`). Untested backups don't count.
+1. **Out-of-band prod backups — REQUIRED before real customer data.**
+   Barman currently targets the in-cluster Rook RGW, which shares a
+   failure domain with the database — and note that the NAS does **not**
+   count as offsite either: it's the same house, same power, same fire.
+   Production data must have an out-of-band copy that lives entirely away
+   from the home lab: point `barmanObjectStore` at cloud object storage
+   (R2/B2), or keep RGW as the fast local target and sync the bucket to
+   the cloud on a schedule. Treat this as a launch gate, not a nice-to-have.
+2. **Restore drill** — bootstrap a recovery into the dev namespace once
+   (bump `serverName` per the recovery notes in the app repo's
+   `cluster.yaml`; same procedure as the shared cluster's
+   `DISASTER-RECOVERY.md`) — and run it **from the offsite copy**, not
+   the local RGW. Untested backups don't count; untested offsite backups
+   doubly so.
 3. **Pin prod images to SHA tags** — `latest` is a moving tag; pin the SHA
    the bake also pushes (override in the prod overlay), or install Flux
    image-automation to bump it. Also removes dev's manual-restart caveat.
@@ -111,9 +117,13 @@ and the companion PR here (#1254).
 
 ## Deferred / known constraints
 
-- **Livestreaming is off in-cluster** (`OME_*` empty): OvenMediaEngine
-  needs raw-TCP RTMP ingest, which the Cloudflare tunnel won't carry from
-  streamers' clients — needs a port-forward/Spectrum or stays on the VPS.
+- **Livestreaming is off in-cluster** (`OME_*` empty) — and it stays off
+  *at home* by design: even CDN-fronted, one ABR live channel costs
+  ~10 Mbps of cache-fill per CDN region, against ~35 Mbps of home
+  upstream. One stream saturates the pipe and starves the sites. The end
+  state is a small **stateless OME VPS as the streaming media plane**
+  (cutover step 4); only that box, never the cluster, originates live
+  segments.
 - **Chunked uploads** disabled (matches compose default); flip
   `CHUNKED_UPLOAD_ENABLED` when needed.
 - **Egress** allows all public 443 (Bunny/Brevo/payment callbacks);
@@ -150,14 +160,24 @@ Retiring OVH means, in order:
    two `ks.yaml` files, and update any host-baked callbacks (CCBill,
    Brevo templates, OAuth redirect URIs). external-dns `domainFilters`
    only covers the home zone — manage the new zones manually or extend it.
-4. **Decide livestreaming** — in-cluster OME needs a raw-TCP RTMP ingest
-   path (port-forward or Cloudflare Spectrum); otherwise the feature stays
-   off. This is the only app feature genuinely tied to the VPS.
+4. **Stand up the streaming media plane** (if livestreams are wanted) — a
+   small VPS (~€10 tier, 1 Gbps) running **only OME**: creators ingest
+   RTMP/SRT straight to it (this is also what solves the raw-TCP ingest
+   problem — the tunnel can't carry it from arbitrary clients), viewers
+   pull through a Bunny pull zone with the VPS as origin, the in-cluster
+   API drives OME over its token-authed HTTPS API, admission webhooks
+   call back to the public API URL for stream-key auth, and recordings
+   push to Bunny storage. The box holds **no customer data** — transient
+   video and a config file — and rebuilds in minutes. Rationale: home
+   upstream (~35 Mbps) cannot originate live segments; bandwidth lives in
+   the cloud, state lives at home.
 5. **Watch, then decommission** — after a comfortable soak, tear down the
-   OVH hosts and disable the `deploy-*` workflows (keep the build-only
-   one). From that moment the offsite-backup item at the top of the
-   hardening list is non-negotiable: the cluster holds the only copy of
-   customer data.
+   OVH platform hosts and disable the `deploy-*` workflows (keep the
+   build-only one). The OME media-plane box, if any, is the only
+   survivor — and it runs nothing but OME. From this moment the cluster
+   holds the **only** copy of customer data, which is why hardening
+   item 1 (out-of-band backups away from the home lab) is a hard
+   prerequisite for this step, not a follow-up.
 
 ## Operating notes
 
