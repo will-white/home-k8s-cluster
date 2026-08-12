@@ -30,5 +30,3 @@ spec:
       DNS_TARGET: external.${SECRET_DOMAIN}
       DOMAIN_SHIBARI: shibari.${SECRET_DOMAIN}
       DOMAIN_QUEER: queer.${SECRET_DOMAIN}
-      DOMAIN_PROMO_SHIBARI: shibari-promo.${SECRET_DOMAIN}
-      DOMAIN_PROMO_QUEER: queer-promo.${SECRET_DOMAIN}
