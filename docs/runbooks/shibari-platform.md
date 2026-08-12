@@ -1,0 +1,151 @@
+# Shibari platform — hosting the platform-x-club sites
+
+Runs the **shibarixclub** and **queerxclub** websites from the private
+[cawhitecode/platform-x-club](https://github.com/cawhitecode/platform-x-club)
+monorepo: two brand hostnames, one runtime-branded Next.js `web` (brand is
+resolved per request from the Host header), one NestJS `api`, one `worker`,
+a **dedicated** CloudNative-PG cluster (customer data stays off the shared
+`postgres16`), and a dedicated password-protected Dragonfly. Prod and a
+public dev environment run side by side.
+
+Manifests live in the app repo under `kubernetes/` (namespace-agnostic;
+Flux's `targetNamespace` + substitutions supply the environment). This repo
+owns the integration: GitRepository + deploy key, namespaces, network
+policies, Gatus. Introduced by
+[platform-x-club#1](https://github.com/cawhitecode/platform-x-club/pull/1)
+and the companion PR here (#1254).
+
+## Topology
+
+| | prod | dev |
+|---|---|---|
+| Namespace | `shibari-platform` | `shibari-platform-dev` |
+| App-repo overlay | `kubernetes/overlays/prod` | `kubernetes/overlays/dev` |
+| Hostnames | `shibari.<domain>`, `queer.<domain>` | `shibari-dev.<domain>`, `queer-dev.<domain>` |
+| Image tags | `latest` (SHA-pinnable) | `dev` |
+| Postgres / Dragonfly | 3 instances / 2 replicas | 1 / 1 |
+| BWS prefix | `SHIBARI_PROD_*` | `SHIBARI_DEV_*` |
+| Gatus alerts | pushover | none (checks only) |
+
+- **Images** come from the app repo's own deploy workflows (`docker buildx
+  bake`): `ghcr.io/cawhitecode/platform-x-club/{api,web,worker}` with
+  moving tags `latest` (prod pipeline) / `dev` (every push to main) plus
+  immutable SHA tags. This repo builds nothing.
+- **Traffic**: Cloudflare edge TLS → tunnel → `external` ingress-nginx
+  (wildcard default cert covers the one-level subdomains). No per-host
+  cert-manager TLS. Media is served by BunnyCDN, not through the house.
+- **Secrets**: flat Bitwarden SM entries → ExternalSecrets. `${BWS_PREFIX}`
+  is substituted per environment by the Flux Kustomization
+  (`kubernetes/apps/shibari-platform*/platform-x-club/ks.yaml`).
+- **Migrations**: TypeORM, run by an init container on the `api`
+  deployment under a Postgres advisory lock. Manual re-run:
+  `kubectl apply -n <ns> -f kubernetes/components/api/schema-sync-job.yaml`
+  (app repo).
+
+## Go-live checklist (one-time)
+
+1. **Deploy key** — generate and install; Flux reads the app repo with it:
+
+   ```bash
+   ssh-keygen -t ed25519 -N '' -C flux-home-kubernetes-ro -f shibari-deploy-key
+   # public half  -> app repo Settings -> Deploy keys (read-only)
+   # private half -> BWS entry SHIBARI_DEPLOY_KEY (then shred the files)
+   ```
+
+2. **Bitwarden entries** (18 total, flat keys in the home-cluster project).
+   Never echo values; create with
+   `bws secret create <KEY> <value> <project-id>`.
+
+   | Keys | Value |
+   |---|---|
+   | `SHIBARI_{PROD,DEV}_JWT_SECRET`, `_JWT_REFRESH_SECRET`, `_DB_PASSWORD`, `_REDIS_PASSWORD`, `_PAYOUT_ENCRYPTION_KEY` | generate: `openssl rand -base64 48` (10 entries) |
+   | `SHIBARI_GHCR_USER` / `SHIBARI_GHCR_TOKEN` | GitHub user + PAT with **read:packages** only (GHCR packages are private) |
+   | `SHIBARI_BUNNY_STORAGE_ZONE`, `_STORAGE_ACCESS_KEY`, `_CDN_BASE_URL`, `_CDN_SECURITY_KEY` | from the Bunny dashboard |
+   | `SHIBARI_BREVO_API_KEY` | from Brevo |
+   | `SHIBARI_DEPLOY_KEY` | private key from step 1 |
+
+   `CNPG_BUCKET_ACCESS_KEY` / `CNPG_BUCKET_SECRET_KEY` already exist and are
+   reused for barman (backups land under
+   `s3://cloudnative-pg/shibari-platform/` on the RGW).
+
+3. **Merge** platform-x-club#1, then the cluster PR. Until steps 1–2 are
+   done the two app Kustomizations simply stay unready; nothing else is
+   affected.
+
+4. **Reconcile & verify**:
+
+   ```bash
+   flux reconcile kustomization cluster-apps --with-source
+   kubectl -n shibari-platform get ks,pods,cluster,dragonfly,ingress
+   kubectl -n shibari-platform-dev get pods
+   # first backup fired? (ScheduledBackup has immediate: true)
+   kubectl -n shibari-platform get backup
+   ```
+
+## Production-hardening TODO (ordered)
+
+1. **Offsite DB backups** — barman currently targets the in-cluster Rook
+   RGW: the backups share a failure domain with the database. Point
+   `barmanObjectStore` at R2/B2 (or sync the RGW bucket offsite). Do this
+   before real customers exist.
+2. **Restore drill** — bootstrap a recovery of a prod backup into the dev
+   namespace once (bump `serverName` per the recovery notes in the app
+   repo's `cluster.yaml`; same procedure as the shared cluster's
+   `DISASTER-RECOVERY.md`). Untested backups don't count.
+3. **Pin prod images to SHA tags** — `latest` is a moving tag; pin the SHA
+   the bake also pushes (override in the prod overlay), or install Flux
+   image-automation to bump it. Also removes dev's manual-restart caveat.
+4. **PrometheusRules for the dedicated cluster** — it has a PodMonitor but
+   none of the alert rules `postgres16` has
+   (`kubernetes/apps/database/cloudnative-pg/cluster/prometheusrule.yaml`);
+   a silently failing WAL archive is the failure mode that makes item 1
+   matter.
+5. **Flux Provider/Alert** for both namespaces (copy the pattern from
+   `kubernetes/apps/database/namespace.yaml`) so a stuck Kustomization
+   notifies instead of staying quietly stale.
+6. **Real payments** — CCBill per-brand creds → BWS, flip
+   `CCBILL_ENABLED` and `PAYMENT_PROVIDER` in the app repo's
+   `api-config`. Mock mode until then.
+7. **Renovate in the app repo** — the CNPG/Dragonfly image pins live there
+   now and nothing bumps them; this repo's Renovate can't see them.
+
+## Deferred / known constraints
+
+- **Livestreaming is off in-cluster** (`OME_*` empty): OvenMediaEngine
+  needs raw-TCP RTMP ingest, which the Cloudflare tunnel won't carry from
+  streamers' clients — needs a port-forward/Spectrum or stays on the VPS.
+- **Chunked uploads** disabled (matches compose default); flip
+  `CHUNKED_UPLOAD_ENABLED` when needed.
+- **Egress** allows all public 443 (Bunny/Brevo/payment callbacks);
+  tighten to provider ranges later
+  (`kubernetes/apps/shibari-platform*/network-policies/app/egress-https.yaml`).
+- **Brand apex domains** (shibarixclub.com / queerxclub.com) when ready:
+  Cloudflare zones + tunnel hostname rules + swap the `DOMAIN_*`
+  substitutes in the two `ks.yaml` files; external-dns `domainFilters`
+  only covers the home zone, so manage the new zones' DNS manually or
+  extend the filter.
+- **Availability = home ISP/power.** Gatus/pushover reports outages; the
+  VPS deployment remains the hedge while the sites are revenue-critical.
+- Namespaces enforce PSS `baseline` (warn/audit `restricted`) — candidate
+  to tighten after checking the CNPG/Dragonfly pods.
+
+## Operating notes
+
+- **Deploy to dev**: merge to app-repo main → bake pushes `:dev` →
+  `kubectl -n shibari-platform-dev rollout restart deploy`.
+- **Deploy to prod**: app repo's prod pipeline pushes `:latest` →
+  restart deployments, or (better, see TODO 3) bump SHA pins.
+- **Rotating secrets**: edit the BWS entry; ESO refreshes within 1h
+  (`flux reconcile` the ks to force). The DB password propagates to
+  Postgres automatically (`cnpg.io/reload` label); everything consumed via
+  `envFrom` (JWT, Bunny, Brevo) needs a `rollout restart` to take effect.
+- **Validate app-repo manifests** before merging changes there:
+
+  ```bash
+  kustomize build --load-restrictor=LoadRestrictionsNone kubernetes/overlays/prod | kubeconform -strict -ignore-missing-schemas -skip Secret,ExternalSecret -
+  ```
+
+- **Where things are defined**: hostnames/env → `ks.yaml` substitutes
+  (this repo); app config → `api-config`/`worker-config` ConfigMaps (app
+  repo); secret *names* → `base/externalsecret-app.yaml` (app repo);
+  secret *values* → Bitwarden SM.
