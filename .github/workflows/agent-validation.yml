@@ -47,20 +47,33 @@ jobs:
       - name: Install Validation Tools
         if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
-          set -e
+          set -euo pipefail
+
+          # Download to a file rather than piping curl into tar, and use
+          # --fail so an HTTP error is a curl error instead of an error page
+          # being handed to gzip. GitHub's release CDN intermittently 503s
+          # (seen 2026-08-12), which under the old `curl -sL | tar xz` showed
+          # up as a misleading "gzip: stdin: not in gzip format" and failed
+          # the whole run on a cache miss. --retry-all-errors covers 5xx.
+          install_tool() {
+            local url="$1" name="$2" archive
+            archive="$(mktemp)"
+            curl -sSfL --retry 5 --retry-delay 3 --retry-all-errors -o "$archive" "$url"
+            tar xzf "$archive" "$name"
+            rm -f "$archive"
+            chmod +x "$name"
+            mv "$name" "$HOME/.local/bin/"
+          }
+
           echo "Installing kubeconform..."
           # renovate: datasource=github-releases depName=yannh/kubeconform
           KUBECONFORM_VERSION="v0.8.0"
-          curl -sL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
-          chmod +x kubeconform
-          mv kubeconform "$HOME/.local/bin/"
+          install_tool "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" kubeconform
 
           echo "Installing kustomize..."
           # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.+)$
           KUSTOMIZE_VERSION="v5.8.1"
-          curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" | tar xz
-          chmod +x kustomize
-          mv kustomize "$HOME/.local/bin/"
+          install_tool "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" kustomize
 
       - name: Install yamllint
         # Unconditional — apt installs to /usr/bin, which the tool cache never
