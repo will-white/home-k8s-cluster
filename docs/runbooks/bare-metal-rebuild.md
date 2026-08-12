@@ -34,7 +34,7 @@ genconfig** — an accepted cloud dependency (see README).
 Talos installs to the 250GB SSD (`/dev/sda`); the 500GB NVMe (`nvme0n1`) is
 Ceph's. All 8 nodes use Image Factory schematic
 `f3350e61fcd45fab42c5b71062eae42982131a4dcbc7ad83bf86d793121607d0`
-(iscsi-tools, util-linux-tools, intel-ucode, i915, nut-client — see
+(gasket-driver, i915, intel-ucode, mei, nut-client — see
 `talconfig.yaml`). Boot each node from the matching ISO:
 `https://factory.talos.dev/image/f3350e61fcd45fab42c5b71062eae42982131a4dcbc7ad83bf86d793121607d0/<version>/metal-amd64.iso`
 (version = `talosVersion` in `talconfig.yaml`). Nodes come up in maintenance
