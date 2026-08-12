@@ -1,7 +1,10 @@
 cluster:
+  # Discovery is fully disabled. The kubernetes registry cannot work on
+  # Kubernetes >=1.22 (the Node authorizer forbids nodes listing other
+  # nodes), so leaving it enabled only floods every node's kernel ring
+  # buffer with KubernetesPullController RBAC errors — it rotated real
+  # boot logs out of dmesg. The external service registry
+  # (discovery.talos.dev) stays off by choice; re-enable it instead of
+  # this if `talosctl get members` / KubeSpan are ever wanted.
   discovery:
-    registries:
-      kubernetes:
-        disabled: false
-      service:
-        disabled: true
+    enabled: false

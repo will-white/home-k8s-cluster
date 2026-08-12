@@ -1,0 +1,39 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: intel-device-plugin-rules
+spec:
+  groups:
+    - name: intel-device-plugin.rules
+      rules:
+        - alert: IntelGPUNodeResourceZero
+          annotations:
+            summary: Node {{ $labels.node }} advertises zero gpu.intel.com/i915 devices
+            description: >-
+              Node {{ $labels.node }} has been advertising 0 allocatable
+              gpu.intel.com/i915 for more than 15 minutes. A short window of 0 is
+              normal right after a node boots (extended resources reset until the
+              intel-gpu-plugin pod re-registers with the kubelet); sustained 0 means
+              the plugin pod is failing on that node, or the node was
+              installed/upgraded with a Talos image whose schematic is missing the
+              siderolabs/i915 extension. Check the intel-gpu-plugin DaemonSet pod on
+              the node and `talosctl -n <node> get extensions`; the node schematic
+              must match the one pinned in kubernetes/bootstrap/talos/talconfig.yaml.
+          expr: kube_node_status_allocatable{resource="gpu_intel_com_i915"} == 0
+          for: 15m
+          labels:
+            severity: critical
+        - alert: IntelGPUResourceAbsent
+          annotations:
+            summary: No node in the cluster advertises gpu.intel.com/i915
+            description: >-
+              The gpu.intel.com/i915 allocatable metric is absent from every node
+              for more than 15 minutes. Either the intel-device-plugin stack is
+              down cluster-wide (operator or GpuDevicePlugin CR deleted, NFD labels
+              gone) or kube-state-metrics is not reporting. GPU workloads (Frigate)
+              cannot schedule while this fires.
+          expr: absent(kube_node_status_allocatable{resource="gpu_intel_com_i915"})
+          for: 15m
+          labels:
+            severity: critical
