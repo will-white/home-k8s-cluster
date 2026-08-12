@@ -107,12 +107,12 @@ spec:
           datasource: Prometheus
           # renovate: depName="Kubernetes / System / API Server"
           gnetId: 15761
-          revision: 19
+          revision: 21
         kubernetes-coredns:
           datasource: Prometheus
           # renovate: depName="Kubernetes / System / CoreDNS"
           gnetId: 15762
-          revision: 20
+          revision: 22
         kubernetes-global:
           datasource: Prometheus
           # renovate: depName="Kubernetes / Views / Global"
@@ -122,17 +122,17 @@ spec:
           datasource: Prometheus
           # renovate: depName="Kubernetes / Views / Namespaces"
           gnetId: 15758
-          revision: 42
+          revision: 46
         kubernetes-nodes:
           datasource: Prometheus
           # renovate: depName="Kubernetes / Views / Nodes"
           gnetId: 15759
-          revision: 34
+          revision: 40
         kubernetes-pods:
           datasource: Prometheus
           # renovate: depName="Kubernetes / Views / Pods"
           gnetId: 15760
-          revision: 36
+          revision: 39
         kubernetes-volumes:
           datasource: Prometheus
           # renovate: depName="K8s / Storage / Volumes / Cluster"
@@ -158,14 +158,14 @@ spec:
           datasource: Prometheus
           # renovate: depName="Node Exporter Full"
           gnetId: 1860
-          revision: 37
+          revision: 45
         smartctl-exporter:
           datasource:
             - name: DS_PROMETHEUS
               value: Prometheus
           # renovate: depName="SMARTctl Exporter Dashboard"
-          gnetId: 22604
-          revision: 2
+          gnetId: 33604
+          revision: 3
         spegel:
           datasource: Prometheus
           # renovate: depName="Spegel"
@@ -226,7 +226,7 @@ spec:
               value: Loki
           # renovate: depName="NGINX / LOKI Ingress Controller"
           gnetId: 12559
-          revision: 3
+          revision: 14
         nginx-request-handling-performance:
           datasource: Prometheus
           url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/grafana/dashboards/request-handling-performance.json
@@ -328,7 +328,7 @@ spec:
           datasource: Prometheus
           # renovate: depName="Prometheus"
           gnetId: 19105
-          revision: 7
+          revision: 9
       home-automation:
         emqx:
           datasource:
