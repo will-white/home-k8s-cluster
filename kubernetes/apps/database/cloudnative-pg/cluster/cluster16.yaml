@@ -23,27 +23,17 @@ spec:
       memory: 4Gi
   monitoring:
     enablePodMonitor: true
-  backup:
-    # Relaxed 30d -> 90d after Ceph capacity expansion (~3.6TiB, ~6% used).
-    retentionPolicy: 90d
-    barmanObjectStore: &barmanObjectStore
-      data:
-        compression: bzip2
-      wal:
-        compression: bzip2
-        maxParallel: 8
-      destinationPath: s3://cloudnative-pg/
-      endpointURL: http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc:80
-      # Note: serverName version needs to be incremented
-      # when recovering from an existing cnpg cluster
-      serverName: &currentCluster postgres16-v1
-      s3Credentials:
-        accessKeyId:
-          name: cloudnative-pg-secret
-          key: s3-access-key
-        secretAccessKey:
-          name: cloudnative-pg-secret
-          key: s3-secret-key
+  # WAL archiving + base backups via the barman-cloud CNPG-I plugin
+  # (in-tree barmanObjectStore is deprecated, removed in CNPG 1.31).
+  # Store config lives in objectstore.yaml; retentionPolicy moved there too.
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: ceph-rgw
+        # Note: serverName version needs to be incremented
+        # when recovering from an existing cnpg cluster
+        serverName: postgres16-v1
   # bootstrap:
   #   # initdb:
   #   #   database: main
@@ -51,15 +41,17 @@ spec:
   #   #   secret:
   #   #     name: postgres-appuser-secret
   #   # Note: previousCluster is the OLD serverName you are recovering FROM.
-  #   # The live serverName above is postgres16-v1, so a recovery bumps the
-  #   # live one to postgres16-v2 and points this at postgres16-v1 (the
-  #   # DISASTER-RECOVERY.md runbook walks through this). The example below
-  #   # is written for that first recovery.
+  #   # The live serverName above (plugins[0].parameters.serverName) is
+  #   # postgres16-v1, so a recovery bumps the live one to postgres16-v2 and
+  #   # points this at postgres16-v1 (the DISASTER-RECOVERY.md runbook walks
+  #   # through this). The example below is written for that first recovery.
   #   recovery:
   #     source: &previousCluster postgres16-v1
   # # Note: externalClusters is needed when recovering from an existing cnpg cluster
   # externalClusters:
   #   - name: *previousCluster
-  #     barmanObjectStore:
-  #       <<: *barmanObjectStore
-  #       serverName: *previousCluster
+  #     plugin:
+  #       name: barman-cloud.cloudnative-pg.io
+  #       parameters:
+  #         barmanObjectName: ceph-rgw
+  #         serverName: *previousCluster
