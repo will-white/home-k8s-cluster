@@ -119,22 +119,54 @@ and the companion PR here (#1254).
 - **Egress** allows all public 443 (Bunny/Brevo/payment callbacks);
   tighten to provider ranges later
   (`kubernetes/apps/shibari-platform*/network-policies/app/egress-https.yaml`).
-- **Brand apex domains** (shibarixclub.com / queerxclub.com) when ready:
-  Cloudflare zones + tunnel hostname rules + swap the `DOMAIN_*`
-  substitutes in the two `ks.yaml` files; external-dns `domainFilters`
-  only covers the home zone, so manage the new zones' DNS manually or
-  extend the filter.
-- **Availability = home ISP/power.** Gatus/pushover reports outages; the
-  VPS deployment remains the hedge while the sites are revenue-critical.
+- **Availability = home ISP/power** once the real domains point here.
+  Gatus/pushover reports outages; whether that SLA is acceptable for a
+  revenue site (or whether to keep a fallback anywhere) is a business
+  call — nothing in this deployment requires one.
 - Namespaces enforce PSS `baseline` (warn/audit `restricted`) — candidate
   to tighten after checking the CNPG/Dragonfly pods.
+
+## Cutover from OVH (the end state)
+
+This cluster deployment is fully self-contained — **nothing here needs the
+OVH VPS**. But until the apex domains cut over, the cluster serves the
+home subdomains while shibarixclub.com / queerxclub.com still point at the
+VPS, and the VPS's deploy workflows are what push the container images.
+Retiring OVH means, in order:
+
+1. **Decouple image builds from VPS deploys** — add a build-only workflow
+   to the app repo (the `docker buildx bake` + push step from
+   `deploy-{dev,prod}.yml`, minus the SSH deploy). Otherwise disabling the
+   VPS pipelines silently stops image publishing.
+2. **Migrate production data** — the live customer database belongs to the
+   OVH deployment. In a maintenance window: freeze writes, `pg_dump` the
+   prod DB, restore into `shibari-platform-db` (CNPG `initdb` import or
+   plain `psql` into the fresh cluster), verify row counts and log in.
+   Redis state (sessions/queues) can be dropped; Bunny storage is external
+   and shared, nothing to move.
+3. **Point the apex domains at the cluster** — zones are already on
+   Cloudflare: add tunnel hostname rules for the four hosts, DNS records to
+   `<tunnel-id>.cfargotunnel.com`, swap the `DOMAIN_*` substitutes in the
+   two `ks.yaml` files, and update any host-baked callbacks (CCBill,
+   Brevo templates, OAuth redirect URIs). external-dns `domainFilters`
+   only covers the home zone — manage the new zones manually or extend it.
+4. **Decide livestreaming** — in-cluster OME needs a raw-TCP RTMP ingest
+   path (port-forward or Cloudflare Spectrum); otherwise the feature stays
+   off. This is the only app feature genuinely tied to the VPS.
+5. **Watch, then decommission** — after a comfortable soak, tear down the
+   OVH hosts and disable the `deploy-*` workflows (keep the build-only
+   one). From that moment the offsite-backup item at the top of the
+   hardening list is non-negotiable: the cluster holds the only copy of
+   customer data.
 
 ## Operating notes
 
 - **Deploy to dev**: merge to app-repo main → bake pushes `:dev` →
   `kubectl -n shibari-platform-dev rollout restart deploy`.
-- **Deploy to prod**: app repo's prod pipeline pushes `:latest` →
-  restart deployments, or (better, see TODO 3) bump SHA pins.
+- **Deploy to prod**: the app repo's prod pipeline pushes `:latest` →
+  restart deployments, or (better, see TODO 3) bump SHA pins. Note the
+  images currently come from the *VPS* deploy workflows — see the
+  cutover section before disabling those.
 - **Rotating secrets**: edit the BWS entry; ESO refreshes within 1h
   (`flux reconcile` the ks to force). The DB password propagates to
   Postgres automatically (`cnpg.io/reload` label); everything consumed via
