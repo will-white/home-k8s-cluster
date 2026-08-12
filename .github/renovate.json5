@@ -186,6 +186,29 @@
     },
     {
       description: [
+        // 44 dashboards share one file and had never been looked up (see the
+        // custom.grafana-dashboards notes below), so the first run after that
+        // fix lands every stale revision at once. Group them into a single PR
+        // instead of ~20 -- the diff is a set of `revision:` integers, and the
+        // regex versioning makes every bump look like a major, which would
+        // otherwise tag each one `type/major`.
+        'Grafana dashboard revisions: one grouped PR, not one per dashboard',
+      ],
+      groupName: 'Grafana dashboards',
+      matchDatasources: [
+        'custom.grafana-dashboards',
+      ],
+      group: {
+        commitMessageTopic: '{{{groupName}}}',
+      },
+      semanticCommitType: 'chore',
+      semanticCommitScope: 'grafana',
+      addLabels: [
+        'renovate/grafana-dashboard',
+      ],
+    },
+    {
+      description: [
         // bazarr 1.6.0 ships on Python 3.14, which upstream explicitly flags
         // as unsupported ("you're on your own"). Downgrading is unsafe (1.6.0
         // migrated the shared Postgres schema), so hold here and review each
@@ -482,8 +505,27 @@
       matchStrings: [
         '# renovate: depName="(?<depName>[^"]+)"\\s+gnetId:\\s+(?<packageName>\\d+)\\s+revision:\\s+(?<currentValue>\\d+)',
       ],
-      datasourceTemplate: 'grafana-dashboards',
+      // `grafana-dashboards` is NOT a built-in Renovate datasource -- it was
+      // never resolvable, so all 44 dashboards below were extracted and then
+      // silently dropped at lookup time (zero revision bumps since the rule was
+      // added). grafana.com is reachable only via customDatasources; see the
+      // `grafana-dashboards` entry at the bottom of this file.
+      datasourceTemplate: 'custom.grafana-dashboards',
       versioningTemplate: 'regex:^(?<major>\\d+)$',
     },
   ],
+  customDatasources: {
+    // GET https://grafana.com/api/dashboards/<gnetId> returns the dashboard
+    // metadata with the current `revision` as a bare integer. JSONata reshapes
+    // that into the {releases:[{version}]} envelope Renovate expects; version
+    // must be a string, hence $string(). Pairs with the regex versioning above,
+    // which treats the bare integer as a single `major` component.
+    'grafana-dashboards': {
+      defaultRegistryUrlTemplate: 'https://grafana.com/api/dashboards/{{packageName}}',
+      format: 'json',
+      transformTemplates: [
+        '{"releases":[{"version": $string(revision)}]}',
+      ],
+    },
+  },
 }

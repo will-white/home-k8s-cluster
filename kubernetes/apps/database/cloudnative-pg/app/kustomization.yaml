@@ -2,3 +2,4 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
+  - ./helmrelease-barman-plugin.yaml

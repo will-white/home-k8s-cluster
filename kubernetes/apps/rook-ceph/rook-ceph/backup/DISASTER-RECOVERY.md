@@ -113,14 +113,17 @@ Restore is two layers: **object layer** (Garage → Ceph RGW) then **app layer**
 
 ### Layer 2a — CloudNativePG (Postgres)
 
-CNPG recovers from the barman store in the `cloudnative-pg` bucket. In
+CNPG recovers from the barman store in the `cloudnative-pg` bucket, via the
+barman-cloud plugin (`ObjectStore` `ceph-rgw` in `objectstore.yaml`; the
+in-tree `barmanObjectStore` was removed in CNPG 1.31). In
 `kubernetes/apps/database/cloudnative-pg/cluster/cluster16.yaml`:
 
-1. Bump `serverName` (e.g. `postgres16-v1` → `postgres16-v2`) so the recovered
-   cluster writes to a new WAL prefix and does not clobber the archive it is
-   recovering from.
-2. Uncomment the `bootstrap.recovery` + `externalClusters` block; set
-   `previousCluster` to the OLD `serverName` (`postgres16-v1`).
+1. Bump `serverName` under `spec.plugins[0].parameters` (e.g. `postgres16-v1`
+   → `postgres16-v2`) so the recovered cluster writes to a new WAL prefix and
+   does not clobber the archive it is recovering from.
+2. Uncomment the `bootstrap.recovery` + `externalClusters` block (plugin-style,
+   pointing at the same `ceph-rgw` ObjectStore); set `previousCluster` to the
+   OLD `serverName` (`postgres16-v1`).
 3. Commit; let Flux create the cluster. It restores the base backup and replays
    WAL from `s3://cloudnative-pg/`.
 4. Once healthy, revert to the normal (non-recovery) spec in a follow-up commit.

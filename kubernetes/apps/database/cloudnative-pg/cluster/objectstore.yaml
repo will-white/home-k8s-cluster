@@ -1,0 +1,35 @@
+---
+# Barman Cloud plugin object store: same Ceph RGW bucket + credentials the
+# in-tree barmanObjectStore used, so the existing archive carries over.
+# serverName intentionally lives on the Cluster plugin parameters (upstream
+# docs: it must be left empty here); retentionPolicy moved here from
+# Cluster.spec.backup.
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: ceph-rgw
+spec:
+  # Relaxed 30d -> 90d after Ceph capacity expansion (~3.6TiB, ~6% used).
+  retentionPolicy: 90d
+  configuration:
+    data:
+      compression: bzip2
+    wal:
+      compression: bzip2
+      maxParallel: 8
+    destinationPath: s3://cloudnative-pg/
+    endpointURL: http://rook-ceph-rgw-ceph-objectstore.rook-ceph.svc:80
+    s3Credentials:
+      accessKeyId:
+        name: cloudnative-pg-secret
+        key: s3-access-key
+      secretAccessKey:
+        name: cloudnative-pg-secret
+        key: s3-secret-key
+  instanceSidecarConfiguration:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
