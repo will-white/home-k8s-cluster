@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shibari-platform-dev-gatus-ep
+  namespace: shibari-platform-dev
+  labels:
+    gatus.io/enabled: "true"
+data:
+  config.yaml: |
+    endpoints:
+      - name: "web-shibari"
+        group: shibari-platform-dev
+        url: "https://shibari-dev.${SECRET_DOMAIN}/"
+        interval: 1m
+        client:
+          dns-resolver: tcp://1.1.1.1:53
+        conditions:
+          - "[STATUS] == 200"
+          - "[RESPONSE_TIME] < 10000"
+      - name: "web-queer"
+        group: shibari-platform-dev
+        url: "https://queer-dev.${SECRET_DOMAIN}/"
+        interval: 1m
+        client:
+          dns-resolver: tcp://1.1.1.1:53
+        conditions:
+          - "[STATUS] == 200"
+          - "[RESPONSE_TIME] < 10000"
+      - name: "promo-shibari"
+        group: shibari-platform-dev
+        url: "https://shibari-promo-dev.${SECRET_DOMAIN}/"
+        interval: 1m
+        client:
+          dns-resolver: tcp://1.1.1.1:53
+        conditions:
+          - "[STATUS] == 200"
+          - "[RESPONSE_TIME] < 10000"
+      - name: "promo-queer"
+        group: shibari-platform-dev
+        url: "https://queer-promo-dev.${SECRET_DOMAIN}/"
+        interval: 1m
+        client:
+          dns-resolver: tcp://1.1.1.1:53
+        conditions:
+          - "[STATUS] == 200"
+          - "[RESPONSE_TIME] < 10000"

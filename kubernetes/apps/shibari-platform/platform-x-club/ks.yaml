@@ -1,0 +1,34 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app shibari-platform
+  namespace: flux-system
+spec:
+  targetNamespace: shibari-platform
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: platform-x-club-source
+    - name: shibari-platform-network-policies
+    - name: cloudnative-pg
+    - name: dragonfly-operator
+    - name: external-secrets-stores
+  path: ./kubernetes/overlays/prod
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: platform-x-club
+  wait: true
+  interval: 30m
+  timeout: 10m
+  postBuild:
+    substitute:
+      ENV: prod
+      BWS_PREFIX: SHIBARI_PROD
+      DNS_TARGET: external.${SECRET_DOMAIN}
+      DOMAIN_SHIBARI: shibari.${SECRET_DOMAIN}
+      DOMAIN_QUEER: queer.${SECRET_DOMAIN}
+      DOMAIN_PROMO_SHIBARI: shibari-promo.${SECRET_DOMAIN}
+      DOMAIN_PROMO_QUEER: queer-promo.${SECRET_DOMAIN}
