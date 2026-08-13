@@ -50,7 +50,11 @@ spec:
               # Refresh each entry's own metadata (status/cover/description)
               # during the global update, not just its chapter list
               UPDATE_MANGA_INFO: "true"
-              DOWNLOADS_PATH: /media/manga
+              # NOTE: there is deliberately no DOWNLOADS_PATH here. The image's
+              # startup_script.sh only sed's a fixed allow-list of env vars into
+              # server.conf, and downloadsPath is not on it -- so setting it is a
+              # silent no-op and downloads land on the config PVC. The downloads
+              # directory is bind-mounted from the NAS instead (see persistence).
               # Route Cloudflare-challenged sources through the in-cluster
               # FlareSolverr (byparr) instance; only invoked when a source
               # actually returns a challenge, so otherwise a no-op
@@ -109,5 +113,10 @@ spec:
         path: /mnt/main/media
         globalMounts:
           - path: /media
+          # Keep the ~9G of downloaded chapters off the 10Gi config PVC: the
+          # data dir's default downloads/ location is served straight from the
+          # NAS, so files land in /mnt/main/media/manga/mangas/<source>/<title>/
+          - path: /home/suwayomi/.local/share/Tachidesk/downloads
+            subPath: manga
   driftDetection:
     mode: enabled
