@@ -28,6 +28,13 @@ spec:
             env:
               TZ: ${TIMEZONE}
               LOG_LEVEL: info
+              # Byparr launches a full browser per in-flight request, so memory
+              # scales with concurrency. Dropping images/media/fonts cuts the
+              # per-session footprint; challenge pages don't need them.
+              BLOCK_MEDIA: "true"
+              # Pinned so the browser skips the egress-IP geo lookup, which
+              # can't reach the internet from this pod and fails on every request.
+              BROWSER_LOCALE: en-US
             probes:
               liveness: &probes
                 enabled: true
@@ -48,7 +55,8 @@ spec:
                 cpu: 100m
                 memory: 512Mi
               limits:
-                memory: 2Gi
+                # 2Gi OOM-killed whenever two challenge solves overlapped
+                memory: 8Gi
     defaultPodOptions:
       securityContext:
         seccompProfile: {type: RuntimeDefault}
