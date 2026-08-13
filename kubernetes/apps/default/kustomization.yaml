@@ -22,3 +22,4 @@ resources:
   - ./unifi/ks.yaml
   - ./zigbee2mqtt/ks.yaml
   - ./zigbee2mqtt-ota/ks.yaml
+  - ./zwave-js-ui/ks.yaml
