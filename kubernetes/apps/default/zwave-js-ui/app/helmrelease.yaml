@@ -41,6 +41,18 @@ spec:
               ZWAVE_PORT: tcp://slzb-ultima3.internal:9638
               # Declaratively manage the Z-Wave JS server + driver knobs that
               # would otherwise only live in the UI's store/settings.json.
+              #
+              # serverServiceDiscoveryDisabled is true in there on purpose, and
+              # it was measured, not assumed: HA's zwave_js integration does
+              # declare zeroconf discovery for _zwave-js-server._tcp.local., but
+              # with the advertisement enabled, a 12s browse from inside the
+              # home-assistant pod found nothing, while the same browse saw 19
+              # other services on the LAN (incl. the SLZB itself). HA runs
+              # hostNetwork; this pod does not, and link-local multicast does
+              # not cross the overlay. Add the HA integration by hand against
+              # ws://zwave-js-ui.default.svc.cluster.local:3000 — reachable via
+              # ClusterFirstWithHostNet. Only an mDNS reflector or hostNetwork
+              # would change this; neither is worth it for one URL.
               ZWAVE_EXTERNAL_SETTINGS: /settings/zwave.json
             envFrom:
               - secretRef:
