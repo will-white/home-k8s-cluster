@@ -2,7 +2,7 @@
   "serverEnabled": true,
   "serverHost": "0.0.0.0",
   "serverPort": 3000,
-  "serverServiceDiscoveryDisabled": true,
+  "serverServiceDiscoveryDisabled": false,
   "enableSoftReset": false,
   "enableStatistics": false,
   "logEnabled": true,
