@@ -1,0 +1,149 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: zwave-js-ui
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: zwave-js-ui
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: volsync
+      namespace: volsync-system
+  install:
+    remediation:
+      retries: 3
+  interval: 30m
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    controllers:
+      zwave-js-ui:
+        annotations:
+          reloader.stakater.com/auto: 'true'
+        containers:
+          app:
+            env:
+              TZ: ${TIMEZONE}
+              PORT: 8091
+              STORE_DIR: /config
+              BACKUPS_DIR: /config/backups
+              ZWAVEJS_EXTERNAL_CONFIG: /config/.config-db
+              # Radio 3 (EFR32ZG23 Z-Wave add-on) exposed as a TCP socket by
+              # SLZB-OS — same remote-serial pattern as zigbee2mqtt on slzb-06m.
+              # Setting this also force-enables the Z-Wave driver.
+              ZWAVE_PORT: tcp://slzb-ultima3.internal:9638
+              # Declaratively manage the Z-Wave JS server + driver knobs that
+              # would otherwise only live in the UI's store/settings.json.
+              ZWAVE_EXTERNAL_SETTINGS: /settings/zwave.json
+            envFrom:
+              - secretRef:
+                  name: zwave-js-ui-secret
+            image:
+              repository: ghcr.io/zwave-js/zwave-js-ui
+              tag: 11.22.2@sha256:07b1a55e39f5cd309d60d5c33d93a3ff56b4bebd9ca73070ed8a03ec1e570381
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 8091
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              # Deliberately probes the UI, not /health/zwave: gating the
+              # Service on the controller link would black-hole the web UI
+              # exactly when the SLZB link is down and you need it. Controller
+              # health is asserted by Gatus (GATUS_PATH) and the Loki rule.
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 8091
+                  initialDelaySeconds: 10
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: 8091
+                  initialDelaySeconds: 5
+                  periodSeconds: 5
+                  failureThreshold: 60
+            resources:
+              limits:
+                memory: 1Gi
+              requests:
+                cpu: 25m
+                memory: 256Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              readOnlyRootFilesystem: true
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+    ingress:
+      app:
+        annotations:
+          gethomepage.dev/enabled: 'true'
+          gethomepage.dev/group: Smart Home
+          gethomepage.dev/icon: zwavejs2mqtt.png
+          gethomepage.dev/name: Z-Wave
+          gethomepage.dev/description: Z-Wave controller
+        className: internal
+        hosts:
+          - host: zwave.${SECRET_DOMAIN}
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+    persistence:
+      config:
+        existingClaim: zwave-js-ui
+      settings:
+        type: configMap
+        name: zwave-js-ui-settings
+        globalMounts:
+          - path: /settings/zwave.json
+            subPath: zwave.json
+            readOnly: true
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+    service:
+      app:
+        controller: zwave-js-ui
+        ports:
+          http:
+            port: 8091
+          # Z-Wave JS server websocket — this is what the Home Assistant
+          # Z-Wave integration connects to (ws://zwave-js-ui.default.svc:3000).
+          ws:
+            port: 3000
+  driftDetection:
+    mode: enabled

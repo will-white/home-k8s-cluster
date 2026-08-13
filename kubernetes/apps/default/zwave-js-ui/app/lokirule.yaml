@@ -1,0 +1,14 @@
+---
+groups:
+  - name: zwave-js-ui
+    rules:
+      - alert: ZWaveJSUIControllerUnreachable
+        expr: |
+          sum(count_over_time({app="zwave-js-ui"} |~ "(?i)(unable to connect to zwave|failed to open the serial port|controller is not ready)"[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} cannot reach the Z-Wave controller"

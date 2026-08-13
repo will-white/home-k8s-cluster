@@ -1,0 +1,11 @@
+{
+  "serverEnabled": true,
+  "serverHost": "0.0.0.0",
+  "serverPort": 3000,
+  "serverServiceDiscoveryDisabled": true,
+  "enableSoftReset": false,
+  "enableStatistics": false,
+  "logEnabled": true,
+  "logLevel": "info",
+  "logToFile": false
+}
