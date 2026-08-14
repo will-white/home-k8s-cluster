@@ -53,6 +53,13 @@ spec:
               # ws://zwave-js-ui.default.svc.cluster.local:3000 — reachable via
               # ClusterFirstWithHostNet. Only an mDNS reflector or hostNetwork
               # would change this; neither is worth it for one URL.
+              #
+              # rf.region is pinned to 9 ("USA (Long Range)") in there. It is
+              # not cosmetic: nothing had ever set a region, so the ZG23 kept
+              # its firmware default and the controller was measured running on
+              # 11 ("Europe (Long Range)") -- 868.4MHz. Every inclusion attempt
+              # failed because US 908.4MHz devices are simply not audible on the
+              # EU band. Leave this set or the radio silently reverts to EU.
               ZWAVE_EXTERNAL_SETTINGS: /settings/zwave.json
             envFrom:
               - secretRef:

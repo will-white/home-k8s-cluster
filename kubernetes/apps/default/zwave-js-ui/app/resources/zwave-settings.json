@@ -1,4 +1,7 @@
 {
+  "rf": {
+    "region": 9
+  },
   "serverEnabled": true,
   "serverHost": "0.0.0.0",
   "serverPort": 3000,
