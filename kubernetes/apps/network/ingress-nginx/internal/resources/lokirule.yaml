@@ -12,9 +12,11 @@ groups:
         annotations:
           app: "{{ $labels.app }}"
           summary: "{{ $labels.app }} is returning elevated 5xx errors"
+      # flux-webhook only routes /hook/, so the Gatus check on / asserts a 404
+      # as its healthy condition. Those are expected and must not count here.
       - alert: IngressNginxHighClientErrors
         expr: |
-          sum by (app) (count_over_time({app=~"ingress-nginx.*"} | json | status >= 400, status < 500 [5m])) > 50
+          sum by (app) (count_over_time({app=~"ingress-nginx.*"} | json | status >= 400, status < 500, vhost != `flux-webhook.${SECRET_DOMAIN}` [5m])) > 50
         for: 10m
         labels:
           severity: warning

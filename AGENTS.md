@@ -206,7 +206,7 @@ You are responsible for maintaining a Home Kubernetes cluster running on Talos L
 - **Focus:** `kubernetes/apps/observability/**`
 - **Activation:** Adopt this role automatically for any task whose files, paths, or subject matter fall under `kubernetes/apps/observability/`, or that involves `ServiceMonitor`, `PodMonitor`, `PrometheusRule`, `Probe`, Grafana dashboards, Loki log pipelines, or Gatus endpoints anywhere in the repo. Otherwise, the user may invoke explicitly with `@observability-agent`.
 - **Domain:** Owns the metrics/logs/health pipeline (scrape → store → query → alert → dashboard → uptime). Current apps:
-  - **Metrics:** kube-prometheus-stack (Prometheus, Alertmanager), node-exporter-truenas, smartctl-exporter, snmp-exporter, opnsense-exporter, adguard-exporter, unpoller
+  - **Metrics:** kube-prometheus-stack (Prometheus, Alertmanager), node-exporter-truenas, smartctl-exporter, snmp-exporter, opnsense-exporter, adguard-exporter
   - **Logs:** loki, promtail
   - **Dashboards:** grafana
   - **Synthetic / Uptime:** gatus
