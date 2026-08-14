@@ -22,3 +22,16 @@ groups:
         annotations:
           app: "{{ $labels.app }}"
           summary: "{{ $labels.app }} is experiencing detector errors"
+      # Continuous recording writes every segment to the NAS over NFS. If that
+      # write path falls behind, Frigate silently discards cached segments and
+      # the footage is gone — nothing else surfaces this.
+      - alert: FrigateRecordingSegmentsDropped
+        expr: |
+          sum by (app) (count_over_time({app="frigate"} |~ "(?i)(unable to keep up with recording segments|too many unprocessed recording segments|unable to store recording segment)"[10m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} is discarding recording segments — the recording write path cannot keep up"

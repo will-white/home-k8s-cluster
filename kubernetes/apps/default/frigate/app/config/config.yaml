@@ -34,13 +34,20 @@ snapshots:
 record:
   enabled: true
   # NOTE: top-level `record.retain` was removed in Frigate 0.14+.
-  # Recording retention is now configured per-category below
-  # (alerts + detections). Continuous/motion recording would need to
-  # be set via `record.continuous` or `record.motion` instead.
+  # Retention is configured per-category below.
+  # Rolling 24h of continuous footage for every camera; alert/detection
+  # clips are kept for 7 days on top of that.
+  continuous:
+    days: 1
   alerts:
+    # Detection can lag the actual event, so keep a generous lead-in.
+    pre_capture: 15
+    post_capture: 10
     retain:
       days: 7
   detections:
+    pre_capture: 15
+    post_capture: 10
     retain:
       days: 7
 
@@ -83,7 +90,9 @@ audio:
 
 birdseye:
   enabled: true
-  mode: continuous
+  # `continuous` keeps every camera encoding into the birdseye view around
+  # the clock; `motion` only composites cameras with active motion.
+  mode: motion
 
 cameras:
   doorbell:

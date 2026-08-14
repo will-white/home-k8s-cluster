@@ -93,9 +93,11 @@ spec:
                   timeoutSeconds: 5
                   failureThreshold: 30
             resources:
+              # Sized from observed steady-state usage (~900m CPU / ~3.9Gi RSS)
+              # so the scheduler reserves what Frigate actually draws.
               requests:
-                cpu: 10m
-                memory: 8000Mi
+                cpu: 1000m
+                memory: 6Gi
                 gpu.intel.com/i915: 1
               limits:
                 memory: 12Gi
