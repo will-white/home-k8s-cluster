@@ -21,7 +21,7 @@ ARG YQ_VERSION=v4.53.3
 # renovate: datasource=github-releases depName=bitwarden/sdk-sm extractVersion=^bws-(?<version>.+)$
 ARG BWS_VERSION=v2.1.0
 # renovate: datasource=github-tags depName=kubernetes/kubernetes
-ARG KUBECTL_VERSION=v1.36.3
+ARG KUBECTL_VERSION=v1.36.4
 # renovate: datasource=github-releases depName=helm/helm
 ARG HELM_VERSION=v4.2.3
 # renovate: datasource=github-releases depName=helmfile/helmfile
