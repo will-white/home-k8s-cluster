@@ -188,7 +188,19 @@ kubectl -n rook-ceph get pods -l app=rook-ceph-osd -o json \
 ```
 
 **One host down is free** — every PG keeps at least 2 replicas. Two is the
-threshold where availability starts costing you. If the nodes will be gone for
+threshold where availability starts costing you.
+
+> **This threshold moves once the pools are at `size 4`.** The replicated pools
+> were raised from 3 to 4 (and mons from 3 to 5) precisely so that losing two
+> hosts stops being an outage: a PG then spans 4 hosts, loses at most 2, and
+> the 2 that remain still satisfy `min_size`. After that change `ok-to-stop`
+> starts answering `true` for pairs, and `task talos:nodes-down` stops refusing
+> them — which is also the acceptance test for the change having worked. The
+> numbers above are the size-3 behaviour, kept because they are what was
+> actually measured. Note the RGW bucket-data pool is erasure coded at
+> `k=2,m=1` and still tolerates only one failure, and etcd still runs 3 control
+> planes, so a two-node loss that takes 2 control planes still stops the
+> Kubernetes API regardless of Ceph. If the nodes will be gone for
 longer than a maintenance window, reweight their OSDs out of the CRUSH map and
 let backfill finish *first*; then nothing is degraded while they are away.
 
