@@ -151,6 +151,11 @@ stays up, so drains, PDBs and Ceph `min_size` all matter in ways they do not
 when everything goes down together. Written from taking `mj04968e` (`.53`) and
 `mj05g4ub` (`.54`) down on 2026-08-22.
 
+**`task talos:nodes-down NODES="..."` and `task talos:nodes-up NODES="..."` do
+all of this**, including the safety gate below. The reasoning is written out
+here so you can deviate safely, and because the tasks refuse some things you
+may occasionally need to override.
+
 ### Know the Ceph cost before you start
 
 Every pool is `size 3 / min_size 2` with failure domain `host`, and there is
@@ -165,12 +170,34 @@ reporting slow metadata IOs, and RGW down from 2 daemons to 1. Everything else
 kept serving, including all 3 mons, both mgrs, all 3 EMQX cores and both
 ingress-nginx controllers.
 
+**Do not do this arithmetic by hand — ask Ceph.** `ceph osd ok-to-stop` gives
+the authoritative answer, names the PGs that would go offline, and exits
+non-zero, which is why `task talos:nodes-down` gates on it:
+
+```bash
+ceph osd ok-to-stop 3 7
+# {"ok_to_stop":false,"num_not_ok_pgs":9,"bad_become_inactive":["2.1","2.11",...]}
+# Error EBUSY: unsafe to stop osd(s) at this time (9 PGs are or would become offline)
+```
+
+Map nodes to OSD ids with the label rook puts on the OSD pods:
+
+```bash
+kubectl -n rook-ceph get pods -l app=rook-ceph-osd -o json \
+  | jq -r '.items[] | "\(.spec.nodeName)\t\(.metadata.labels["ceph-osd-id"])"'
+```
+
 **One host down is free** — every PG keeps at least 2 replicas. Two is the
 threshold where availability starts costing you. If the nodes will be gone for
 longer than a maintenance window, reweight their OSDs out of the CRUSH map and
 let backfill finish *first*; then nothing is degraded while they are away.
 
 ### Procedure
+
+`task talos:nodes-down NODES="192.168.5.53 192.168.5.54"` performs every step
+below and refuses at step 0 if `ceph osd ok-to-stop` says the OSD loss would
+take PGs offline (`FORCE_UNSAFE=1` overrides). It also warns about Volsync
+sources due to fire within 30 minutes. By hand:
 
 1. **Move any CNPG primary off the doomed nodes first**, or you take an
    unplanned failover instead of a clean switchover. There is no `cnpg` kubectl
@@ -197,8 +224,8 @@ larger blast radius than the thing you are protecting against.
 
 ### Partial bring-up
 
-`task talos:cluster-up` is whole-cluster — it waits on *all* nodes being Ready
-— so for a partial return run the steps by hand:
+`task talos:nodes-up NODES="..."` does this. Note that `task talos:cluster-up`
+is **not** usable here — it waits on *all* nodes being Ready. By hand:
 
 ```bash
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- \
@@ -316,9 +343,10 @@ also one of the things that comes back read-only.
 
 ### Then treat it as a bring-up
 
-Once the node is back, follow [Partial bring-up](#partial-bring-up): clear the
-taint, uncordon, wait for peering, unset whatever flags you set, and **sweep for
-the read-only RBD aftershock**. That last step is not optional and it bites
+Once the node is back, `task talos:nodes-up NODES="<the node>"` does the whole
+thing — see [Partial bring-up](#partial-bring-up): clear the taint, uncordon,
+wait for peering, unset whatever flags you set, and **sweep for the read-only
+RBD aftershock**. That last step is not optional and it bites
 hardest here — nobody scheduled the outage, so nobody is watching for the pods
 that come back running-but-broken.
 
