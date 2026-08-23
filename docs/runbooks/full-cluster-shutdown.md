@@ -182,6 +182,46 @@ missing replicas on its own, and there is no need to switch the primary back.
 `UNREACHABLE_THRESHOLD_SECONDS` (3600), so a sub-hour window never trips it.
 Check rather than assume — Gotcha 1 covers why a missed taint is so expensive.
 
+### Aftershock: RBD volumes remount read-only
+
+The blocked-I/O window leaves some RBD volumes remounted **read-only**, and the
+kernel does not undo it when Ceph recovers. The pods stay up and keep failing,
+so this outlives the outage and is easy to misread as an application bug.
+Affected pods sit on nodes that **never went down** — the read-only remount
+follows the blocked PGs, not the missing nodes.
+
+Seen on 2026-08-22, all three needing nothing more than a pod delete:
+
+| Pod | Symptom in logs |
+| --- | --- |
+| `prometheus-kube-prometheus-stack-0` | `open /prometheus/queries.active: read-only file system` |
+| `frigate` | `attempt to write a readonly database`, `Config file is read-only` |
+| `zigbee2mqtt` | `ENOENT ... mkdir '/config/log/<timestamp>'` |
+
+The zigbee2mqtt one is the misleading case: `ENOENT` rather than `EROFS` reads
+like data loss. Verify before assuming — scale the deployment to 0, mount the
+PVC in a throwaway pod and check. On 2026-08-22 the volume was completely
+intact (`configuration.yaml`, `database.db`, `state.json` all present, and
+`/config/log` existed and was writable); scaling back up was the entire fix.
+
+Sweep for these after the PGs go `active+clean`:
+
+```bash
+kubectl get pods -A --no-headers | awk '$4!="Running" && $4!="Completed"'
+```
+
+Volsync movers also strand themselves — jobs scheduled during the outage retry
+forever against a CSI socket that has gone (`csi.sock: connect: connection
+refused`) or lose their snapshot PVC entirely. Delete the stuck mover pods and
+let the next scheduled sync recreate them. One caveat: a CephFS clone reporting
+`rpc error: code = Aborted desc = clone from snapshot is already in progress` is
+**succeeding, not failing** — the message carries a percentage that climbs.
+Leave it alone; `max_concurrent_clones` is 4 and a backlog drains on its own.
+
+A stuck `mon.m has slow ops` on a `log(...)` entry from the outage window is
+cosmetic — it is a cluster-log message, not client I/O — but it holds
+`HEALTH_WARN` until the mon is restarted.
+
 
 ## Latent failures a full restart exposes
 
