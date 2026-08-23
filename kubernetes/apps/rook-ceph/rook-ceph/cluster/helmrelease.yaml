@@ -35,7 +35,24 @@ spec:
         spec:
           failureDomain: host
           replicated:
-            size: 3
+            # size 4, not 3, so the cluster survives losing TWO of the eight
+            # hosts. There is one OSD per host and the failure domain is host,
+            # so at size 3 a PG lands on 3 of 8 hosts and ~10.7% of PGs (6 of
+            # the 56 host-triples) contain any given pair -- lose both and the
+            # PG drops below min_size and BLOCKS client I/O. Measured on
+            # 2026-08-22: 19 PGs inactive, 23% objects degraded, and a cascade
+            # of read-only RBD remounts that outlived the outage.
+            #
+            # At size 4 a PG spans 4 hosts, loses at most 2, and the 2 that
+            # remain still satisfy min_size. min_size stays 2 on its own:
+            # osd_pool_default_min_size is 0 (auto = size - size/2, so 4 -> 2)
+            # and the existing pools already store min_size 2, which raising
+            # size does not change. Verify after rollout, it is load-bearing.
+            #
+            # Cost is ~33% more raw space, against 7.5% utilisation (352 GiB of
+            # 4.5 TiB). Note this does NOT buy 2-node tolerance for the cluster
+            # as a whole -- etcd still runs 3 control planes and tolerates 1.
+            size: 4
         storageClass:
           allowVolumeExpansion: true
           enabled: true
@@ -124,6 +141,16 @@ spec:
             name: nfs
           - enabled: false
             name: restful
+      mon:
+        # Five mons, not the chart default of three. Quorum needs a majority,
+        # so 3 mons tolerate exactly ONE loss -- which would make the size 4
+        # pools above pointless: the data would survive two hosts while the
+        # monitors did not. 5 mons tolerate 2.
+        #
+        # Mons must land on distinct nodes for that to hold; there are 8, and
+        # the `all` toleration below lets them use control planes too.
+        count: 5
+        allowMultiplePerNode: false
       network:
         connections:
           requireMsgr2: true
@@ -171,10 +198,12 @@ spec:
             - failureDomain: host
               name: data0
               replicated:
-                size: 3
+                # See the ceph-blockpool comment: size 4 keeps PGs above
+                # min_size when two hosts are lost.
+                size: 4
           metadataPool:
             replicated:
-              size: 3
+              size: 4
           metadataServer:
             activeCount: 1
             activeStandby: true
@@ -241,7 +270,12 @@ spec:
           metadataPool:
             failureDomain: host
             replicated:
-              size: 3
+              # See the ceph-blockpool comment. Only the RGW *metadata* pool is
+              # replicated; the bucket data pool below is erasure coded at
+              # k=2,m=1 and still tolerates a single failure only. Raising that
+              # to m=2 needs a NEW pool and a data migration -- EC profiles
+              # cannot be changed in place -- so it is tracked separately.
+              size: 4
           preservePoolsOnDelete: true
         storageClass:
           enabled: true
