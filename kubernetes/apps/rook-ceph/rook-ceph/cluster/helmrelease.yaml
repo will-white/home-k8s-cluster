@@ -97,6 +97,30 @@ spec:
       isDefault: false
       name: csi-ceph-blockpool
     cephClusterSpec:
+      # Rotate the *daemon* cephx keys to aes256k. Ceph v20.2.4 is the
+      # CVE-2025-30156 release: it adds the aes256k cipher and flags every
+      # remaining `aes` key, raising AUTH_INSECURE_SERVICE_KEY_TYPE (the 12
+      # daemon entities: osd.0-7, mgr.a/b, mds x2) and
+      # AUTH_INSECURE_SERVICE_TICKETS to HEALTH_ERR until the keys are rotated.
+      # Rook gates upgrades on Ceph health, so leaving these unrotated blocks
+      # every future Rook upgrade.
+      #
+      # Daemon keys are safe to rotate: per the CephCluster CRD, "Daemon CephX
+      # keys can be rotated without affecting client connections." Rotation is
+      # driven by keyGeneration -- bump it to rotate again in future.
+      #
+      # Client and CSI keys deliberately stay on `aes`: aes256k needs Linux
+      # kernel 7.0+ for CSI PVC mounts and these nodes run 6.18 (Talos v1.13.8),
+      # so rotating them would break RBD/CephFS mounts. The chart already
+      # defaults security.cephx.csi.keyType to aes for exactly this reason.
+      # Those entities stay at HEALTH_WARN, which does not gate Rook.
+      # Revisit once Talos ships a 7.0+ kernel.
+      security:
+        cephx:
+          daemon:
+            keyRotationPolicy: KeyGeneration
+            keyGeneration: 1
+            keyType: aes256k
       # The rook orchestrator module logs every Kubernetes API response body at
       # DEBUG. A full PodList is ~1.5MiB and it polls every 15s (~6MiB/min,
       # ~8.6GiB/day). Loki rejected each one against its 256KiB max entry size
