@@ -143,3 +143,30 @@ spec:
           for: 30m
           labels:
             severity: warning
+
+    - name: ceph.rules
+      rules:
+        - alert: CephOsdMapFlagsSet
+          annotations:
+            summary: >-
+              Ceph maintenance flags have been left set for over 4 hours.
+            description: >-
+              One or more of noout/norebalance/nobackfill/norecover is still
+              set on the osdmap. These are set deliberately while nodes are
+              down and MUST be unset on the way back — norecover and
+              nobackfill are precisely what stop Ceph healing degraded PGs,
+              so the cluster quietly sits at reduced redundancy with no other
+              symptom until something else fails. Nothing else alerts on this.
+              Unset via `task talos:nodes-up`, or by hand with
+              `for f in norecover nobackfill norebalance noout; do ceph osd
+              unset $f; done`. Run `ceph status` to see which are set.
+          # OSDMAP_FLAGS only counts the operator-settable flags — the
+          # permanent ones (sortbitwise, recovery_deletes, purged_snapdirs,
+          # pglog_hardlimit) do not trip it. 4h is deliberately longer than a
+          # normal maintenance window so this fires on a forgotten unset
+          # rather than on legitimate work in progress.
+          expr: |
+            ceph_health_detail{name="OSDMAP_FLAGS"} == 1
+          for: 4h
+          labels:
+            severity: warning
