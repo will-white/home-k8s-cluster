@@ -7,6 +7,10 @@ several latent problems. Everything below is what actually happened, not theory.
 **TL;DR:** `task talos:cluster-down`, do the hardware work, power on, then
 `task talos:cluster-up`. Read the gotchas before you start.
 
+Taking only *some* nodes down is a materially different procedure, with a
+real availability cost the full shutdown does not have — see
+[Partial shutdown](#partial-shutdown-a-subset-of-nodes).
+
 ---
 
 ## Shutdown
@@ -106,6 +110,78 @@ Resuming Flux earlier makes 96 reconciling apps compete with Ceph recovery for
 the same disks — especially bad if a fresh OSD is backfilling.
 
 ---
+
+## Partial shutdown (a subset of nodes)
+
+Taking a *few* nodes down is not a smaller version of the above. The cluster
+stays up, so drains, PDBs and Ceph `min_size` all matter in ways they do not
+when everything goes down together. Written from taking `mj04968e` (`.53`) and
+`mj05g4ub` (`.54`) down on 2026-08-22.
+
+### Know the Ceph cost before you start
+
+Every pool is `size 3 / min_size 2` with failure domain `host`, and there is
+exactly **one OSD per host** across 8 hosts. Any PG mapped to two downed hosts
+drops to a single replica — below `min_size` — and **blocks client I/O** until
+one of them returns. About 6 of the 56 possible host-triples contain any given
+pair, so expect roughly 10% of PGs affected.
+
+Measured with two hosts down: **19 PGs inactive (7.2%)**, 3 erasure-coded PGs
+`down` in `ceph-objectstore.rgw.buckets.data`, 23% of objects degraded, the MDS
+reporting slow metadata IOs, and RGW down from 2 daemons to 1. Everything else
+kept serving, including all 3 mons, both mgrs, all 3 EMQX cores and both
+ingress-nginx controllers.
+
+**One host down is free** — every PG keeps at least 2 replicas. Two is the
+threshold where availability starts costing you. If the nodes will be gone for
+longer than a maintenance window, reweight their OSDs out of the CRUSH map and
+let backfill finish *first*; then nothing is degraded while they are away.
+
+### Procedure
+
+1. **Move any CNPG primary off the doomed nodes first**, or you take an
+   unplanned failover instead of a clean switchover. There is no `cnpg` kubectl
+   plugin installed here, so patch exactly what the plugin's `promote` patches:
+   ```bash
+   kubectl -n database patch cluster postgres16 --subresource=status \
+     --type=merge -p '{"status":{"targetPrimary":"postgres16-4"}}'
+   ```
+   Replication is async (`minSyncReplicas: 0`), so even a lone surviving
+   instance still accepts writes — there is no synchronous-quorum stall to
+   plan around.
+2. **Set the Ceph flags** exactly as for a full shutdown: `noout norebalance
+   nobackfill norecover`. The `nodown` warning above applies unchanged.
+3. **Cordon** the nodes, so pods evicted off them are not scheduled straight
+   back onto a node that is about to disappear.
+4. **`talosctl -n <ips> shutdown --force --wait=false`.** `--force` is still
+   required, but for a different reason than the full shutdown: `rook-ceph-osd`
+   and `emqx-core` sit at `maxUnavailable: 1` and `postgres16-primary` at 0, so
+   draining *two* nodes deadlocks on those PDBs for the full 30-minute timeout.
+
+Do **not** suspend Flux for a partial shutdown. The cluster keeps serving and
+rescheduling is ordinary behaviour; suspending every Kustomization is a much
+larger blast radius than the thing you are protecting against.
+
+### Partial bring-up
+
+`task talos:cluster-up` is whole-cluster — it waits on *all* nodes being Ready
+— so for a partial return run the steps by hand:
+
+```bash
+kubectl -n rook-ceph exec deploy/rook-ceph-tools -- \
+  bash -c 'for f in norecover nobackfill norebalance noout; do ceph osd unset $f; done'
+kubectl uncordon <nodes>
+kubectl taint node <node> node.kubernetes.io/out-of-service-   # only if applied
+```
+
+Wait for the nodes to be `Ready` and for Ceph to settle **before** unsetting the
+flags, for the reason in "Order matters at the end" above. CNPG rebuilds the
+missing replicas on its own, and there is no need to switch the primary back.
+
+`node-fencer` in `kube-system` only applies the `out-of-service` taint after
+`UNREACHABLE_THRESHOLD_SECONDS` (3600), so a sub-hour window never trips it.
+Check rather than assume — Gotcha 1 covers why a missed taint is so expensive.
+
 
 ## Latent failures a full restart exposes
 
