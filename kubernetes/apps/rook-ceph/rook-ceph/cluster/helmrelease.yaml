@@ -23,13 +23,33 @@ spec:
     remediation:
       retries: 3
   interval: 30m
-  timeout: 15m
+  # A full roll of all 19 Ceph daemons takes longer than 15m; the short
+  # timeout is what escalated a healthy-but-slow upgrade into a rollback.
+  timeout: 40m
   upgrade:
     cleanupOnFail: true
     remediation:
       retries: 3
       strategy: rollback
   values:
+    # Pin the Ceph daemon image explicitly. This chart derives the CephCluster's
+    # cephVersion from .Values.cephImage, so leaving it unset silently inherits
+    # whatever the chart ships: rook-ceph-cluster v1.20.3 defaulted to v20.2.2
+    # and v1.20.6 to v20.2.4, which meant a Rook *patch* bump (#1283/#1284)
+    # carried a Ceph point-release upgrade. That upgrade landed on all 19
+    # daemons, then Ceph went HEALTH_ERR on the new CVE-2025-30156 cephx checks
+    # that v20.2.4 introduces, Rook refused to continue, Helm hit its timeout,
+    # and Flux rolled back to v1.20.3 -- asking for a Ceph *downgrade* to
+    # v20.2.2, which Rook also (correctly) refused. Pinning here decouples the
+    # Ceph version from the chart version so Ceph only ever moves deliberately.
+    #
+    # Do NOT also set cephVersion under cephClusterSpec: the chart renders
+    # cephVersion from cephImage and then appends cephClusterSpec verbatim,
+    # so doing both emits a duplicate cephVersion key.
+    cephImage:
+      repository: quay.io/ceph/ceph
+      tag: v20.2.4
+      allowUnsupported: false
     cephBlockPools:
       - name: ceph-blockpool
         spec:
