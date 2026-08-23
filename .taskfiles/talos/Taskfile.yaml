@@ -160,3 +160,45 @@ tasks:
     preconditions:
       - kubectl get nodes &>/dev/null
       - which talosctl kubectl flux
+
+  nodes-down:
+    desc: Gracefully power off a SUBSET of nodes [NODES=required]
+    summary: |
+      Partial shutdown. Unlike cluster-down, the rest of the cluster keeps
+      serving, so Ceph min_size, the PDBs and the CNPG primary all matter.
+
+      Refuses to run when `ceph osd ok-to-stop` says the resulting OSD loss
+      would take PGs offline — with size 3 / min_size 2 and one OSD per host,
+      two hosts is the threshold where client I/O starts blocking. Override
+      with FORCE_UNSAFE=1 only if you accept that.
+
+      NODES accepts IPs or hostnames, space separated.
+      Example: task talos:nodes-down NODES="192.168.5.53 192.168.5.54"
+    cmd: '{{.SCRIPTS_DIR}}/nodes-down.sh {{.NODES}}'
+    requires:
+      vars: [NODES]
+    preconditions:
+      - talosctl config info &>/dev/null
+      - kubectl get nodes &>/dev/null
+      - which talosctl kubectl jq
+
+  nodes-up:
+    desc: Bring a SUBSET of nodes back after nodes-down [NODES=required]
+    summary: |
+      Partial bring-up. cluster-up cannot be used for this — it waits on ALL
+      nodes being Ready. Clears the out-of-service taint, uncordons, waits for
+      Ceph to PEER (not active+clean: norecover/nobackfill are what stop it
+      reaching that), unsets the flags, then sweeps for the read-only RBD
+      aftershock.
+
+      Also the right task after an UNPLANNED node loss — pass the nodes that
+      came back.
+
+      NODES accepts IPs or hostnames, space separated.
+      Example: task talos:nodes-up NODES="192.168.5.53 192.168.5.54"
+    cmd: '{{.SCRIPTS_DIR}}/nodes-up.sh {{.NODES}}'
+    requires:
+      vars: [NODES]
+    preconditions:
+      - kubectl get nodes &>/dev/null
+      - which kubectl jq

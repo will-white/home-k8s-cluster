@@ -1,11 +1,26 @@
-# Full cluster shutdown & bring-up
+# Cluster shutdown, node loss & bring-up
+
+Three scenarios, one recovery path:
+
+| Scenario | Start here |
+| --- | --- |
+| All 8 nodes off for maintenance | [Shutdown](#shutdown) |
+| Some nodes off deliberately | [Partial shutdown](#partial-shutdown-a-subset-of-nodes) |
+| A node died on its own | [When a node goes down on its own](#when-a-node-goes-down-on-its-own) |
+
+The bring-up and the aftershock cleanup are the same in all three.
 
 Written after the 2026-08-08/09 maintenance shutdown (OSD drive replacement in
 `mj0581m7`), which was the first full power-off in a long time and surfaced
-several latent problems. Everything below is what actually happened, not theory.
+several latent problems, and extended after taking `mj04968e`/`mj05g4ub` down on
+2026-08-22. Everything below is what actually happened, not theory.
 
 **TL;DR:** `task talos:cluster-down`, do the hardware work, power on, then
 `task talos:cluster-up`. Read the gotchas before you start.
+
+Taking only *some* nodes down is a materially different procedure, with a
+real availability cost the full shutdown does not have — see
+[Partial shutdown](#partial-shutdown-a-subset-of-nodes).
 
 ---
 
@@ -28,7 +43,12 @@ deviate safely.
    blocks indefinitely. On 2026-08-09 this left 258 PGs inactive and 75 ops
    blocked for ~26 minutes, and had to be undone under pressure. `noout` alone
    already prevents rebalancing.
-3. **Check nothing is mid-flight** — Volsync replications, running Jobs.
+3. **Check nothing is mid-flight — and nothing is about to start.** Volsync
+   replications and running Jobs, but also the *next* tick of anything on a
+   schedule. Volsync's default trigger is hourly (`0 * * * *`), so powering off
+   at :55 walks straight into it. On 2026-08-22 that stranded five mover pods,
+   some retrying against a CSI socket that no longer existed for 100+ minutes.
+   Either time the window away from the hour boundary or suspend the sources.
 4. **Power off with `--force`**, workers first, then control planes.
 
    `--force` skips the Kubernetes cordon/drain. That is *correct* here: draining
@@ -98,12 +118,278 @@ on that node — the address is static, so it is cable/switch/port, not DHCP.
 ### Order matters at the end
 
 1. All nodes `Ready`, taints cleared, uncordoned
-2. Ceph settles to `HEALTH_OK` / all PGs `active+clean`
+2. Ceph **peers** — wait until `ceph status` reports no inactive PGs
 3. **Then** unset the flags (`norecover nobackfill norebalance noout`)
-4. **Then** resume Flux
+4. Watch it settle to `HEALTH_OK` / all PGs `active+clean`
+5. **Then** resume Flux
+
+Step 2 is the one that reads wrong until you have done it once. Do *not* wait
+for `active+clean` before unsetting the flags: `norecover` and `nobackfill` are
+precisely what stops PGs reaching it, so that wait never finishes. Peering only
+needs the OSDs back and talking to each other; **recovery is what the flags are
+holding back**. Wait for the inactive count to reach zero, unset, then watch the
+degraded percentage fall:
+
+```bash
+kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status | grep -E "osd:|inactive|degraded"
+```
+
+On 2026-08-22 the OSDs peered about a minute after the nodes came back, and
+unsetting the flags took the cluster from 23% degraded to `active+clean` in
+under five minutes — because `noout` had kept the returning OSDs' data valid,
+so this was recovery of the write delta, not a full backfill.
 
 Resuming Flux earlier makes 96 reconciling apps compete with Ceph recovery for
 the same disks — especially bad if a fresh OSD is backfilling.
+
+---
+
+## Partial shutdown (a subset of nodes)
+
+Taking a *few* nodes down is not a smaller version of the above. The cluster
+stays up, so drains, PDBs and Ceph `min_size` all matter in ways they do not
+when everything goes down together. Written from taking `mj04968e` (`.53`) and
+`mj05g4ub` (`.54`) down on 2026-08-22.
+
+**`task talos:nodes-down NODES="..."` and `task talos:nodes-up NODES="..."` do
+all of this**, including the safety gate below. The reasoning is written out
+here so you can deviate safely, and because the tasks refuse some things you
+may occasionally need to override.
+
+### Know the Ceph cost before you start
+
+Every pool is `size 3 / min_size 2` with failure domain `host`, and there is
+exactly **one OSD per host** across 8 hosts. Any PG mapped to two downed hosts
+drops to a single replica — below `min_size` — and **blocks client I/O** until
+one of them returns. About 6 of the 56 possible host-triples contain any given
+pair, so expect roughly 10% of PGs affected.
+
+Measured with two hosts down: **19 PGs inactive (7.2%)**, 3 erasure-coded PGs
+`down` in `ceph-objectstore.rgw.buckets.data`, 23% of objects degraded, the MDS
+reporting slow metadata IOs, and RGW down from 2 daemons to 1. Everything else
+kept serving, including all 3 mons, both mgrs, all 3 EMQX cores and both
+ingress-nginx controllers.
+
+**Do not do this arithmetic by hand — ask Ceph.** `ceph osd ok-to-stop` gives
+the authoritative answer, names the PGs that would go offline, and exits
+non-zero, which is why `task talos:nodes-down` gates on it:
+
+```bash
+ceph osd ok-to-stop 3 7
+# {"ok_to_stop":false,"num_not_ok_pgs":9,"bad_become_inactive":["2.1","2.11",...]}
+# Error EBUSY: unsafe to stop osd(s) at this time (9 PGs are or would become offline)
+```
+
+Map nodes to OSD ids with the label rook puts on the OSD pods:
+
+```bash
+kubectl -n rook-ceph get pods -l app=rook-ceph-osd -o json \
+  | jq -r '.items[] | "\(.spec.nodeName)\t\(.metadata.labels["ceph-osd-id"])"'
+```
+
+**One host down is free** — every PG keeps at least 2 replicas. Two is the
+threshold where availability starts costing you.
+
+> **This threshold moves once the pools are at `size 4`.** The replicated pools
+> were raised from 3 to 4 (and mons from 3 to 5) precisely so that losing two
+> hosts stops being an outage: a PG then spans 4 hosts, loses at most 2, and
+> the 2 that remain still satisfy `min_size`. After that change `ok-to-stop`
+> starts answering `true` for pairs, and `task talos:nodes-down` stops refusing
+> them — which is also the acceptance test for the change having worked. The
+> numbers above are the size-3 behaviour, kept because they are what was
+> actually measured. Note the RGW bucket-data pool is erasure coded at
+> `k=2,m=1` and still tolerates only one failure, and etcd still runs 3 control
+> planes, so a two-node loss that takes 2 control planes still stops the
+> Kubernetes API regardless of Ceph. If the nodes will be gone for
+longer than a maintenance window, reweight their OSDs out of the CRUSH map and
+let backfill finish *first*; then nothing is degraded while they are away.
+
+### Procedure
+
+`task talos:nodes-down NODES="192.168.5.53 192.168.5.54"` performs every step
+below and refuses at step 0 if `ceph osd ok-to-stop` says the OSD loss would
+take PGs offline (`FORCE_UNSAFE=1` overrides). It also warns about Volsync
+sources due to fire within 30 minutes. By hand:
+
+1. **Move any CNPG primary off the doomed nodes first**, or you take an
+   unplanned failover instead of a clean switchover. There is no `cnpg` kubectl
+   plugin installed here, so patch exactly what the plugin's `promote` patches:
+   ```bash
+   kubectl -n database patch cluster postgres16 --subresource=status \
+     --type=merge -p '{"status":{"targetPrimary":"postgres16-4"}}'
+   ```
+   Replication is async (`minSyncReplicas: 0`), so even a lone surviving
+   instance still accepts writes — there is no synchronous-quorum stall to
+   plan around.
+2. **Set the Ceph flags** exactly as for a full shutdown: `noout norebalance
+   nobackfill norecover`. The `nodown` warning above applies unchanged.
+3. **Cordon** the nodes, so pods evicted off them are not scheduled straight
+   back onto a node that is about to disappear.
+4. **`talosctl -n <ips> shutdown --force --wait=false`.** `--force` is still
+   required, but for a different reason than the full shutdown: `rook-ceph-osd`
+   and `emqx-core` sit at `maxUnavailable: 1` and `postgres16-primary` at 0, so
+   draining *two* nodes deadlocks on those PDBs for the full 30-minute timeout.
+
+Do **not** suspend Flux for a partial shutdown. The cluster keeps serving and
+rescheduling is ordinary behaviour; suspending every Kustomization is a much
+larger blast radius than the thing you are protecting against.
+
+### Partial bring-up
+
+`task talos:nodes-up NODES="..."` does this. Note that `task talos:cluster-up`
+is **not** usable here — it waits on *all* nodes being Ready. By hand:
+
+```bash
+kubectl -n rook-ceph exec deploy/rook-ceph-tools -- \
+  bash -c 'for f in norecover nobackfill norebalance noout; do ceph osd unset $f; done'
+kubectl uncordon <nodes>
+kubectl taint node <node> node.kubernetes.io/out-of-service-   # only if applied
+```
+
+Wait for the nodes to be `Ready` and for Ceph to settle **before** unsetting the
+flags, for the reason in "Order matters at the end" above. CNPG rebuilds the
+missing replicas on its own, and there is no need to switch the primary back.
+
+`node-fencer` in `kube-system` only applies the `out-of-service` taint after
+`UNREACHABLE_THRESHOLD_SECONDS` (3600), so a sub-hour window never trips it.
+Check rather than assume — Gotcha 1 covers why a missed taint is so expensive.
+
+### Aftershock: RBD volumes remount read-only
+
+The blocked-I/O window leaves RBD volumes remounted **read-only** — ext4 sets
+`emergency_ro` — and the kernel does not undo it when Ceph recovers. This
+outlives the outage and is easy to misread as an application bug. Affected
+volumes sit on nodes that **never went down**: the remount follows the blocked
+PGs, not the missing nodes, so scan *every* node.
+
+**Most victims do not crash.** They keep serving anything that does not need a
+write, so they sit at `1/1 Running` and a "not Running" sweep misses them
+entirely. On 2026-08-22 that sweep found 3 crashlooping pods and **missed 7
+silently-degraded volumes** — including Home Assistant, Alertmanager and
+zwave-js-ui. The Z-Wave breakage was noticed by a human hours later, not by any
+check. Do not use pod status to find these.
+
+### Detecting it
+
+Scan the nodes, not the pods:
+
+```bash
+for ip in $(kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}'); do
+  talosctl -n "$ip" read /proc/mounts | grep emergency_ro | grep -oE 'pvc-[0-9a-f-]+' | sed "s/^/$ip /"
+done
+```
+
+Map a `pvc-<uuid>` back to an app with
+`kubectl get pvc -A -o json | jq '.items[]|select(.spec.volumeName=="pvc-...")'`.
+
+**Do not pre-filter that mount line.** `emergency_ro` appears *after*
+`stripe=1024`, so a `sed` that trims the tail silently hides every hit — that
+mistake produced a clean-looking scan while seven volumes were broken.
+`task talos:nodes-up` runs this scan and prints the exact restart commands.
+
+### Symptoms, once you know which pod
+
+| Pod | Symptom in logs |
+| --- | --- |
+| `prometheus-kube-prometheus-stack-0` | `open /prometheus/queries.active: read-only file system` |
+| `frigate` | `attempt to write a readonly database`, `Config file is read-only` |
+| `zigbee2mqtt` | `ENOENT ... mkdir '/config/log/<timestamp>'` |
+| `zwave-js-ui` | `Failed to lock DB file "/config/<id>.jsonl"`, `/health/zwave` 500, driver retry loop |
+
+The fix in every case is a pod delete, which detaches and remounts the volume
+read-write. Verify with `grep ' /config ' /proc/mounts` inside the pod: a clean
+mount has no `emergency_ro`.
+
+The zigbee2mqtt case is the misleading one: `ENOENT` rather than `EROFS` reads
+like data loss. Verify before assuming — scale to 0, mount the PVC in a
+throwaway pod and look. On 2026-08-22 the volume was completely intact and
+scaling back up was the entire fix.
+
+**Data loss is possible but was minor.** Home Assistant quarantined one
+regenerable cache file (`bluetooth.passive_update_processor`) and left 9
+zero-length `tmp*` files in `.storage` — atomic writes that never got renamed.
+Its core registries were all valid JSON and `PRAGMA integrity_check` on the
+recorder DB returned `ok` with 3.7M rows. Check before restoring from backup.
+
+Volsync movers also strand themselves — jobs scheduled during the outage retry
+forever against a CSI socket that has gone (`csi.sock: connect: connection
+refused`) or lose their snapshot PVC entirely. Delete the stuck mover pods and
+let the next scheduled sync recreate them. One caveat: a CephFS clone reporting
+`rpc error: code = Aborted desc = clone from snapshot is already in progress` is
+**succeeding, not failing** — the message carries a percentage that climbs.
+Leave it alone; `max_concurrent_clones` is 4 and a backlog drains on its own.
+
+A stuck `mon.m has slow ops` on a `log(...)` entry from the outage window is
+cosmetic — it is a cluster-log message, not client I/O — but it holds
+`HEALTH_WARN` until the mon is restarted.
+
+
+## When a node goes down on its own
+
+Everything above assumes you chose the moment. An unplanned loss is the same
+event with the preparation removed, so the recovery is identical — but the first
+few minutes differ, and ["Know the Ceph cost"](#know-the-ceph-cost-before-you-start)
+is the part that matters most. **Two hosts lost at once is a partial storage
+outage whether or not you planned it**, and the arithmetic does not care that
+nobody chose it.
+
+### What you have already lost
+
+You do not get the switchover or the flags. Anything primary on that node has
+already failed over on its own — CNPG handles this, though replication is async
+(`minSyncReplicas: 0`), so a small window of un-replicated writes can be lost.
+That is the price of not choosing the moment, and it is why the planned
+procedure does the switchover first.
+
+If the node took Prometheus or Alertmanager with it, the `Watchdog` heartbeat
+stops and the external healthcheck pages. **Read that page correctly**: it means
+monitoring is gone, not that the cluster is fine. Expect to be flying without
+metrics for the duration — see the aftershock section, because Prometheus is
+also one of the things that comes back read-only.
+
+### First moves
+
+1. **Confirm the blast radius before touching anything.** One host down leaves
+   every PG at 2 or more replicas and is not urgent. Two is:
+   ```bash
+   kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
+   ```
+   The number that matters is `pgs inactive` — that is blocked client I/O, and
+   it decides how hard you push on everything else.
+
+2. **Decide `noout`, and get it right.** This is the one real fork:
+
+   - **Back within the hour** (reboot, brief power cut) → set `noout`. It stops
+     Ceph re-replicating data you are about to get back for free.
+   - **Genuinely dead** (failed disk, dead board) → leave `noout` off and let
+     Ceph heal onto the surviving hosts. Setting it here just prolongs the
+     degraded window for no benefit.
+
+   `noout` is right for a reboot and wrong for a funeral. The `nodown` warning
+   in [Shutdown](#shutdown) applies unchanged and is worse here — a node that is
+   never coming back is exactly the case that wedges all client I/O.
+
+3. **Do not wait out the fencing timeout if the node is dead.** `node-fencer`
+   applies the `out-of-service` taint only after
+   `UNREACHABLE_THRESHOLD_SECONDS` (3600), which is a long time to leave RWO
+   PVCs stranded on a corpse. That taint is what force-detaches
+   VolumeAttachments so RBD volumes can reattach on a live node, so apply it by
+   hand:
+   ```bash
+   kubectl taint node <node> node.kubernetes.io/out-of-service=nodeshutdown:NoExecute
+   ```
+   Only do this once you are certain the kubelet is really gone, not merely
+   unreachable — the taint evicts every pod on the node. And remove it when the
+   node returns; see [Gotcha 1](#gotcha-1-the-out-of-service-taint-highest-time-cost).
+
+### Then treat it as a bring-up
+
+Once the node is back, `task talos:nodes-up NODES="<the node>"` does the whole
+thing — see [Partial bring-up](#partial-bring-up): clear the taint, uncordon,
+wait for peering, unset whatever flags you set, and **sweep for the read-only
+RBD aftershock**. That last step is not optional and it bites
+hardest here — nobody scheduled the outage, so nobody is watching for the pods
+that come back running-but-broken.
 
 ---
 
