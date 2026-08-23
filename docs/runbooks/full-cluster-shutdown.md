@@ -1,8 +1,19 @@
-# Full cluster shutdown & bring-up
+# Cluster shutdown, node loss & bring-up
+
+Three scenarios, one recovery path:
+
+| Scenario | Start here |
+| --- | --- |
+| All 8 nodes off for maintenance | [Shutdown](#shutdown) |
+| Some nodes off deliberately | [Partial shutdown](#partial-shutdown-a-subset-of-nodes) |
+| A node died on its own | [When a node goes down on its own](#when-a-node-goes-down-on-its-own) |
+
+The bring-up and the aftershock cleanup are the same in all three.
 
 Written after the 2026-08-08/09 maintenance shutdown (OSD drive replacement in
 `mj0581m7`), which was the first full power-off in a long time and surfaced
-several latent problems. Everything below is what actually happened, not theory.
+several latent problems, and extended after taking `mj04968e`/`mj05g4ub` down on
+2026-08-22. Everything below is what actually happened, not theory.
 
 **TL;DR:** `task talos:cluster-down`, do the hardware work, power on, then
 `task talos:cluster-up`. Read the gotchas before you start.
@@ -32,7 +43,12 @@ deviate safely.
    blocks indefinitely. On 2026-08-09 this left 258 PGs inactive and 75 ops
    blocked for ~26 minutes, and had to be undone under pressure. `noout` alone
    already prevents rebalancing.
-3. **Check nothing is mid-flight** — Volsync replications, running Jobs.
+3. **Check nothing is mid-flight — and nothing is about to start.** Volsync
+   replications and running Jobs, but also the *next* tick of anything on a
+   schedule. Volsync's default trigger is hourly (`0 * * * *`), so powering off
+   at :55 walks straight into it. On 2026-08-22 that stranded five mover pods,
+   some retrying against a CSI socket that no longer existed for 100+ minutes.
+   Either time the window away from the hour boundary or suspend the sources.
 4. **Power off with `--force`**, workers first, then control planes.
 
    `--force` skips the Kubernetes cordon/drain. That is *correct* here: draining
@@ -102,9 +118,26 @@ on that node — the address is static, so it is cable/switch/port, not DHCP.
 ### Order matters at the end
 
 1. All nodes `Ready`, taints cleared, uncordoned
-2. Ceph settles to `HEALTH_OK` / all PGs `active+clean`
+2. Ceph **peers** — wait until `ceph status` reports no inactive PGs
 3. **Then** unset the flags (`norecover nobackfill norebalance noout`)
-4. **Then** resume Flux
+4. Watch it settle to `HEALTH_OK` / all PGs `active+clean`
+5. **Then** resume Flux
+
+Step 2 is the one that reads wrong until you have done it once. Do *not* wait
+for `active+clean` before unsetting the flags: `norecover` and `nobackfill` are
+precisely what stops PGs reaching it, so that wait never finishes. Peering only
+needs the OSDs back and talking to each other; **recovery is what the flags are
+holding back**. Wait for the inactive count to reach zero, unset, then watch the
+degraded percentage fall:
+
+```bash
+kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status | grep -E "osd:|inactive|degraded"
+```
+
+On 2026-08-22 the OSDs peered about a minute after the nodes came back, and
+unsetting the flags took the cluster from 23% degraded to `active+clean` in
+under five minutes — because `noout` had kept the returning OSDs' data valid,
+so this was recovery of the write delta, not a full backfill.
 
 Resuming Flux earlier makes 96 reconciling apps compete with Ceph recovery for
 the same disks — especially bad if a fresh OSD is backfilling.
@@ -222,6 +255,74 @@ A stuck `mon.m has slow ops` on a `log(...)` entry from the outage window is
 cosmetic — it is a cluster-log message, not client I/O — but it holds
 `HEALTH_WARN` until the mon is restarted.
 
+
+## When a node goes down on its own
+
+Everything above assumes you chose the moment. An unplanned loss is the same
+event with the preparation removed, so the recovery is identical — but the first
+few minutes differ, and ["Know the Ceph cost"](#know-the-ceph-cost-before-you-start)
+is the part that matters most. **Two hosts lost at once is a partial storage
+outage whether or not you planned it**, and the arithmetic does not care that
+nobody chose it.
+
+### What you have already lost
+
+You do not get the switchover or the flags. Anything primary on that node has
+already failed over on its own — CNPG handles this, though replication is async
+(`minSyncReplicas: 0`), so a small window of un-replicated writes can be lost.
+That is the price of not choosing the moment, and it is why the planned
+procedure does the switchover first.
+
+If the node took Prometheus or Alertmanager with it, the `Watchdog` heartbeat
+stops and the external healthcheck pages. **Read that page correctly**: it means
+monitoring is gone, not that the cluster is fine. Expect to be flying without
+metrics for the duration — see the aftershock section, because Prometheus is
+also one of the things that comes back read-only.
+
+### First moves
+
+1. **Confirm the blast radius before touching anything.** One host down leaves
+   every PG at 2 or more replicas and is not urgent. Two is:
+   ```bash
+   kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph status
+   ```
+   The number that matters is `pgs inactive` — that is blocked client I/O, and
+   it decides how hard you push on everything else.
+
+2. **Decide `noout`, and get it right.** This is the one real fork:
+
+   - **Back within the hour** (reboot, brief power cut) → set `noout`. It stops
+     Ceph re-replicating data you are about to get back for free.
+   - **Genuinely dead** (failed disk, dead board) → leave `noout` off and let
+     Ceph heal onto the surviving hosts. Setting it here just prolongs the
+     degraded window for no benefit.
+
+   `noout` is right for a reboot and wrong for a funeral. The `nodown` warning
+   in [Shutdown](#shutdown) applies unchanged and is worse here — a node that is
+   never coming back is exactly the case that wedges all client I/O.
+
+3. **Do not wait out the fencing timeout if the node is dead.** `node-fencer`
+   applies the `out-of-service` taint only after
+   `UNREACHABLE_THRESHOLD_SECONDS` (3600), which is a long time to leave RWO
+   PVCs stranded on a corpse. That taint is what force-detaches
+   VolumeAttachments so RBD volumes can reattach on a live node, so apply it by
+   hand:
+   ```bash
+   kubectl taint node <node> node.kubernetes.io/out-of-service=nodeshutdown:NoExecute
+   ```
+   Only do this once you are certain the kubelet is really gone, not merely
+   unreachable — the taint evicts every pod on the node. And remove it when the
+   node returns; see [Gotcha 1](#gotcha-1-the-out-of-service-taint-highest-time-cost).
+
+### Then treat it as a bring-up
+
+Once the node is back, follow [Partial bring-up](#partial-bring-up): clear the
+taint, uncordon, wait for peering, unset whatever flags you set, and **sweep for
+the read-only RBD aftershock**. That last step is not optional and it bites
+hardest here — nobody scheduled the outage, so nobody is watching for the pods
+that come back running-but-broken.
+
+---
 
 ## Latent failures a full restart exposes
 
