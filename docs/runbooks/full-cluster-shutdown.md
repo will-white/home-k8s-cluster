@@ -244,31 +244,60 @@ Check rather than assume — Gotcha 1 covers why a missed taint is so expensive.
 
 ### Aftershock: RBD volumes remount read-only
 
-The blocked-I/O window leaves some RBD volumes remounted **read-only**, and the
-kernel does not undo it when Ceph recovers. The pods stay up and keep failing,
-so this outlives the outage and is easy to misread as an application bug.
-Affected pods sit on nodes that **never went down** — the read-only remount
-follows the blocked PGs, not the missing nodes.
+The blocked-I/O window leaves RBD volumes remounted **read-only** — ext4 sets
+`emergency_ro` — and the kernel does not undo it when Ceph recovers. This
+outlives the outage and is easy to misread as an application bug. Affected
+volumes sit on nodes that **never went down**: the remount follows the blocked
+PGs, not the missing nodes, so scan *every* node.
 
-Seen on 2026-08-22, all three needing nothing more than a pod delete:
+**Most victims do not crash.** They keep serving anything that does not need a
+write, so they sit at `1/1 Running` and a "not Running" sweep misses them
+entirely. On 2026-08-22 that sweep found 3 crashlooping pods and **missed 7
+silently-degraded volumes** — including Home Assistant, Alertmanager and
+zwave-js-ui. The Z-Wave breakage was noticed by a human hours later, not by any
+check. Do not use pod status to find these.
+
+### Detecting it
+
+Scan the nodes, not the pods:
+
+```bash
+for ip in $(kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}'); do
+  talosctl -n "$ip" read /proc/mounts | grep emergency_ro | grep -oE 'pvc-[0-9a-f-]+' | sed "s/^/$ip /"
+done
+```
+
+Map a `pvc-<uuid>` back to an app with
+`kubectl get pvc -A -o json | jq '.items[]|select(.spec.volumeName=="pvc-...")'`.
+
+**Do not pre-filter that mount line.** `emergency_ro` appears *after*
+`stripe=1024`, so a `sed` that trims the tail silently hides every hit — that
+mistake produced a clean-looking scan while seven volumes were broken.
+`task talos:nodes-up` runs this scan and prints the exact restart commands.
+
+### Symptoms, once you know which pod
 
 | Pod | Symptom in logs |
 | --- | --- |
 | `prometheus-kube-prometheus-stack-0` | `open /prometheus/queries.active: read-only file system` |
 | `frigate` | `attempt to write a readonly database`, `Config file is read-only` |
 | `zigbee2mqtt` | `ENOENT ... mkdir '/config/log/<timestamp>'` |
+| `zwave-js-ui` | `Failed to lock DB file "/config/<id>.jsonl"`, `/health/zwave` 500, driver retry loop |
 
-The zigbee2mqtt one is the misleading case: `ENOENT` rather than `EROFS` reads
-like data loss. Verify before assuming — scale the deployment to 0, mount the
-PVC in a throwaway pod and check. On 2026-08-22 the volume was completely
-intact (`configuration.yaml`, `database.db`, `state.json` all present, and
-`/config/log` existed and was writable); scaling back up was the entire fix.
+The fix in every case is a pod delete, which detaches and remounts the volume
+read-write. Verify with `grep ' /config ' /proc/mounts` inside the pod: a clean
+mount has no `emergency_ro`.
 
-Sweep for these after the PGs go `active+clean`:
+The zigbee2mqtt case is the misleading one: `ENOENT` rather than `EROFS` reads
+like data loss. Verify before assuming — scale to 0, mount the PVC in a
+throwaway pod and look. On 2026-08-22 the volume was completely intact and
+scaling back up was the entire fix.
 
-```bash
-kubectl get pods -A --no-headers | awk '$4!="Running" && $4!="Completed"'
-```
+**Data loss is possible but was minor.** Home Assistant quarantined one
+regenerable cache file (`bluetooth.passive_update_processor`) and left 9
+zero-length `tmp*` files in `.storage` — atomic writes that never got renamed.
+Its core registries were all valid JSON and `PRAGMA integrity_check` on the
+recorder DB returned `ok` with 3.7M rows. Check before restoring from backup.
 
 Volsync movers also strand themselves — jobs scheduled during the outage retry
 forever against a CSI socket that has gone (`csi.sock: connect: connection

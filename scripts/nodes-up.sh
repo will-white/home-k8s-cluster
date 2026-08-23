@@ -91,25 +91,60 @@ for i in $(seq 1 60); do
 done
 
 # ── 7. The aftershock sweep — this step is not optional ──────────────────────
-# The blocked-I/O window leaves some RBD volumes remounted read-only and the
-# kernel does not undo it when Ceph recovers. Affected pods sit on nodes that
-# never went down. A pod delete is the fix. There is no metric for this: node
-# exporter cannot see pod RBD mounts, so it must be looked for by hand.
+# The blocked-I/O window leaves RBD volumes remounted read-only (ext4 sets
+# `emergency_ro`) and the kernel does not undo it when Ceph recovers.
+#
+# Most victims DO NOT crash: they keep serving whatever does not need a write,
+# so a "not Running" check misses them entirely. On 2026-08-22 that check found
+# 3 crashlooping pods and missed 7 silently-degraded volumes, including Home
+# Assistant, Alertmanager and zwave-js-ui. Scan the NODES instead — and scan
+# ALL of them, because affected volumes sit on nodes that never went down.
 hr
-log "Sweeping for the read-only RBD aftershock and other stragglers"
+log "Scanning every node for read-only (emergency_ro) Ceph mounts"
+
+ALL_IPS="$(jq -r '.items[] | (.status.addresses[]|select(.type=="InternalIP")|.address)' <<<"$ALL_JSON")"
+RO_PVCS=""
+if command -v talosctl >/dev/null 2>&1; then
+    for ip in $ALL_IPS; do
+        # Do not pre-filter this line: emergency_ro comes AFTER stripe=, so a
+        # sed that trims the tail silently hides every hit.
+        found="$(talosctl -n "$ip" read /proc/mounts 2>/dev/null \
+                 | grep 'emergency_ro' | grep -oE 'pvc-[0-9a-f-]+' | sort -u || true)"
+        [[ -n "$found" ]] && RO_PVCS+="$found"$'\n'
+    done
+else
+    echo "  ! talosctl not available — skipping node scan (check by hand)"
+fi
+
+RO_PVCS="$(sort -u <<<"$RO_PVCS" | sed '/^$/d')"
+if [[ -n "$RO_PVCS" ]]; then
+    echo "  ✗ read-only volumes found — these pods are degraded but probably 'Running':"
+    PVC_JSON="$(kubectl get pvc -A -o json)"
+    restart=""
+    while read -r vol; do
+        [[ -z "$vol" ]] && continue
+        read -r ns name < <(jq -r --arg v "$vol" '.items[] | select(.spec.volumeName==$v)
+                            | "\(.metadata.namespace) \(.metadata.name)"' <<<"$PVC_JSON" | head -1)
+        [[ -z "${ns:-}" ]] && { echo "    $vol (no matching PVC)"; continue; }
+        pod="$(kubectl -n "$ns" get pods -o json \
+              | jq -r --arg c "$name" '.items[] | select(.spec.volumes[]?.persistentVolumeClaim?.claimName==$c)
+                                       | .metadata.name' | head -1)"
+        echo "    $ns/$name -> pod ${pod:-<none>}"
+        [[ -n "$pod" ]] && restart+="kubectl -n $ns delete pod $pod"$'\n'
+    done <<<"$RO_PVCS"
+    echo
+    echo "  Fix is a pod restart, which detaches and remounts the volume read-write:"
+    echo "$restart" | sed 's/^/    /'
+    echo "  Data is usually intact — verify before assuming loss (see runbook)."
+else
+    echo "  ✓ no read-only Ceph mounts on any node"
+fi
+
+echo
+log "Other stragglers (not Running/Completed)"
 bad="$(kubectl get pods -A --no-headers 2>/dev/null \
       | awk '$4!="Running" && $4!="Completed" {print "    "$1"/"$2"  "$4}' || true)"
-if [[ -n "$bad" ]]; then
-    echo "  Pods not Running/Completed:"
-    echo "$bad"
-    echo
-    echo "  If a pod is CrashLoopBackOff, check its logs for a read-only volume:"
-    echo "    kubectl logs -n <ns> <pod> --tail=30 | grep -iE 'read-only|readonly|EROFS'"
-    echo "  The fix is a pod delete. Before assuming data loss, verify the volume:"
-    echo "  scale to 0, mount the PVC in a throwaway pod and look (see runbook)."
-else
-    echo "  ✓ nothing unhealthy"
-fi
+[[ -n "$bad" ]] && echo "$bad" || echo "  ✓ none"
 
 echo
 ceph_exec ceph status 2>/dev/null | sed -n '1,6p' || true
