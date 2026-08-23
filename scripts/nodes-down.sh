@@ -132,7 +132,8 @@ if [[ -n "$PRIMARY_NODE" ]] && printf '%s\n' "${NODES[@]}" | grep -qx "$PRIMARY_
     DOOMED_JSON="$(printf '%s\n' "${NODES[@]}" | jq -R . | jq -sc .)"
     TARGET="$(kubectl -n "$CNPG_NS" get pods -l "cnpg.io/cluster=$CNPG_CLUSTER" -o json \
         | jq -r --argjson d "$DOOMED_JSON" '
-            .items[] | select([.spec.nodeName] | inside($d) | not)
+            .items[]
+            | select(.spec.nodeName as $n | ($d | any(. == $n)) | not)
             | select(.status.phase=="Running") | .metadata.name' | head -1)"
     [[ -n "$TARGET" ]] || die "no surviving CNPG instance to promote"
     log "Promoting $TARGET"
