@@ -139,6 +139,31 @@ spec:
       # The option only takes effect when the module reloads, which the
       # 8-hourly `ceph mgr fail` in mgr-maintenance/ already does.
       cephConfig:
+        client.rgw:
+          # Ceph v20.2.4 ships the fix for CVE-2026-54330, which makes RGW
+          # reject SigV4 requests whose `host` / `x-amz-*` headers are not in
+          # the signed subset. The kopia mover (ghcr.io/home-operations/kopia
+          # 0.23.1, via minio-go v7.0.96) signs its PUTs that way, so every
+          # volsync backup write started returning 403 the moment the Ceph
+          # daemons moved 20.2.2 -> 20.2.4:
+          #
+          #   s3:put_obj verifying requester
+          #   s3:put_obj Failed the auth strategy, reason=-1
+          #   s3:put_obj http status=403
+          #
+          # GETs carry no such headers and still succeed, and CNPG's WAL
+          # archiving to RGW is unaffected, so this hit volsync PVC backups
+          # only. There is no newer kopia image to upgrade to (0.23.1 is the
+          # latest published tag), so this compatibility flag is the only way
+          # to restore backups today.
+          #
+          # TRADEOFF: this re-opens the CVE ("Allow potential privilege
+          # escalation with added `x-amz-` headers on Sigv4"). Accepted here
+          # because this RGW is reachable only from the LAN -- a ClusterIP plus
+          # an `internal`-class ingress (rgw.${SECRET_DOMAIN}); it is not
+          # internet-exposed. REMOVE THIS as soon as kopia/minio-go ships a
+          # release that signs the headers correctly.
+          rgw_sigv4_insecure: "true"
         mgr:
           mgr/rook/log_level: info
         osd:
