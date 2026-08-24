@@ -119,7 +119,15 @@ spec:
         cephx:
           daemon:
             keyRotationPolicy: KeyGeneration
-            keyGeneration: 1
+            # Must be 2, not 1: generation 1 was already spent. Six of the eight
+            # OSDs carried cephx-status {"keyGeneration":1} from a rotation done
+            # back on Ceph 19.2.3/20.2.2, so a desired generation of 1 was not
+            # *greater than* their current generation and Rook correctly skipped
+            # them -- only osd.1 and osd.5 rotated, leaving the cluster in a
+            # mixed aes/aes256k state and still HEALTH_ERR. Bumping to 2 makes
+            # the desired generation exceed the recorded one for every daemon.
+            # Bump this again for any future rotation.
+            keyGeneration: 2
             keyType: aes256k
       # The rook orchestrator module logs every Kubernetes API response body at
       # DEBUG. A full PodList is ~1.5MiB and it polls every 15s (~6MiB/min,
