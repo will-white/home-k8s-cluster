@@ -33,6 +33,13 @@ spec:
             env:
               TZ: ${TIMEZONE}
             probes:
+              # Kavita rescans its library over the NFS /media mount during
+              # startup. Anything that cold-caches that mount (node reboot,
+              # switch/link bounce, NAS restart) pushes the scan past the ~50s
+              # liveness budget, so the kubelet SIGTERMs it mid-scan and the
+              # next attempt starts cold again — a crashloop that cannot break
+              # itself. Seen 2026-08-25 after the rack cabling work. The startup
+              # probe gates liveness/readiness until Kestrel is actually bound.
               liveness: &probes
                 enabled: true
                 custom: true
@@ -42,9 +49,19 @@ spec:
                     port: &port 5000
                   initialDelaySeconds: 20
                   periodSeconds: 10
-                  timeoutSeconds: 1
+                  timeoutSeconds: 5
                   failureThreshold: 3
               readiness: *probes
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/Health
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  failureThreshold: 60
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: false
