@@ -28,6 +28,7 @@ the Bitwarden bootstrap token. Losing it is unrecoverable, so:
 Runbooks:
 - [Bare-metal rebuild](./docs/runbooks/bare-metal-rebuild.md) — nuke & repave from blank nodes
 - [Full cluster shutdown](./docs/runbooks/full-cluster-shutdown.md) — graceful power-down/up for maintenance
+- [etcd maintenance](./docs/runbooks/etcd-maintenance.md) — defrag, alert triage, network-vs-disk diagnosis
 - [Ceph / data restore](./kubernetes/apps/rook-ceph/rook-ceph/backup/DISASTER-RECOVERY.md) — Garage → RGW → CNPG/Volsync rehydration
 
 ## 🔧 Tools
