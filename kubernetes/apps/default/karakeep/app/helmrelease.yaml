@@ -69,7 +69,7 @@ spec:
           browser:
             image:
               repository: ghcr.io/browserless/chromium
-              tag: latest@sha256:c0886239e4eaa102e214acbbde5345f5b2a55a7ccbb52456048afd374defbabb
+              tag: latest@sha256:fff5f5bf6d048dd8d9f18a635ae4efcfcf4026a5ddd8815ae7659e619c98acee
             env:
               # Change default port to avoid conflict with Karakeep
               PORT: "3001"
