@@ -17,7 +17,15 @@
   reviewers: [
     'will-white',
   ],
-  rebaseWhen: 'conflicted',
+  // behind-base-branch keeps every Renovate branch rebased on main, so the
+  // Flux Diff comment is always against the current cluster state (with
+  // 'conflicted', #1289 sat 60+ commits behind and its diff showed unrelated
+  // changes). Costs a CI run per rebase; updateNotScheduled (default true)
+  // lets rebases happen outside the weekend window.
+  rebaseWhen: 'behind-base-branch',
+  // 16 -> 18 as one PR hides the 17 release notes; one PR per major keeps the
+  // changelog range reviewable.
+  separateMultipleMajor: true,
   schedule: [
     'every weekend',
   ],
@@ -222,6 +230,57 @@
       addLabels: [
         'renovate/grafana-dashboard',
       ],
+    },
+    {
+      description: [
+        // Classes the evidence review keeps finding GREEN: patch bumps of
+        // repackaged home-operations apps (the tag is the upstream version;
+        // a patch is a bugfix release with no schema/config changes).
+        // automergeType pr so Kubeconform + Flux Diff run (they trigger on
+        // pull_request only); minimumReleaseAge gives upstream a few days to
+        // pull a bad release first. bazarr is deliberately absent (approval
+        // gate below); home-assistant is absent because its x.y.Z patches
+        // still roll integrations.
+        'Automerge patch bumps of home-operations app images (after 3 days)',
+      ],
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/home-operations/sonarr',
+        'ghcr.io/home-operations/radarr',
+        'ghcr.io/home-operations/prowlarr',
+        'ghcr.io/home-operations/qbittorrent',
+        'ghcr.io/home-operations/kopia',
+        'ghcr.io/home-operations/postgres-init',
+      ],
+      matchUpdateTypes: [
+        'patch',
+      ],
+      minimumReleaseAge: '3 days',
+      automerge: true,
+      automergeType: 'pr',
+    },
+    {
+      description: [
+        // Stateless sidecars and exporters: a patch cannot migrate anything.
+        'Automerge patch bumps of sidecars/exporters (after 3 days)',
+      ],
+      matchPackageNames: [
+        'ghcr.io/onedr0p/exportarr',
+        'ghcr.io/kiwigrid/k8s-sidecar',
+        'ghcr.io/twin/gatus',
+        'ghcr.io/esanchezm/prometheus-qbittorrent-exporter',
+        'prometheus-blackbox-exporter',
+        'prometheus-smartctl-exporter',
+        'ghcr.io/prometheus-community/charts/prometheus-snmp-exporter',
+      ],
+      matchUpdateTypes: [
+        'patch',
+      ],
+      minimumReleaseAge: '3 days',
+      automerge: true,
+      automergeType: 'pr',
     },
     {
       description: [
