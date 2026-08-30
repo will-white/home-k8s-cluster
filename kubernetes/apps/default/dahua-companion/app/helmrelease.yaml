@@ -37,7 +37,21 @@ spec:
               - secretRef:
                   name: dahua-companion-secret
             probes:
-              liveness: &probes
+              # /health runs a live camera probe, so it must not gate liveness:
+              # a flaky doorbell would restart a healthy process, and a restart
+              # cannot bring the camera back. Liveness checks the process only;
+              # camera reachability is reported through readiness.
+              liveness: &processProbe
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 8080
+                  initialDelaySeconds: 10
+                  timeoutSeconds: 5
+                  periodSeconds: 30
+                  failureThreshold: 3
+              readiness:
                 enabled: true
                 custom: true
                 spec:
@@ -45,21 +59,14 @@ spec:
                     path: /health
                     port: 8080
                   initialDelaySeconds: 10
-                  timeoutSeconds: 5
+                  # /health bounds its camera probe at 5s; stay above that so
+                  # kubelet does not give up at the same moment the probe does.
+                  timeoutSeconds: 10
                   periodSeconds: 30
                   failureThreshold: 3
-              readiness: *probes
-              startup:
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /health
-                    port: 8080
-                  initialDelaySeconds: 5
-                  timeoutSeconds: 5
-                  periodSeconds: 10
-                  failureThreshold: 30
+              # Startup must also ignore the camera, or a doorbell that is down
+              # at boot would stop the pod from ever starting.
+              startup: *processProbe
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
