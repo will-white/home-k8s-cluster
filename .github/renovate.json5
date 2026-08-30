@@ -282,6 +282,148 @@
       allowedVersions: '/^v\\d+\\.2\\.\\d+$/',
     },
     {
+      description: [
+        // Renovate embeds release notes only when it can resolve a source repo
+        // whose tags match the new version. The packages below either ship no
+        // org.opencontainers.image.source label or point it at a repo without
+        // releases, so their PRs arrived with no notes at all (checked against
+        // ~150 merged image PRs). Every repo listed here tags releases as
+        // vX.Y.Z, which Renovate's fallback tag matcher accepts, so setting
+        // sourceUrl is enough to get the notes and a compare link into the PR
+        // body -- which is what the merge-renovate-prs review reads first.
+        'Release notes: point sources at the upstream project',
+      ],
+      matchPackageNames: [
+        'docker.io/caddy',
+      ],
+      sourceUrl: 'https://github.com/caddyserver/caddy',
+    },
+    {
+      matchPackageNames: [
+        'docker.io/kometateam/kometa',
+      ],
+      sourceUrl: 'https://github.com/Kometa-Team/Kometa',
+    },
+    {
+      matchPackageNames: [
+        'ghcr.io/blakeblackshear/frigate',
+      ],
+      sourceUrl: 'https://github.com/blakeblackshear/frigate',
+    },
+    {
+      matchPackageNames: [
+        'ghcr.io/coder/code-server',
+      ],
+      sourceUrl: 'https://github.com/coder/code-server',
+    },
+    {
+      matchPackageNames: [
+        'ghcr.io/dragonflydb/operator',
+      ],
+      sourceUrl: 'https://github.com/dragonflydb/dragonfly-operator',
+    },
+    {
+      matchPackageNames: [
+        'ghcr.io/home-operations/charts-mirror/volsync-perfectra1n',
+      ],
+      sourceUrl: 'https://github.com/perfectra1n/volsync',
+    },
+    {
+      matchPackageNames: [
+        'ghcr.io/siderolabs/installer',
+      ],
+      sourceUrl: 'https://github.com/siderolabs/talos',
+    },
+    {
+      matchPackageNames: [
+        'ghcr.io/spegel-org/helm-charts/spegel',
+      ],
+      sourceUrl: 'https://github.com/spegel-org/spegel',
+    },
+    {
+      matchPackageNames: [
+        'spegel',
+      ],
+      sourceUrl: 'https://github.com/spegel-org/spegel',
+    },
+    {
+      matchPackageNames: [
+        'rclone/rclone',
+      ],
+      sourceUrl: 'https://github.com/rclone/rclone',
+    },
+    {
+      matchPackageNames: [
+        'registry.k8s.io/git-sync/git-sync',
+      ],
+      sourceUrl: 'https://github.com/kubernetes/git-sync',
+    },
+    {
+      description: [
+        // prometheus-community charts live in one monorepo tagged
+        // <chart>-<version>. The helm datasource's index.yaml `sources` for
+        // these point at the exporter binaries, not the chart repo, so the
+        // tag lookup misses. Renovate matches "<depName>-<version>" against
+        // the chart repo's releases once sourceUrl points there.
+        'prometheus-community exporter charts: notes from the helm-charts monorepo',
+      ],
+      matchPackageNames: [
+        'prometheus-blackbox-exporter',
+        'prometheus-smartctl-exporter',
+        'ghcr.io/prometheus-community/charts/prometheus-snmp-exporter',
+      ],
+      sourceUrl: 'https://github.com/prometheus-community/helm-charts',
+    },
+    {
+      description: [
+        // No GitHub releases exist for these; the image repo only builds the
+        // upstream project. changelogUrl is informational (a link in the PR
+        // body), sourceUrl still yields a compare link.
+        'Vendor changelogs for images without GitHub releases',
+      ],
+      matchPackageNames: [
+        'ghcr.io/cloudnative-pg/postgresql',
+      ],
+      sourceUrl: 'https://github.com/cloudnative-pg/postgres-containers',
+      changelogUrl: 'https://www.postgresql.org/docs/release/',
+    },
+    {
+      matchPackageNames: [
+        'quay.io/ceph/ceph',
+      ],
+      sourceUrl: 'https://github.com/ceph/ceph',
+      changelogUrl: 'https://docs.ceph.com/en/latest/releases/',
+    },
+    {
+      matchPackageNames: [
+        'docker.io/library/python',
+      ],
+      changelogUrl: 'https://docs.python.org/3/whatsnew/changelog.html',
+    },
+    {
+      description: [
+        // A Postgres major is not an image bump. ImageCatalog entries are keyed
+        // by `major:`, and CNPG >=1.26 performs the (offline, one-way)
+        // pg_upgrade only when a NEW entry is added and
+        // Cluster.imageCatalogRef.major is pointed at it. A Renovate PR that
+        // rewrites the 16.x line to an 18.x tag (#1289) is wrong in shape, not
+        // merely risky. Minors still flow for every catalog entry; majors are
+        // a hand-written change -- see the comment in
+        // kubernetes/apps/database/cloudnative-pg/cluster/imagecatalog.yaml.
+        'cloudnative-pg/postgresql: no major PRs (pg_upgrade is a manual catalog change)',
+      ],
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/cloudnative-pg/postgresql',
+      ],
+      matchUpdateTypes: [
+        'major',
+      ],
+      enabled: false,
+    },
+    {
       matchDatasources: [
         'helm',
       ],
