@@ -151,6 +151,22 @@
     },
     {
       description: [
+        // The devcontainer CLI's getRef() splits a feature id on the last '@'
+        // and feeds everything before it to the path regex, so a Docker-style
+        // 'feature:2@sha256:...' pin leaves the ':2' in the path and fails with
+        // "Feature ... could not be processed" before the container is built.
+        // Only 'feature@sha256:...' parses. Renovate still bumps those bare
+        // digests (it tracks the 'latest' tag), so pins stay current; this rule
+        // just stops it from re-adding the tag half of the reference.
+        'Do not pin digests onto tagged devcontainer features (CLI cannot parse tag@digest)',
+      ],
+      matchManagers: [
+        'devcontainer',
+      ],
+      pinDigests: false,
+    },
+    {
+      description: [
         'Flux Group',
       ],
       groupName: 'Flux',
