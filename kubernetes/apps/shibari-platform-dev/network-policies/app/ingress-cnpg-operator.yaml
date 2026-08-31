@@ -1,0 +1,25 @@
+---
+# The CloudNative-PG operator lives in the database namespace and manages
+# the dedicated Postgres cluster here — it must reach the instance pods'
+# status port during reconciliation, failover, and backups.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-cnpg-operator
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: shibari-platform-db
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: database
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: cloudnative-pg
+      ports:
+        - port: 8000
+          protocol: TCP
