@@ -29,7 +29,7 @@ ARG HELMFILE_VERSION=v1.7.4
 # renovate: datasource=github-releases depName=stern/stern
 ARG STERN_VERSION=v1.34.0
 # renovate: datasource=github-releases depName=cli/cli
-ARG GH_VERSION=v2.98.0
+ARG GH_VERSION=v2.100.0
 
 # Install system packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
