@@ -193,6 +193,15 @@
     },
     {
       description: [
+        // Talos 1.14 stopped publishing ghcr.io/siderolabs/installer (release
+        // notes "Default Installer Image"; ghcr has no v1.14.0 tag), so a docker
+        // lookup on it can never propose 1.14+. The talconfig.yaml and
+        // TalosUpgrade markers track ghcr.io/siderolabs/talos instead, which is
+        // tagged for every release. The nodes boot from a factory.talos.dev
+        // schematic (talosImageURL) and tuppr >=0.5.3 swaps the version into
+        // that URL, so no installer image is referenced anywhere.
+        // Ordering: a Kubernetes minor needs the Talos minor that ships it on
+        // the nodes first (Talos 1.13 -> k8s 1.36; 1.37 arrived with 1.14).
         'Talos Group',
       ],
       groupName: 'Talos',
@@ -205,7 +214,7 @@
       separateMinorPatch: true,
       matchPackageNames: [
         '/siderolabs/talosctl/',
-        '/siderolabs/installer/',
+        '/siderolabs/talos$/',
       ],
     },
     {
@@ -389,7 +398,7 @@
     },
     {
       matchPackageNames: [
-        'ghcr.io/siderolabs/installer',
+        'ghcr.io/siderolabs/talos',
       ],
       sourceUrl: 'https://github.com/siderolabs/talos',
     },
