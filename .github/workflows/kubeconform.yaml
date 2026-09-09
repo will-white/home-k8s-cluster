@@ -64,7 +64,7 @@ jobs:
           install_tool "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" kustomize
 
           # renovate: datasource=github-releases depName=fluxcd/flux2
-          FLUX_VERSION="2.9.4"
+          FLUX_VERSION="2.9.5"
           install_tool "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" flux
 
       - name: Verify Tools
