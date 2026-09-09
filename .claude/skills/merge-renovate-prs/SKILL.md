@@ -195,7 +195,16 @@ reversible auto-migration; `kubeVersion`/dependency floors need checking.
 
 1. **Live cluster rolls** — Talos / Kubernetes / kubelet / installer bumps
    (`talconfig.yaml`, `system-upgrade/**`, tuppr plans). Merging triggers real
-   node OS / control-plane upgrades.
+   node OS / control-plane upgrades. For a Talos roll the script also compares
+   the schematic in `talconfig.yaml` with what each node runs and installs from
+   (needs `talosconfig`; ledger `schematic=ok|DRIFT`). tuppr derives the
+   upgrade image from the node's `machine.install.image`, so **drift means the
+   roll silently keeps the old extension set** (the 2026-08-09 v1.13.8 roll
+   missed nut-client this way), and once the machine config is re-applied
+   tuppr refuses the mismatch unless the nodes carry the
+   `tuppr.home-operations.com/factory-url` + `/schematic` annotations. Resolve
+   drift (annotations via `machine.nodeAnnotations`, or `task
+   talos:upgrade-node` per node) before scheduling the roll.
 2. **One-way data migrations** — DB schema migrations that can't be reverted,
    Postgres/Ceph/storage majors, on-disk format changes, "cannot downgrade" in
    the notes, app majors whose first start migrates state. Requires a verified

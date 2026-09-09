@@ -708,6 +708,88 @@ class Evidence:
                     self.say(f"  - {l}")
         self.ledger["cluster"] = ("hr:" + "/".join(states)) if states else f"{len(bad)}-notready"
 
+    # ---- Talos schematic drift (node rolls only)
+    def talos_drift(self):
+        # tuppr builds a node's upgrade image from its machine.install.image and refuses
+        # when that image does not embed the schematic the node runs, so a schematic
+        # changed in talconfig.yaml but never applied is silently dropped by the roll
+        # (the 2026-08-09 v1.13.8 roll missed nut-client this way).
+        if not self.cluster or not any(k.startswith("NODE") for k in self.kinds):
+            return
+        tc = self.root / "kubernetes/bootstrap/talos/talconfig.yaml"
+        cfg = os.environ.get("TALOSCONFIG") or str(self.root / "kubernetes/bootstrap/talos/clusterconfig/talosconfig")
+        if not tc.exists() or not Path(cfg).exists():
+            self.say("\n(talos: talconfig.yaml or talosconfig missing — schematic drift not checked)")
+            self.ledger["schematic"] = "unchecked"
+            return
+        txt = tc.read_text()
+        want_ver = (re.search(r"^talosVersion:\s*(\S+)", txt, re.M) or [None, "?"])[1]
+        nodes = []
+        for blk in re.split(r"\n\s*- hostname:", txt)[1:]:
+            host = blk.split("\n", 1)[0].strip().strip('"')
+            ip = re.search(r"ipAddress:\s*\"?([\d.]+)", blk)
+            url = re.search(r"talosImageURL:\s*(\S+)", blk)
+            if ip and url:
+                nodes.append((host, ip.group(1), url.group(1).rsplit("/", 1)[-1].split(":")[0]))
+        if not nodes:
+            self.say("\n(talos: no nodes with ipAddress + talosImageURL in talconfig.yaml — drift not checked)")
+            self.ledger["schematic"] = "unchecked"
+            return
+        env = dict(os.environ, TALOSCONFIG=cfg)
+        def t(ip, *a):
+            try:
+                p = subprocess.run(["talosctl", "-n", ip, *a], capture_output=True, text=True, env=env, timeout=25)
+            except (subprocess.TimeoutExpired, FileNotFoundError):
+                return ""
+            return p.stdout if p.returncode == 0 else ""
+        self.say(f"\n### Talos schematic — talconfig.yaml declares talosVersion {want_ver}, "
+                 f"schematic(s) {', '.join(sorted({s[:12] + '…' for _, _, s in nodes}))}")
+        drift, mismatch, unreachable = [], [], []
+        for host, ip, want in nodes:
+            raw = t(ip, "get", "extensions", "-o", "json")
+            if not raw:
+                unreachable.append(host)
+                self.say(f"- {host} {ip}: unreachable via talosctl")
+                continue
+            running, exts, dec, pos = "", [], json.JSONDecoder(), 0
+            while pos < len(raw):
+                try:
+                    obj, end = dec.raw_decode(raw, pos)
+                except json.JSONDecodeError:
+                    break
+                pos = end
+                while pos < len(raw) and raw[pos].isspace():
+                    pos += 1
+                md = (obj.get("spec") or {}).get("metadata") or {}
+                if md.get("name") == "schematic":
+                    running = md.get("version", "")
+                elif md.get("name") not in (None, "modules.dep"):
+                    exts.append(md.get("name"))
+            # only the install image line is read out of the machine config; the rest holds secrets
+            mc = re.search(r"image:\s*(factory\.talos\.dev/\S+|ghcr\.io/siderolabs/installer\S*)", t(ip, "get", "machineconfig", "-o", "yaml"))
+            install = mc.group(1) if mc else "?"
+            inst_schematic = install.rsplit("/", 1)[-1].split(":")[0] if "factory.talos.dev" in install else ""
+            ver = (re.findall(r"Tag:\s*(v\S+)", t(ip, "version", "--short")) or ["?"])[-1]
+            flags = []
+            if running != want:
+                drift.append(host); flags.append("DRIFT: running ≠ talconfig")
+            if inst_schematic and running and inst_schematic != running:
+                mismatch.append(host); flags.append("install.image ≠ running (tuppr will refuse)")
+            self.say(f"- {host} {ip}: {ver} running {running[:12]}… [{', '.join(exts)}]; install.image {install.rsplit('/', 1)[-1][:24]}…"
+                     + (f" **{'; '.join(flags)}**" if flags else " ok"))
+        if drift:
+            self.say(f"**SCHEMATIC DRIFT on {len(drift)}/{len(nodes)} node(s)** ({', '.join(drift)}): the roll will re-pin the old "
+                     "schematic and skip the extension change. Before scheduling: either set node annotations "
+                     "`tuppr.home-operations.com/factory-url` (factory.talos.dev/installer) + "
+                     "`tuppr.home-operations.com/schematic` (talconfig's ID) — e.g. via Talos `machine.nodeAnnotations` — and "
+                     "re-apply the machine configs, or run `task talos:upgrade-node HOSTNAME=<node>` per node (uses git's schematic).")
+        if mismatch:
+            self.say(f"**install.image / running schematic mismatch on {len(mismatch)} node(s)**: tuppr errors out on these "
+                     "unless the two annotations above are set.")
+        self.ledger["schematic"] = ("DRIFT:%d/%d" % (len(drift), len(nodes))) if drift else ("unreachable" if len(unreachable) == len(nodes) else "ok")
+        if mismatch:
+            self.ledger["schematic"] += "+mismatch"
+
     # ---- driver
     def run_all(self):
         self.load_pr()
@@ -747,12 +829,14 @@ class Evidence:
             self.locks(p)
             self.history(p)
         self.cluster_state(ci)
+        self.talos_drift()
         L = self.ledger
         pk = self.packages[0] if self.packages else {"name": "?", "cur": "", "new": ""}
         row = (f"| #{self.pr} | {pk['name']} {pk['cur']}→{pk['new']} | {L.get('kind')} | "
                f"fluxdiff={','.join(L.get('fluxdiff', ['-']))} branch={L.get('fresh')} imm={L.get('immutable', 0)} | "
                f"notes={','.join(L.get('notes', ['-']))} | signals={L.get('signals', 0)} xref={L.get('xref', 0)} locks={L.get('locks', 0)} | "
-               f"cluster={L.get('cluster', 'skipped')} | verdict=? |")
+               f"cluster={L.get('cluster', 'skipped')}"
+               + (f" schematic={L['schematic']}" if "schematic" in L else "") + " | verdict=? |")
         self.say(f"\n_{self.gh.footer()}_")
         self.say("\n---\nLEDGER " + row)
         print("\n".join(self.report))
