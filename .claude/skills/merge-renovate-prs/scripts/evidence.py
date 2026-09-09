@@ -5,10 +5,14 @@ Usage: evidence.py <pr-number> [--repo owner/repo] [--out DIR] [--no-cluster]
 
 Prints a markdown report and a one-line ledger row. Writes the collected
 release notes, flux diffs and helm values diffs to --out (default:
-$SCRATCH/evidence/<pr>). Needs: gh (authenticated), git; optional: helm,
-kubectl (+ kubeconfig at the repo root or $KUBECONFIG). Stdlib only.
+$SCRATCH/evidence/<pr>). Needs: git, python3 (stdlib only). GitHub access goes
+through the gh CLI when it is authenticated, otherwise straight to the REST API:
+anonymous works for PUBLIC repos (60 req/h per IP, no Flux Diff artifact download);
+GH_TOKEN / GITHUB_TOKEN lifts both. --no-gh forces the REST path. Optional: helm
+(chart bumps), kubectl + kubeconfig at the repo root or $KUBECONFIG (cluster state).
 """
 import argparse, base64, json, os, re, subprocess, sys, difflib
+import hashlib, io, time, urllib.error, urllib.parse, urllib.request, zipfile
 from pathlib import Path
 
 SIGNAL_RE = re.compile(
@@ -32,7 +36,8 @@ VENDOR_NOTES = {
     "docker.io/library/python": "https://docs.python.org/3/whatsnew/changelog.html",
 }
 GH_ORG_MAP = {  # image org/name -> github repo when the obvious mapping is wrong
-    "ghcr.io/siderolabs/installer": "siderolabs/talos",
+    "ghcr.io/siderolabs/installer": "siderolabs/talos",  # installer image ended with Talos 1.13
+    "ghcr.io/siderolabs/talos": "siderolabs/talos",
     "ghcr.io/siderolabs/kubelet": "kubernetes/kubernetes",
     "ghcr.io/dragonflydb/operator": "dragonflydb/dragonfly-operator",
     "registry.k8s.io/git-sync/git-sync": "kubernetes/git-sync",
@@ -50,14 +55,202 @@ def run(cmd, check=False, input=None):
     return p.returncode, p.stdout
 
 
-def gh_json(args):
-    rc, out = run(["gh"] + args)
-    if rc != 0 or not out.strip():
-        return None
-    try:
-        return json.loads(out)
-    except json.JSONDecodeError:
-        return None
+def _git_repo_slug():
+    rc, out = run(["git", "remote", "get-url", "origin"])
+    m = re.search(r"github\.com[:/]([^/\s]+/[^/\s]+?)(?:\.git)?/?$", out.strip())
+    return m.group(1) if m else None
+
+
+# ---------------------------------------------------------------- GitHub access
+# Two interchangeable backends. Both return gh-shaped dicts so the collectors do
+# not care which one is in use. Selection happens in make_github().
+class GhCli:
+    # the authenticated gh CLI: 5000 req/h, can download Flux Diff artifacts
+    mode = "gh"
+
+    @staticmethod
+    def available():
+        return run(["gh", "auth", "status"])[0] == 0
+
+    def _json(self, args):
+        rc, out = run(["gh"] + args)
+        if rc != 0 or not out.strip():
+            return None
+        try:
+            return json.loads(out)
+        except json.JSONDecodeError:
+            return None
+
+    def default_repo(self):
+        return (self._json(["repo", "view", "--json", "nameWithOwner"]) or {}).get("nameWithOwner") or _git_repo_slug()
+
+    def pr(self, repo, n):
+        return self._json(["pr", "view", str(n), "--repo", repo, "--json",
+                           "number,title,state,labels,files,headRefName,headRefOid,baseRefName,body,"
+                           "mergeable,mergeStateStatus,comments,url,mergedAt"])
+
+    def pr_diff(self, repo, n):
+        return run(["gh", "pr", "diff", str(n), "--repo", repo])[1]
+
+    def api(self, path, cache=True):
+        return self._json(["api", path])
+
+    def contents(self, repo, path):
+        rc, out = run(["gh", "api", f"repos/{repo}/contents/{path}", "-q", ".content"])
+        return base64.b64decode(out).decode(errors="replace") if rc == 0 and out.strip() else None
+
+    def repo_exists(self, repo):
+        # exit status, not --jq output: `--jq .full_name` prints a bare string that is not JSON
+        return run(["gh", "api", f"repos/{repo}"])[0] == 0
+
+    def prs_all(self, repo, limit=300):
+        return self._json(["pr", "list", "--repo", repo, "--state", "all", "--limit", str(limit),
+                           "--json", "number,title,state,mergedAt"]) or []
+
+    def flux_runs(self, repo, branch):
+        return self._json(["run", "list", "--repo", repo, "--workflow", "Flux Diff", "--branch", branch,
+                           "--limit", "3", "--json", "databaseId,headSha,status"]) or []
+
+    def download_artifact(self, repo, run_id, name, dest):
+        return run(["gh", "run", "download", str(run_id), "--repo", repo, "-n", name, "-D", str(dest)])[0] == 0
+
+    def banner(self):
+        return "github access: gh CLI (authenticated)"
+
+    def footer(self):
+        return self.banner()
+
+
+class Rest:
+    # GitHub REST via urllib. Anonymous = PUBLIC repos only, 60 req/h per IP, and
+    # artifact zips are refused; GH_TOKEN/GITHUB_TOKEN lifts both. Shared,
+    # slow-moving endpoints (releases, tags, contents, the PR list) are cached on
+    # disk so a whole backlog costs ~6 requests per PR instead of ~12.
+    mode = "rest"
+
+    def __init__(self, cache_dir, token=None, ttl=6 * 3600):
+        self.token, self.ttl = token, ttl
+        self.cache = Path(cache_dir)
+        self.cache.mkdir(parents=True, exist_ok=True)
+        self.remaining, self.calls = None, 0
+
+    def _get(self, path, accept="application/vnd.github+json", cache=True):
+        url = path if path.startswith("http") else f"https://api.github.com/{path}"
+        key = self.cache / (hashlib.sha1((accept + url).encode()).hexdigest() + ".cache")
+        if cache and key.exists() and time.time() - key.stat().st_mtime < self.ttl:
+            return key.read_bytes()
+        req = urllib.request.Request(url, headers={"Accept": accept, "User-Agent": "merge-renovate-prs/evidence.py",
+                                                   "X-GitHub-Api-Version": "2022-11-28"})
+        if self.token:
+            req.add_header("Authorization", f"Bearer {self.token}")
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:  # follows the 301 of a renamed repo
+                self.calls += 1
+                self.remaining = r.headers.get("X-RateLimit-Remaining", self.remaining)
+                body = r.read()
+        except urllib.error.HTTPError as e:
+            self.calls += 1
+            self.remaining = e.headers.get("X-RateLimit-Remaining", self.remaining)
+            if e.code in (403, 429) and e.headers.get("X-RateLimit-Remaining") == "0":
+                reset = e.headers.get("X-RateLimit-Reset")
+                when = time.strftime("%H:%M:%S", time.localtime(int(reset))) if reset else "?"
+                sys.exit(f"GitHub API rate limit exhausted ({'token' if self.token else 'anonymous = 60/h'}); "
+                         f"resets at {when}. Set GH_TOKEN or `gh auth login`, or wait.")
+            return None
+        except (urllib.error.URLError, TimeoutError):
+            return None
+        if cache:
+            key.write_bytes(body)
+        return body
+
+    def _json(self, path, cache=True):
+        body = self._get(path, cache=cache)
+        if body is None:
+            return None
+        try:
+            return json.loads(body)
+        except json.JSONDecodeError:
+            return None
+
+    def default_repo(self):
+        return _git_repo_slug()
+
+    def pr(self, repo, n):
+        p = self._json(f"repos/{repo}/pulls/{n}", cache=False)
+        if not p:
+            return None
+        files = self._json(f"repos/{repo}/pulls/{n}/files?per_page=100", cache=False) or []
+        comments = self._json(f"repos/{repo}/issues/{n}/comments?per_page=100", cache=False) or []
+        return {
+            "number": p["number"], "title": p["title"],
+            "state": "MERGED" if p.get("merged_at") else p["state"].upper(),
+            "labels": [{"name": l["name"]} for l in p.get("labels", [])],
+            "files": [{"path": f["filename"]} for f in files],
+            "headRefName": p["head"]["ref"], "headRefOid": p["head"]["sha"], "baseRefName": p["base"]["ref"],
+            "body": p.get("body") or "",
+            "mergeable": {True: "MERGEABLE", False: "CONFLICTING"}.get(p.get("mergeable"), "UNKNOWN"),
+            "mergeStateStatus": (p.get("mergeable_state") or "unknown").upper(),
+            # gh (GraphQL) reports the bot as "github-actions"; REST says "github-actions[bot]"
+            "comments": [{"author": {"login": ((c.get("user") or {}).get("login") or "").removesuffix("[bot]")},
+                          "body": c.get("body") or ""} for c in comments],
+            "url": p["html_url"], "mergedAt": p.get("merged_at"),
+        }
+
+    def pr_diff(self, repo, n):
+        body = self._get(f"repos/{repo}/pulls/{n}", accept="application/vnd.github.diff", cache=False)
+        return body.decode(errors="replace") if body else ""
+
+    def api(self, path, cache=True):
+        return self._json(path, cache=cache)
+
+    def contents(self, repo, path):
+        j = self._json(f"repos/{repo}/contents/{path}")
+        if not j or "content" not in j:
+            return None
+        return base64.b64decode(j["content"]).decode(errors="replace")
+
+    def repo_exists(self, repo):
+        return self._json(f"repos/{repo}") is not None
+
+    def prs_all(self, repo, limit=300):
+        out = []
+        for page in range(1, max(1, limit // 100) + 1):
+            chunk = self._json(f"repos/{repo}/pulls?state=all&sort=created&direction=desc&per_page=100&page={page}") or []
+            out += [{"number": x["number"], "title": x["title"], "mergedAt": x.get("merged_at"),
+                     "state": "MERGED" if x.get("merged_at") else x["state"].upper()} for x in chunk]
+            if len(chunk) < 100:
+                break
+        return out
+
+    def flux_runs(self, repo, branch):
+        q = urllib.parse.quote(branch, safe="")
+        runs = (self._json(f"repos/{repo}/actions/runs?branch={q}&per_page=20", cache=False) or {}).get("workflow_runs", [])
+        return [{"databaseId": r["id"], "headSha": r["head_sha"], "status": r["status"]} for r in runs if r.get("name") == "Flux Diff"]
+
+    def download_artifact(self, repo, run_id, name, dest):
+        if not self.token:
+            return False  # artifact zips need an authenticated request even on public repos
+        arts = (self._json(f"repos/{repo}/actions/runs/{run_id}/artifacts", cache=False) or {}).get("artifacts", [])
+        for a in arts:
+            if a.get("name") == name and a.get("archive_download_url"):
+                data = self._get(a["archive_download_url"], accept="application/octet-stream", cache=False)
+                if data:
+                    Path(dest).mkdir(parents=True, exist_ok=True)
+                    zipfile.ZipFile(io.BytesIO(data)).extractall(dest)
+                    return True
+        return False
+
+    def banner(self):
+        return "github access: REST " + ("with token" if self.token else "anonymous (public repos only, 60 req/h)")
+
+    def footer(self):
+        return f"{self.banner()}; {self.calls} request(s) this run, rate-limit remaining={self.remaining}"
+
+
+def make_github(no_gh, cache_dir):
+    if not no_gh and GhCli.available():
+        return GhCli()
+    return Rest(cache_dir, os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN"))
 
 
 def core_version(v):
@@ -100,8 +293,8 @@ def rule_matches_package(patterns, name):
 
 # ---------------------------------------------------------------- collectors
 class Evidence:
-    def __init__(self, pr, repo, out, cluster):
-        self.pr, self.repo, self.out, self.cluster = pr, repo, out, cluster
+    def __init__(self, pr, repo, out, cluster, gh):
+        self.pr, self.repo, self.out, self.cluster, self.gh = pr, repo, out, cluster, gh
         self.root = Path(run(["git", "rev-parse", "--show-toplevel"])[1].strip() or ".")
         self.out.mkdir(parents=True, exist_ok=True)
         self.report, self.ledger = [], {}
@@ -111,16 +304,19 @@ class Evidence:
 
     # ---- PR
     def load_pr(self):
-        self.meta = gh_json(["pr", "view", str(self.pr), "--repo", self.repo, "--json",
-                             "number,title,state,labels,files,headRefName,headRefOid,baseRefName,body,"
-                             "mergeable,mergeStateStatus,comments,url,mergedAt"])
+        self.meta = self.gh.pr(self.repo, self.pr)
         if not self.meta:
-            sys.exit(f"cannot read PR {self.pr}")
+            sys.exit(f"cannot read PR {self.pr} in {self.repo} ({self.gh.banner()})"
+                     + ("" if self.gh.mode == "gh" else " — private repo or bad number? set GH_TOKEN or `gh auth login`"))
         m = self.meta
         self.files = [f["path"] for f in m["files"]]
         self.labels = [l["name"] for l in m["labels"]]
-        rc, self.diff = run(["gh", "pr", "diff", str(self.pr), "--repo", self.repo])
+        self.diff = self.gh.pr_diff(self.repo, self.pr)
         self.say(f"# Evidence: PR #{m['number']} — {m['title']}")
+        if self.gh.mode != "gh":
+            self.say(f"> {self.gh.banner()} — gh CLI unavailable/unauthenticated: truncated Flux Diff artifacts "
+                     f"{'need a token' if not getattr(self.gh, 'token', None) else 'are fetched with the token'}; "
+                     "rebase/merge/comment still need `gh auth login`")
         self.say(f"{m['url']}  state={m['state']} mergeable={m['mergeable']}/{m['mergeStateStatus']} labels={','.join(self.labels)}")
         self.say(f"files: {', '.join(self.files)}")
         self.apps = sorted({tuple(p.split('/')[2:4]) for p in self.files if p.startswith('kubernetes/apps/') and p.count('/') >= 3})
@@ -177,7 +373,7 @@ class Evidence:
     # ---- freshness + flux diff
     def flux_diff(self):
         m = self.meta
-        cmp = gh_json(["api", f"repos/{self.repo}/compare/{m['baseRefName']}...{m['headRefOid']}"]) or {}
+        cmp = self.gh.api(f"repos/{self.repo}/compare/{m['baseRefName']}...{m['headRefOid']}", cache=False) or {}
         behind = cmp.get("behind_by")
         fresh = "fresh" if behind == 0 else (f"STALE (behind main by {behind})" if behind else "unknown")
         comments = [c["body"] for c in m.get("comments", []) if c["author"]["login"] == "github-actions" and "add-pr-comment" in c["body"]]
@@ -231,13 +427,11 @@ class Evidence:
                 self.say(f"**{len(noise)} object(s) outside this PR's apps appear in the diff** (stale base or shared template): " + "; ".join(noise[:5]))
 
     def fetch_artifact(self, res):
-        runs = gh_json(["run", "list", "--repo", self.repo, "--workflow", "Flux Diff", "--branch", self.meta["headRefName"],
-                        "--limit", "3", "--json", "databaseId,headSha,status"]) or []
+        runs = self.gh.flux_runs(self.repo, self.meta["headRefName"])
         for r in runs:
             if r["headSha"] == self.meta["headRefOid"] and r["status"] == "completed":
                 d = self.out / f"artifact-{res}"
-                rc, _ = run(["gh", "run", "download", str(r["databaseId"]), "--repo", self.repo, "-n", f"flux-diff-{res}", "-D", str(d)])
-                if rc == 0:
+                if self.gh.download_artifact(self.repo, r["databaseId"], f"flux-diff-{res}", d):
                     for f in d.rglob("*.patch"):
                         return f.read_text()
         return None
@@ -253,13 +447,13 @@ class Evidence:
             return GH_ORG_MAP[name], "map"
         m = re.match(r"ghcr\.io/(home-operations|onedr0p)/([^/]+)$", name)
         if m:
-            rc, out = run(["gh", "api", f"repos/{m.group(1)}/containers/contents/apps/{m.group(2)}/docker-bake.hcl", "-q", ".content"])
-            if rc == 0:
-                src = re.search(r'SOURCE"\s*\{\s*default\s*=\s*"https://github\.com/([^"]+)"', base64.b64decode(out).decode())
+            bake = self.gh.contents(f"{m.group(1)}/containers", f"apps/{m.group(2)}/docker-bake.hcl")
+            if bake:
+                src = re.search(r'SOURCE"\s*\{\s*default\s*=\s*"https://github\.com/([^"]+)"', bake)
                 if src:
                     return src.group(1).rstrip("/"), "docker-bake SOURCE"
         m = re.match(r"ghcr\.io/([^/]+/[^/]+)$", name)
-        if m and gh_json(["api", f"repos/{m.group(1)}", "--jq", ".full_name"]) is not None:
+        if m and self.gh.repo_exists(m.group(1)):
             return m.group(1), "ghcr org/name"
         return None, "unresolved"
 
@@ -324,7 +518,7 @@ class Evidence:
         rels = []
         page = 1
         while page <= 4:
-            chunk = gh_json(["api", f"repos/{repo}/releases?per_page=100&page={page}"]) or []
+            chunk = self.gh.api(f"repos/{repo}/releases?per_page=100&page={page}") or []
             rels += chunk
             if len(chunk) < 100:
                 break
@@ -354,7 +548,7 @@ class Evidence:
         return out, note
 
     def compare_commits(self, repo, cur, new, prefix=""):
-        tags = gh_json(["api", f"repos/{repo}/tags?per_page=100"]) or []
+        tags = self.gh.api(f"repos/{repo}/tags?per_page=100") or []
         def find(v):
             for t in tags:
                 if core_version(t["name"]) == core_version(v) and t["name"].startswith(prefix):
@@ -362,7 +556,7 @@ class Evidence:
         a, b = find(cur), find(new)
         if not (a and b):
             return None
-        cmp = gh_json(["api", f"repos/{repo}/compare/{a}...{b}"]) or {}
+        cmp = self.gh.api(f"repos/{repo}/compare/{a}...{b}") or {}
         msgs = [c["commit"]["message"].splitlines()[0] for c in cmp.get("commits", [])]
         return a, b, msgs
 
@@ -386,9 +580,8 @@ class Evidence:
                 buf.append("## commits " + f"{a}...{b}\n" + "\n".join(msgs))
                 self.ledger.setdefault("notes", []).append(f"{label}:{len(msgs)}commits")
             else:
-                rc, out = run(["gh", "api", f"repos/{repo}/contents/CHANGELOG.md", "-q", ".content"])
-                if rc == 0:
-                    cl = base64.b64decode(out).decode(errors="replace")
+                cl = self.gh.contents(repo, "CHANGELOG.md")
+                if cl:
                     buf.append("## CHANGELOG.md (head)\n" + cl[:20000])
                     self.say(f"**{label}: no releases/tags matched in {repo}; CHANGELOG.md captured (first 20k)** — read it for the range by hand")
                     self.ledger.setdefault("notes", []).append(f"{label}:changelog.md")
@@ -470,7 +663,7 @@ class Evidence:
                     flag = " ⚠" if re.search(r"revert|rollback|reapply|hold|hotfix|broke", l, re.I) else ""
                     self.say(f"  - {l}{flag}")
         short = p["name"].rsplit("/", 1)[-1]
-        prs = gh_json(["pr", "list", "--repo", self.repo, "--state", "all", "--limit", "300", "--json", "number,title,state,mergedAt"]) or []
+        prs = self.gh.prs_all(self.repo, 300)
         prior = [x for x in prs if short in x["title"] and x["number"] != self.pr][:6]
         if prior:
             self.say(f"- prior PRs for *{short}*: " + "; ".join(f"#{x['number']} {x['state']} {(x.get('mergedAt') or '')[:10]}" for x in prior))
@@ -560,6 +753,7 @@ class Evidence:
                f"fluxdiff={','.join(L.get('fluxdiff', ['-']))} branch={L.get('fresh')} imm={L.get('immutable', 0)} | "
                f"notes={','.join(L.get('notes', ['-']))} | signals={L.get('signals', 0)} xref={L.get('xref', 0)} locks={L.get('locks', 0)} | "
                f"cluster={L.get('cluster', 'skipped')} | verdict=? |")
+        self.say(f"\n_{self.gh.footer()}_")
         self.say("\n---\nLEDGER " + row)
         print("\n".join(self.report))
         (self.out / "report.md").write_text("\n".join(self.report))
@@ -571,12 +765,16 @@ def main():
     ap.add_argument("--repo")
     ap.add_argument("--out")
     ap.add_argument("--no-cluster", action="store_true")
+    ap.add_argument("--no-gh", action="store_true", help="bypass the gh CLI and call the GitHub REST API directly")
+    ap.add_argument("--cache-dir", help="REST response cache (default $SCRATCH/evidence/_cache, 6h TTL)")
     a = ap.parse_args()
-    repo = a.repo or (gh_json(["repo", "view", "--json", "nameWithOwner"]) or {}).get("nameWithOwner")
+    scratch = os.environ.get("SCRATCH", "/tmp")
+    gh = make_github(a.no_gh, a.cache_dir or os.path.join(scratch, "evidence", "_cache"))
+    repo = a.repo or gh.default_repo()
     if not repo:
         sys.exit("cannot determine repo; pass --repo owner/repo")
-    base = a.out or os.path.join(os.environ.get("SCRATCH", "/tmp"), "evidence", str(a.pr))
-    Evidence(a.pr, repo, Path(base), not a.no_cluster).run_all()
+    base = a.out or os.path.join(scratch, "evidence", str(a.pr))
+    Evidence(a.pr, repo, Path(base), not a.no_cluster, gh).run_all()
 
 
 if __name__ == "__main__":
