@@ -31,7 +31,10 @@ spec:
               tag: v2.2.0@sha256:753eeb0cc22ab7baad39ed47cbd1aae14e193dd1b264e965f193a9ea1d1e1bdd
             env:
               TZ: ${TIMEZONE}
-              HOMEPAGE_ALLOWED_HOSTS: &host dash.${SECRET_DOMAIN}
+              # Homepage validates the Host header and returns HTTP 400 for anything
+              # not listed here. Gatus probes the in-cluster Service name (see
+              # templates/gatus/guarded), so it must be allowed alongside the ingress host.
+              HOMEPAGE_ALLOWED_HOSTS: dash.${SECRET_DOMAIN},${APP}.${NAMESPACE}.svc.cluster.local:${GATUS_PORT}
             envFrom:
               - secretRef:
                   name: homepage-secret
@@ -60,7 +63,7 @@ spec:
       app:
         className: internal
         hosts:
-          - host: *host
+          - host: dash.${SECRET_DOMAIN}
             paths:
               - path: /
                 service:
