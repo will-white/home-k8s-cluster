@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Secret gate. CI runs gitleaks too (.github/workflows/gitleaks.yaml), but that
+# fires *after* a push - by which point a leaked credential must be rotated, not
+# just amended away. This catches it while it is still only in the index.
+#
+# Bypass with `git commit --no-verify` if you are certain a finding is a false
+# positive.
+set -euo pipefail
+
+RED=$'\033[0;31m'
+YELLOW=$'\033[0;33m'
+NC=$'\033[0m'
+
+# These live in the worktree and are .gitignore'd, but `git add -f` defeats that.
+# Belt and braces: refuse outright, whatever gitleaks thinks of the contents.
+readonly NEVER_COMMIT=(age.key kubeconfig talosconfig github-deploy.key)
+staged="$(git diff --cached --name-only --diff-filter=ACM)"
+for path in "${NEVER_COMMIT[@]}"; do
+    if grep -Fxq "${path}" <<<"${staged}"; then
+        printf '%sBLOCKED%s %s is a local credential and must never be committed.\n' \
+            "${RED}" "${NC}" "${path}" >&2
+        exit 1
+    fi
+done
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+    printf '%sWARN%s gitleaks not found - skipping secret scan (CI still gates this).\n' \
+        "${YELLOW}" "${NC}" >&2
+    exit 0
+fi
+
+if ! gitleaks git --staged --redact --no-banner; then
+    printf '\n%sCommit blocked: gitleaks found a secret in your staged changes.%s\n' \
+        "${RED}" "${NC}" >&2
+    printf 'Secrets belong in Bitwarden via ExternalSecret, or SOPS-encrypted (*.sops.yaml).\n' >&2
+    exit 1
+fi

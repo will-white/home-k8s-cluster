@@ -20,6 +20,12 @@ if command -v direnv >/dev/null 2>&1 && [ -f "${WORKSPACE_DIR}/.envrc" ]; then
   direnv allow "${WORKSPACE_DIR}" || true
 fi
 
+# Activate the repo's versioned git hooks (secret gate before commit)
+if [ -d "${WORKSPACE_DIR}/.githooks" ]; then
+  echo "Enabling versioned git hooks..."
+  git -C "${WORKSPACE_DIR}" config core.hooksPath .githooks
+fi
+
 # Validate all tools are available
 echo "Validating installed tools..."
 bash "$(dirname "$0")/validate-tools.sh" || true
