@@ -24,5 +24,9 @@ spec:
       APP: *app
       NAMESPACE: default
       GATUS_PORT: "3214"
+      # "/" bounces through the Rails auth flow (/users/sign_in -> /dashboard -> ...).
+      # Gatus follows redirects without persisting the session cookie, so the probe
+      # loops until its client timeout. /health answers 200 directly.
+      GATUS_PATH: /health
       VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
       VOLSYNC_CAPACITY: 5Gi
