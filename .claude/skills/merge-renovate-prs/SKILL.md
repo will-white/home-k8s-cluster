@@ -46,8 +46,13 @@ release, not the whole `current → new` range.
 | `evidence.py <pr>` | the whole §2 pass for one PR → markdown report + `LEDGER` row; writes notes/diffs under `$SCRATCH/evidence/<pr>/` |
 | `verify.sh -n <ns> <app> [--chart v] [--image s] [--timeout s]` | bounded post-merge wait (§8): HelmRelease Ready + revision, pods Running/ready, image landed, no restarts |
 
-Both are read-only against the cluster and need only `gh`, `git`, `python3`
+Both are read-only against the cluster and need only `git`, `python3`
 (+ `helm` for chart bumps, `kubectl` + kubeconfig for cluster state).
+`evidence.py` talks to GitHub through `gh` when it is authenticated and
+otherwise falls back to the REST API by itself: anonymous works for this
+public repo (60 req/h per IP, ~6 per PR thanks to an on-disk cache, no
+truncated-Flux-Diff artifacts); `GH_TOKEN` lifts both limits; `--no-gh`
+forces the REST path. Its report header says which mode ran.
 
 ## 0. Preflight
 
@@ -57,7 +62,15 @@ Both are read-only against the cluster and need only `gh`, `git`, `python3`
   `export SCRATCH=<scratchpad dir>`.
 - Environment varies: devcontainer = fish + full toolchain; WSL = bash and
   `flux`/`kustomize`/`yq`/`jq` may be missing. `command -v gh helm kubectl python3`.
-- `gh api user -q .login` — confirm auth. If it fails: `! gh auth login`.
+- `gh api user -q .login` — confirm auth. If it fails: `! gh auth login -h github.com -s workflow`
+  (or set `GH_TOKEN`). **Without auth the evidence pass still runs** — the
+  survey comes from `origin/renovate/*` after `git fetch` (commit subject ==
+  PR title; `git rev-list --count <branch>..origin/main` == behind_by), the
+  PR list/labels and Flux Diff comments from the anonymous API, and
+  `evidence.py` falls back on its own — but rebase, merge, comment and
+  artifact download do not. Do §1–§3, write the ledger and the PR-comment
+  bodies to `$SCRATCH`, then stop and ask for auth; don't pull a token out of
+  a credential helper.
 - **Workflow scope:** merging any PR that edits `.github/workflows/*` needs it:
   `! gh auth refresh -h github.com -s workflow` when you see *"refusing to allow
   an OAuth App … without workflow scope"*.
@@ -182,7 +195,16 @@ reversible auto-migration; `kubeVersion`/dependency floors need checking.
 
 1. **Live cluster rolls** — Talos / Kubernetes / kubelet / installer bumps
    (`talconfig.yaml`, `system-upgrade/**`, tuppr plans). Merging triggers real
-   node OS / control-plane upgrades.
+   node OS / control-plane upgrades. For a Talos roll the script also compares
+   the schematic in `talconfig.yaml` with what each node runs and installs from
+   (needs `talosconfig`; ledger `schematic=ok|DRIFT`). tuppr derives the
+   upgrade image from the node's `machine.install.image`, so **drift means the
+   roll silently keeps the old extension set** (the 2026-08-09 v1.13.8 roll
+   missed nut-client this way), and once the machine config is re-applied
+   tuppr refuses the mismatch unless the nodes carry the
+   `tuppr.home-operations.com/factory-url` + `/schematic` annotations. Resolve
+   drift (annotations via `machine.nodeAnnotations`, or `task
+   talos:upgrade-node` per node) before scheduling the roll.
 2. **One-way data migrations** — DB schema migrations that can't be reverted,
    Postgres/Ceph/storage majors, on-disk format changes, "cannot downgrade" in
    the notes, app majors whose first start migrates state. Requires a verified
@@ -225,6 +247,13 @@ value. Only the following is *not* recorded in either place:
   v3.
 - **Gitleaks** check: historically red for a shallow-clone reason, not a leak.
   Still open the check output before dismissing it.
+- **Kubernetes minor ⇔ Talos minor.** Talos runs only the Kubernetes minors up
+  to the one it shipped with (1.13 → 1.36; 1.37 arrived with Talos 1.14), so a
+  `KubernetesUpgrade` / `kubernetesVersion` bump to a new minor is RED until
+  that Talos minor is on the nodes. Order: tuppr chart → Talos patch → Talos
+  minor → Kubernetes minor, `verify.sh`-equivalent node checks between each.
+  (Talos ≥1.14 has no `ghcr.io/siderolabs/installer`; version tracking uses
+  `ghcr.io/siderolabs/talos` — see the Talos group in `renovate.json5`.)
 
 When a lock turns out to be obsolete, say so in the report and offer to update
 `renovate.json5` / the comment — don't add a rule here.
