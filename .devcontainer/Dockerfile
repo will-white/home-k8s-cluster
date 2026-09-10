@@ -30,6 +30,10 @@ ARG HELMFILE_VERSION=v1.7.4
 ARG STERN_VERSION=v1.34.0
 # renovate: datasource=github-releases depName=cli/cli
 ARG GH_VERSION=v2.100.0
+# renovate: datasource=github-releases depName=jqlang/jq extractVersion=^jq-(?<version>.+)$
+ARG JQ_VERSION=1.8.2
+# renovate: datasource=github-releases depName=gitleaks/gitleaks
+ARG GITLEAKS_VERSION=v8.30.1
 
 # Install system packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -38,11 +42,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get -y install --no-install-recommends \
     build-essential \
     curl \
+    fzf \
     git \
     gnupg2 \
-    jq \
     moreutils \
     procps \
+    shellcheck \
     sudo \
     unzip \
     yamllint \
@@ -98,6 +103,12 @@ RUN set -eux \
     # gh (GitHub CLI)
     && curl -fsSL "https://github.com/cli/cli/releases/download/${GH_VERSION}/gh_${GH_VERSION#v}_linux_amd64.tar.gz" | tar xz --strip-components=2 -C /usr/local/bin "gh_${GH_VERSION#v}_linux_amd64/bin/gh" \
     && chmod +x /usr/local/bin/gh \
+    # jq
+    && curl -fsSL "https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-amd64" -o /usr/local/bin/jq \
+    && chmod +x /usr/local/bin/jq \
+    # gitleaks - powers the .githooks/pre-commit secret gate
+    && curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION#v}_linux_x64.tar.gz" | tar xz -C /usr/local/bin gitleaks \
+    && chmod +x /usr/local/bin/gitleaks \
     # bws (Bitwarden Secrets Manager)
     && curl -fsSL "https://github.com/bitwarden/sdk-sm/releases/download/bws-${BWS_VERSION}/bws-x86_64-unknown-linux-gnu-${BWS_VERSION#v}.zip" -o /tmp/bws.zip \
     && unzip -o /tmp/bws.zip -d /usr/local/bin/ \
