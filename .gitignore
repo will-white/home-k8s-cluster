@@ -24,3 +24,8 @@ Brewfile.lock.json
 wiki
 # Bootstrap
 /config.yaml
+# Claude Code - per-machine permissions, not shared
+.claude/settings.local.json
+# Python
+__pycache__/
+*.py[cod]
