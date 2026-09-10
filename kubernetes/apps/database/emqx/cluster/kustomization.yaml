@@ -4,6 +4,7 @@ resources:
   - ./cluster.yaml
   - ./ingress.yaml
   - ./podmonitor.yaml
+  - ./prometheusrule.yaml
 configMapGenerator:
   - name: emqx-loki-rules
     files:

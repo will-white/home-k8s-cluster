@@ -1,0 +1,36 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: emqx-rules
+  labels:
+    prometheus: k8s
+    role: alert-rules
+spec:
+  groups:
+    - name: emqx.rules
+      rules:
+        # Every EMQX node reports how many cluster peers it can see. When the
+        # mnesia cluster partitions, each node keeps serving traffic on its own
+        # and reports running_nodes = 1, so Kubernetes, the HelmRelease and
+        # every health check stay green while the brokers are silently
+        # independent: a publisher on one node is invisible to a subscriber on
+        # another. That is exactly how Home Assistant lost every Zigbee entity
+        # on 2026-09-09 while both it and Zigbee2MQTT were "up".
+        #
+        # Compared against the number of scraped pods rather than a literal 3,
+        # so the rule follows the replica count. `for: 10m` rides out rolling
+        # restarts, during which nodes legitimately drop out of the cluster.
+        - alert: EMQXClusterPartitioned
+          annotations:
+            summary: EMQX cluster is partitioned — MQTT clients on different nodes cannot reach each other
+            description: >-
+              At least one EMQX node sees fewer running peers than there are
+              nodes ({{ $value }} visible). Publishers and subscribers that
+              land on different brokers are silently isolated, and retained
+              messages diverge per node. Heal with a rolling restart of the
+              EMQX core pods.
+          expr: |-
+            min(emqx_cluster_nodes_running) < count(emqx_cluster_nodes_running)
+          for: 10m
+          labels:
+            severity: critical
