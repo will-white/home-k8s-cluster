@@ -136,10 +136,9 @@ RUN curl -fsSL https://claude.ai/install.sh | bash \
 ENV PATH="/home/vscode/.local/bin:${PATH}"
 
 COPY --chown=vscode:vscode setup.sh /tmp/devcontainer/setup.sh
-COPY --chown=vscode:vscode completions.sh /tmp/devcontainer/completions.sh
 COPY --chown=vscode:vscode fish-config.fish /tmp/devcontainer/fish-config.fish
 
-RUN chmod +x /tmp/devcontainer/setup.sh /tmp/devcontainer/completions.sh \
+RUN chmod +x /tmp/devcontainer/setup.sh \
     && /tmp/devcontainer/setup.sh \
     && rm -rf /tmp/devcontainer
 

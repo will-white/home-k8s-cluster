@@ -26,6 +26,12 @@ if [ -d "${WORKSPACE_DIR}/.githooks" ]; then
   git -C "${WORKSPACE_DIR}" config core.hooksPath .githooks
 fi
 
+# Generate shell completions here rather than in the Docker build: devcontainer
+# features (flux, go-task) install after the image is built, so a build-time run
+# cannot see them.
+echo "Generating shell completions..."
+bash "$(dirname "$0")/completions.sh"
+
 # Validate all tools are available
 echo "Validating installed tools..."
 bash "$(dirname "$0")/validate-tools.sh" || true

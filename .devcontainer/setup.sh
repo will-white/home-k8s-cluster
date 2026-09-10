@@ -22,4 +22,3 @@ fish -c 'tide configure --auto --style=Lean --prompt_colors="True color" --show_
 
 fish "${SCRIPT_DIR}/fish-config.fish"
 
-bash "${SCRIPT_DIR}/completions.sh"
