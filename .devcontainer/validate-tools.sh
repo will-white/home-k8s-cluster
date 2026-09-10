@@ -42,6 +42,28 @@ check_tool "direnv"      "direnv version"
 check_tool "fish"        "fish --version"
 check_tool "claude"      "claude --version"
 
+# Guard the fix for workspace-local .bin shadowing the image's pinned tools.
+# Every tool below must resolve to the copy baked into the image, not to a stale
+# binary left in ./.bin by `task workstation:generic-linux`.
+echo ""
+echo "=== PATH precedence ==="
+SHADOWED=0
+for tool in kubectl helm kustomize kubeconform sops age talosctl talhelper yq gh flux stern; do
+    resolved="$(command -v "$tool" 2>/dev/null || true)"
+    case "$resolved" in
+        */.bin/*)
+            printf "${RED}\u2717${NC} %-15s shadowed by %s\n" "$tool" "$resolved"
+            SHADOWED=$((SHADOWED + 1))
+            ;;
+    esac
+done
+if [ "$SHADOWED" -gt 0 ]; then
+    printf "${RED}%s tool(s) resolve to ./.bin instead of the image's pinned copies.${NC}\n" "$SHADOWED"
+    FAILED=$((FAILED + SHADOWED))
+else
+    printf "${GREEN}\u2713${NC} no tools shadowed by ./.bin\n"
+fi
+
 echo ""
 if [ "$FAILED" -gt 0 ]; then
     echo -e "${RED}${FAILED} tool(s) failed validation!${NC}"

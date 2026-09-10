@@ -44,7 +44,7 @@
     "BWS_ACCESS_TOKEN": "${localEnv:BWS_ACCESS_TOKEN}",
     "SHELL": "/bin/bash",
     "CLAUDE_CODE_SHELL": "/bin/bash",
-    "PATH": "/home/vscode/.local/bin:${containerWorkspaceFolder}/.bin:${containerWorkspaceFolder}/.local/bin:${containerEnv:PATH}"
+    "PATH": "/home/vscode/.local/bin:${containerWorkspaceFolder}/.local/bin:${containerEnv:PATH}"
   },
   "customizations": {
     "vscode": {
