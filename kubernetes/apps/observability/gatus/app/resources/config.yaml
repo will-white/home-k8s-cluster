@@ -156,6 +156,26 @@ endpoints:
     alerts:
       - type: pushover
 
+  - name: zigbee-coordinator
+    group: home-lab
+    # SLZB-06M Zigbee coordinator. Zigbee2MQTT reaches it over a TCP serial
+    # link on port 6638; when that link drops, z2m exits and every Zigbee
+    # entity in Home Assistant goes unavailable. We probe the web UI on :80
+    # rather than :6638 on purpose — the coordinator accepts a *second*
+    # concurrent socket on the serial port, so polling it risks corrupting or
+    # displacing z2m's own session. Port 80 proves the device is powered and
+    # on the network, which is the failure this is meant to catch.
+    url: http://slzb-06m.internal
+    interval: 1m
+    client:
+      dns-resolver: tcp://192.168.5.2:53
+      timeout: 10s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 5000"
+    alerts:
+      - type: pushover
+
   - name: adguard-dns
     group: home-lab
     url: 192.168.5.2
