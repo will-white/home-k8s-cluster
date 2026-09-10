@@ -105,13 +105,24 @@ RUN set -eux \
     && rm -f /tmp/bws.zip
 
 # Create directories and set fish as default shell
-RUN mkdir -p /home/vscode/.bin /home/vscode/.config/fish/completions \
-    && chown -R vscode:vscode /home/vscode/.bin /home/vscode/.config \
+RUN mkdir -p /home/vscode/.bin /home/vscode/.config/fish/completions /home/vscode/.claude \
+    && chown -R vscode:vscode /home/vscode/.bin /home/vscode/.config /home/vscode/.claude \
     && usermod -s /usr/bin/fish vscode || true
 
-ENV SHELL=/usr/bin/fish
+# fish remains the *interactive* shell (usermod above + the VS Code terminal
+# profile). SHELL is what non-interactive tooling reads, and CLI agents emit bash
+# syntax, so point it at bash instead.
+ENV SHELL=/bin/bash
 
 USER vscode
+
+# Claude Code CLI — native install (no Node.js needed), lands in ~/.local/bin.
+# Deliberately unpinned: the CLI self-updates at runtime, so a pinned version
+# here would be stale on first launch anyway.
+RUN curl -fsSL https://claude.ai/install.sh | bash \
+    && /home/vscode/.local/bin/claude --version
+
+ENV PATH="/home/vscode/.local/bin:${PATH}"
 
 COPY --chown=vscode:vscode setup.sh /tmp/devcontainer/setup.sh
 COPY --chown=vscode:vscode completions.sh /tmp/devcontainer/completions.sh

@@ -40,6 +40,7 @@ check_tool "jq"          "jq --version"
 check_tool "yamllint"    "yamllint --version"
 check_tool "direnv"      "direnv version"
 check_tool "fish"        "fish --version"
+check_tool "claude"      "claude --version"
 
 echo ""
 if [ "$FAILED" -gt 0 ]; then
