@@ -2,9 +2,41 @@
 groups:
   - name: zigbee2mqtt
     rules:
+      # The Zigbee coordinator (SLZB-06M) is reached over a TCP serial link on
+      # port 6638. When that link drops, ember logs a fatal serial error
+      # and Zigbee2MQTT exits — every Zigbee entity in Home Assistant goes
+      # unavailable, which presents as "Home Assistant can't see any Zigbee
+      # devices". No `for:` delay: this is a discrete event, not a sustained
+      # condition, and the whole Zigbee mesh is down until it recovers.
+      - alert: Zigbee2MQTTCoordinatorDisconnected
+        expr: |
+          sum by (app) (count_over_time({app="zigbee2mqtt"} |~ "(?i)(adapter disconnected|ERROR_SERIAL_INIT|NCP_FATAL_ERROR|port error: read E|failed to connect to the adapter)"[10m])) > 0
+        for: 0m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} lost the Zigbee coordinator — all Zigbee devices are unavailable in Home Assistant"
+
+      # index.js logs "WATCHDOG: Waiting <n>min before next start try." while
+      # the z2m process is stopped and waiting to be respawned. The frontend is
+      # down for the whole of that wait, so the mesh is offline even though the
+      # container itself is still alive.
+      - alert: Zigbee2MQTTWatchdogRestarting
+        expr: |
+          sum by (app) (count_over_time({app="zigbee2mqtt"} |~ "WATCHDOG: Waiting"[10m])) > 0
+        for: 0m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} is stopped and waiting on a watchdog restart — the Zigbee mesh is offline"
+
       - alert: ZigbeeMQTTUnreachable
         expr: |
-          sum(count_over_time({app="zigbee2mqtt"} |~ "(?i)not connected to mqtt server"[2m])) > 0
+          sum by (app) (count_over_time({app="zigbee2mqtt"} |~ "(?i)not connected to mqtt server"[2m])) > 0
         for: 2m
         labels:
           severity: critical
@@ -12,3 +44,28 @@ groups:
         annotations:
           app: "{{ $labels.app }}"
           summary: "{{ $labels.app }} is unable to reach MQTT"
+
+      # Leading indicators of a degrading mesh / coordinator link. Thresholds
+      # are set above the observed 24h peaks (route errors max 16 per 15m,
+      # ping failures max 2 per 15m) so normal bursts stay quiet.
+      - alert: Zigbee2MQTTMeshRouteErrors
+        expr: |
+          sum by (app) (count_over_time({app="zigbee2mqtt"} |~ "ROUTE_ERROR_"[15m])) > 25
+        for: 15m
+        labels:
+          severity: warning
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} is seeing elevated Zigbee routing errors — mesh or coordinator link degrading"
+
+      - alert: Zigbee2MQTTDevicesUnreachable
+        expr: |
+          sum by (app) (count_over_time({app="zigbee2mqtt"} |~ "(?i)failed to ping"[15m])) > 10
+        for: 15m
+        labels:
+          severity: warning
+          category: logs
+        annotations:
+          app: "{{ $labels.app }}"
+          summary: "{{ $labels.app }} cannot reach a growing number of Zigbee devices"
