@@ -1,0 +1,27 @@
+---
+# Gate at -S warning: the repo is clean at that level. Info/style findings
+# (mostly SC2086 unquoted args in scripts/amcrest.sh) are left un-gated so this
+# lands green and stays meaningful.
+name: ShellCheck
+on:
+  pull_request:
+    paths:
+      - "scripts/**.sh"
+      - ".devcontainer/**.sh"
+      - ".github/workflows/shellcheck.yaml"
+  push:
+    branches: ["main"]
+    paths:
+      - "scripts/**.sh"
+      - ".devcontainer/**.sh"
+
+jobs:
+  shellcheck:
+    name: shellcheck
+    runs-on: home-ops-runner
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install shellcheck
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+      - name: Lint
+        run: shellcheck -S warning -f gcc scripts/*.sh .devcontainer/*.sh

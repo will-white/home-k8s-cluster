@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # ./amcrest.sh <username> <password> <host or IP>
 
 # Turn off amcrest water mark

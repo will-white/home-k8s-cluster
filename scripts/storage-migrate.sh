@@ -27,7 +27,7 @@ confirm() {
 wait_pvc_bound() {
     local ns="$1" pvc="$2" sc_expected="$3"
     log "Waiting for PVC $ns/$pvc to bind on $sc_expected..."
-    for i in $(seq 1 60); do
+    for _ in $(seq 1 60); do
         local phase sc
         phase=$(kubectl -n "$ns" get pvc "$pvc" -o jsonpath='{.status.phase}' 2>/dev/null || true)
         sc=$(kubectl -n "$ns" get pvc "$pvc" -o jsonpath='{.spec.storageClassName}' 2>/dev/null || true)
@@ -194,7 +194,7 @@ cutover_volsync() {
     flux reconcile ks "$APP" --with-source
 
     log "Waiting for ReplicationDestination $pvc-bootstrap to complete fresh restore..."
-    for i in $(seq 1 120); do
+    for _ in $(seq 1 120); do
         local last
         last=$(kubectl -n "$ns" get replicationdestination "$pvc-bootstrap" \
             -o jsonpath='{.status.lastManualSync}' 2>/dev/null || true)
