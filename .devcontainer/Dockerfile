@@ -29,7 +29,7 @@ ARG HELMFILE_VERSION=v1.7.4
 # renovate: datasource=github-releases depName=stern/stern
 ARG STERN_VERSION=v1.34.0
 # renovate: datasource=github-releases depName=cli/cli
-ARG GH_VERSION=v2.100.0
+ARG GH_VERSION=v2.101.0
 # renovate: datasource=github-releases depName=jqlang/jq extractVersion=^jq-(?<version>.+)$
 ARG JQ_VERSION=1.8.2
 # renovate: datasource=github-releases depName=gitleaks/gitleaks
