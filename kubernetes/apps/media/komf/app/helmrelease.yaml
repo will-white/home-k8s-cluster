@@ -29,7 +29,7 @@ spec:
           app:
             image:
               repository: sndxr/komf
-              tag: latest@sha256:210573289961ac5467b1ed07088efc95f995a328c678fe87d53fd8a11abfd058
+              tag: latest@sha256:88111b8a3ca83ce17f341fc63c1908388015e5b33fd08b1baf0d1eeaa026e176
             env:
               TZ: ${TIMEZONE}
               KOMF_LOG_LEVEL: INFO
