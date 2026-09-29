@@ -32,12 +32,14 @@ spec:
         # a fresh dind store on the node disk. Unspread, the scheduler stacked
         # them on one or two 4-core workers (653 of 1,540 runner pods on
         # mj05ajfj in a week) and tripped NodeSystemSaturation/NodeDiskIOSaturation.
-        # Honor taints so the control-plane nodes don't count as empty domains
-        # (with DoNotSchedule that would strand runners Pending).
+        # Soft on purpose: workers whose CPU requests are already full (mj04ew44
+        # sits at ~99%) still count as spread domains with zero runners, so
+        # DoNotSchedule stranded runners Pending as soon as two were running.
+        # Honor taints so the control-plane nodes aren't scored as empty domains.
         topologySpreadConstraints:
           - maxSkew: 1
             topologyKey: kubernetes.io/hostname
-            whenUnsatisfiable: DoNotSchedule
+            whenUnsatisfiable: ScheduleAnyway
             nodeTaintsPolicy: Honor
             labelSelector:
               matchLabels:
