@@ -28,6 +28,21 @@ spec:
       namespace: actions-runner-system
     template:
       spec:
+        # Runners are ~0.4 CPU at peak but each job pulls its action images into
+        # a fresh dind store on the node disk. Unspread, the scheduler stacked
+        # them on one or two 4-core workers (653 of 1,540 runner pods on
+        # mj05ajfj in a week) and tripped NodeSystemSaturation/NodeDiskIOSaturation.
+        # Honor taints so the control-plane nodes don't count as empty domains
+        # (with DoNotSchedule that would strand runners Pending).
+        topologySpreadConstraints:
+          - maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: DoNotSchedule
+            nodeTaintsPolicy: Honor
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: runner
+                actions.github.com/scale-set-name: home-ops-runner
         containers:
           - name: runner
             image: ghcr.io/actions/actions-runner:2.337.0@sha256:e5496277be5d09bc968b3d64911b74e219ac4a3f2edce956a3ecf9271bea1ef4
