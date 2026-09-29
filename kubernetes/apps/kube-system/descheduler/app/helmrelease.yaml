@@ -42,7 +42,14 @@ spec:
               args:
                 nodeAffinityType:
                   - requiredDuringSchedulingIgnoredDuringExecution
+            # cilium-operator (set-cilium-node-taints) puts this NoSchedule taint
+            # on a node while its agent restarts; it is gone within seconds.
+            # Without the exclusion every cilium roll evicted unrelated pods
+            # (komga, komf, manyfold on 2026-09-29) mid-rollout.
             - name: RemovePodsViolatingNodeTaints
+              args:
+                excludedTaints:
+                  - node.cilium.io/agent-not-ready
             - name: RemovePodsViolatingTopologySpreadConstraint
               args:
                 constraints:
