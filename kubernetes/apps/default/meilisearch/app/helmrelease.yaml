@@ -27,7 +27,7 @@ spec:
           app:
             image:
               repository: getmeili/meilisearch
-              tag: v1.53.1@sha256:8d6643d86d71fad6ad3cba92cde7ccfce9e4d6c384bda67598eb553571c32431
+              tag: v1.54.1@sha256:6f6c72d43008f227a7329422aa723ab5b4929e1fad8e68743062b050c36fb7ad
             envFrom:
               - secretRef:
                   name: meilisearch-secret
