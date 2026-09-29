@@ -32,6 +32,12 @@ A `type/major` label is a hint, not a verdict. Real examples from this repo:
 - `postgresql 16 → 18` (major) is not a bigger image bump: it is an offline
   `pg_upgrade` expressed as a *new* `ImageCatalog` entry, and the Renovate PR as
   written (rewriting the `major: 16` line) was wrong in shape.
+- `chart external-dns 1.21.1 → 1.22.0` (minor) carried app v0.22.0, whose
+  notes said *"Action required … default annotation prefix is now
+  `external-dns.kubernetes.io/` with no fallback … can delete all your DNS
+  records"*. Only the chart notes were read (one harmless `policy` item), it
+  was merged GREEN, and `cloudflare-dns` deleted five public CNAMEs (reverted
+  in #1402). A chart bump is also an *app* bump whenever appVersion moves.
 - GitHub Actions majors are usually a no-op for this repo.
 
 So **every PR gets the evidence pass in §2**, and the verdict in §3 comes from
@@ -44,7 +50,7 @@ release, not the whole `current → new` range.
 | script | what it does |
 |---|---|
 | `evidence.py <pr>` | the whole §2 pass for one PR → markdown report + `LEDGER` row; writes notes/diffs under `$SCRATCH/evidence/<pr>/` |
-| `verify.sh -n <ns> <app> [--chart v] [--image s] [--timeout s]` | bounded post-merge wait (§8): HelmRelease Ready + revision, pods Running/ready, image landed, no restarts |
+| `verify.sh -n <ns> <app> [--chart v] [--image s] [--timeout s] [--label sel] [--commit sha]` | bounded post-merge wait (§8): the app's Kustomization applied the merge commit, HelmRelease Ready for its current generation + revision, pods Running/ready, image landed, no restarts |
 
 Both are read-only against the cluster and need only `git`, `python3`
 (+ `helm` for chart bumps, `kubectl` + kubeconfig for cluster state).
@@ -144,7 +150,14 @@ changes). Each report contains, in order:
    `helm show chart` at both versions (appVersion, kubeVersion), a
    `helm show values` diff for non-app-template charts, and **every release in
    `(current, new]`** (falls back to the commit range, then `CHANGELOG.md`).
-   If the chart's appVersion moved, the app's release range is pulled too.
+   Several candidate repos are tried in turn (Renovate link, then the chart's
+   `sources`) and the report says which one answered. On a chart **major**,
+   the chart's `UPGRADE.md` / README "Upgrading" sections for the skipped
+   majors are pulled too (kube-prometheus-stack keeps its breaking changes
+   only there). **Whenever the chart's appVersion moves, the app's own release
+   range is pulled**, even when chart and app ship from one repo. Candidates
+   are `CHART_APP_MAP`, the chart sources and `<org>/<chart>`, and the ledger
+   gets `app=<cur>→<new>`.
 4. **Signals** — lines from those notes matching migration/removal/breaking
    patterns, tagged with the release they came from.
 5. **Cross-reference** — backticked / `UPPER_SNAKE` tokens from the signal
@@ -173,6 +186,12 @@ changes). Each report contains, in order:
   (its values.yaml is empty, so there is no values diff).
 - Treat `notes=…:NONE` / `UNRESOLVED` / `fluxdiff=NONE` / `branch=STALE` as
   findings: no evidence is not "no change".
+- When the ledger shows `app=<cur>→<new>`, read the **app** notes' "action
+  required" / breaking / upgrade sections yourself. `app:NONE` means no app
+  notes were found. `app:SAME-AS-CHART` means the only release found is the
+  chart's own, so the app's changes were not seen. Either one is an evidence
+  gap (RED 5) until you find the app repo; add it to `CHART_APP_MAP` in
+  `evidence.py`. `app:=pkg` is fine: one release covers both (cilium).
 - Sanity-check the cross-reference (it is a token grep: it can miss a renamed
   nested key and it can hit an unrelated word).
 
@@ -182,7 +201,8 @@ Keep the ledger rows in one scratch file; they become the report (§9).
 
 **GREEN — merge in batch.** No migration/removal signal touches anything we
 set; Flux Diff is fresh and shows only the expected tag/label churn; no
-immutable-field candidates; no lock; cluster healthy; not a cluster roll.
+immutable-field candidates; no lock; cluster healthy; not a cluster roll; and,
+if appVersion moved, the app's notes were read, not just the chart's.
 Digest bumps, GitHub Action minors, devcontainer tool pins, most app-template
 and exporter patch/minor bumps land here.
 
@@ -223,7 +243,7 @@ line, name the file:line the diff touches, and state the correct upgrade path
 
 - **True duplicates** = two PRs editing the **same line/file** for the same
   package. Keep the **highest version that passes §3**, close the other with a
-  note. A hold on the higher one (helm v4) means take the lower.
+  note. A hold on the higher one means take the lower.
 - **NOT duplicates** (merge both): Renovate splits one package across files —
   CLI in `.devcontainer/Dockerfile` vs cluster manifest, bootstrap
   `helmfile.yaml` vs `app/helmrelease.yaml` (spegel, talos, kubernetes). Keep
@@ -243,8 +263,13 @@ value. Only the following is *not* recorded in either place:
   bump `cluster16.yaml` `imageCatalogRef.major` — CNPG ≥1.26 runs `pg_upgrade`
   declaratively, **offline, in place, one-way**. Fresh backup first (§7).
   Renovate majors for this image are disabled; the upgrade is hand-written.
-- **helm v4** breaks the helmfile bootstrap (`--validate` removed). Take latest
-  v3.
+- **DNS controllers can delete public records.** `cloudflare-dns`,
+  `adguard-dns-internal` and `adguard-dns-external` (external-dns) run with
+  `policy: sync`, so a behaviour change deletes records instead of just failing.
+  Never batch them: merge alone, then check
+  `kubectl logs -n network deploy/cloudflare-dns | grep -E 'action=(DELETE|CREATE)'`
+  plus a public lookup of an external host. Prefer a `--dry-run` rollout for
+  app minors.
 - **Gitleaks** check: historically red for a shallow-clone reason, not a leak.
   Still open the check output before dismissing it.
 - **Kubernetes minor ⇔ Talos minor.** Talos runs only the Kubernetes minors up
@@ -322,6 +347,24 @@ $SKILL/scripts/verify.sh -n <ns> <app> --image <new-tag>                # image 
 # exit 0 = rolled out; 1 = timeout (default 600s; Flux interval is the usual cause — extend or check
 #   `flux get sources git`/`kubectl get gitrepository -n flux-system`); 2 = failure detected (events printed)
 ```
+
+- verify.sh first waits for the app's Kustomization to have applied the merge
+  commit (`--commit`, default `origin/main` after a fetch). Run it **right after
+  each merge** (or pass `--commit <merge sha>`). Otherwise a later check can
+  pass on the old rollout.
+- Pods are found by `app.kubernetes.io/name=<app>`, then `…/instance=<app>`.
+  If neither matches, it prints `WARN … checking the HelmRelease only`. That is
+  not a pod check: pass `--label` (cilium: `--label k8s-app=cilium`).
+- Rollout ≠ behaviour. A green verify.sh on external-dns 1.22.0 coexisted with
+  deleted DNS records. For controllers that act on the outside world (DNS,
+  certs, backups), read their action logs after the rollout.
+- Scrape-target checks: `bazarr` scrapes every 15m and `sonarr`/`radarr`/
+  `prowlarr` every 5m, so `health=unknown` just after a Prometheus restart is
+  expected until one interval passes.
+- A CNI roll (cilium) briefly taints nodes with `node.cilium.io/agent-not-ready`.
+  If the descheduler's `RemovePodsViolatingNodeTaints` isn't excluding that
+  taint, unrelated pods get evicted mid-roll. Check the descheduler logs before
+  blaming the upgrade.
 
 Then the app's own signal: `kubectl logs -n <ns> -l app.kubernetes.io/name=<app> --tail=200 | grep -iE "migrat|error|listening|deprecat"`
 and, for user-facing apps, its Gatus endpoint. Do not force cluster-wide
