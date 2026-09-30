@@ -72,9 +72,12 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: {drop: ["ALL"]}
+            # Explicit memory request: with only a limit set, Kubernetes
+            # reserved the full 4Gi (7-day peak 321Mi). Limit left loose.
             resources:
               requests:
                 cpu: 100m
+                memory: 512Mi
               limits:
                 memory: 4Gi
           exportarr:

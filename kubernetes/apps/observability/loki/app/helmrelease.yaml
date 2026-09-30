@@ -120,6 +120,14 @@ spec:
         # directory" and evaluated nothing — no alerts, no recording rules.
         folder: /rules/fake
     singleBinary:
+      # ~1GiB working set (7-day peak 1028Mi) with no request; loose limit
+      # so a heavy query burst isn't OOM-killed.
+      resources:
+        requests:
+          cpu: 50m
+          memory: 1Gi
+        limits:
+          memory: 4Gi
       persistence:
         enabled: true
         size: 100Gi

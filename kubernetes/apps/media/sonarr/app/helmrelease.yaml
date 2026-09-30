@@ -72,9 +72,13 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: {drop: ["ALL"]}
+            # Explicit memory request: with only a limit set, Kubernetes
+            # reserved the full 4Gi (7-day peak 536Mi). Limit left loose on
+            # purpose. CPU p95 0.26 / max 0.59 was above the old 100m.
             resources:
               requests:
-                cpu: 100m
+                cpu: 300m
+                memory: 768Mi
               limits:
                 memory: 4Gi
           exportarr:

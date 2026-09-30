@@ -35,9 +35,10 @@ spec:
               SYSTEM_ENABLEANALYTICS: false
               ALLOW_GOOGLE_VISIBILITY: false
             resources:
+              # 7-day peak 1149Mi (JVM) against a 500Mi request.
               requests:
                 cpu: 10m
-                memory: 500Mi
+                memory: 1200Mi
               limits:
                 memory: 4Gi
     service:
