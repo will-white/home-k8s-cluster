@@ -23,7 +23,11 @@ SIGNAL_RE = re.compile(
     r"default(?:s)? (?:changed|now|is now)|security|\bauth|token|password|permission|"
     r"StatefulSet|\bPVC\b|volume|persist|on-disk|reindex|"
     r"manual (?:step|action|intervention)|before (?:upgrading|you upgrade)|upgrade notes|"
-    r"incompatib|not backward|no longer",
+    r"incompatib|not backward|no longer|"
+    # external-dns 0.22.0: "Action required before upgrade … default annotation prefix is now … with
+    # no fallback … can delete all your DNS records" matched none of the above
+    r"action required|no fallback|\bdelet\w* (?:all|every|existing|your)|"
+    r"default [\w-]+(?: [\w-]+)? (?:is now|changed|now)|:rotating_light:|🚨",
     re.I,
 )
 IMMUTABLE_RE = re.compile(
@@ -45,6 +49,11 @@ GH_ORG_MAP = {  # image org/name -> github repo when the obvious mapping is wron
     "docker.io/kometateam/kometa": "Kometa-Team/Kometa",
     "ghcr.io/cloudnative-pg/postgresql": "cloudnative-pg/postgres-containers",
     "quay.io/ceph/ceph": "ceph/ceph",
+}
+CHART_APP_MAP = {  # chart name -> repo that releases its appVersion, when Chart.yaml `sources` doesn't list it
+    "kube-prometheus-stack": "prometheus-operator/prometheus-operator",
+    "intel-device-plugins-operator": "intel/intel-device-plugins-for-kubernetes",
+    "intel-device-plugins-gpu": "intel/intel-device-plugins-for-kubernetes",
 }
 
 
@@ -502,6 +511,7 @@ class Evidence:
         if not info:
             return None
         info["ref"] = base
+        info["chart"] = chart or url.rstrip("/").rsplit("/", 1)[-1]
         if "app-template" not in str(base):
             vals = {}
             for tag, v in (("cur", p["cur"]), ("new", p["new"])):
@@ -514,20 +524,28 @@ class Evidence:
         return info
 
     # ---- releases
-    def releases_between(self, repo, cur, new, extra_prefix=None):
-        rels = []
-        page = 1
-        while page <= 4:
+    def releases_between(self, repo, cur, new, prefer=None):
+        curc, newc = core_version(cur), core_version(new)
+        # page lazily: chart monorepos (prometheus-community/helm-charts) publish hundreds of
+        # releases a month, so a fixed 4-page window lost the current tag
+        rels, page = [], 1
+        while page <= 12:
             chunk = self.gh.api(f"repos/{repo}/releases?per_page=100&page={page}") or []
             rels += chunk
-            if len(chunk) < 100:
+            if len(chunk) < 100 or any(core_version(r.get("tag_name", "")) == curc for r in chunk):
                 break
             page += 1
-        curc, newc = core_version(cur), core_version(new)
         cands = [r for r in rels if r.get("tag_name", "").endswith(newc) or core_version(r.get("tag_name", "")) == newc]
         if not cands:
             return None, "no release tagged for new version"
-        # prefer a tag whose prefix looks like the package (monorepos)
+        # monorepos tag chart and app releases differently (kube-prometheus-stack-91.8.1,
+        # helm-chart-2.11.0 vs v2.11.0): a chart lookup (prefer=<chart>) wants the chart's tag,
+        # an app lookup (prefer="app:<chart>") wants the tag that is NOT a chart release
+        if prefer and prefer.startswith("app:"):
+            chart = prefer[4:]
+            cands.sort(key=lambda r: "chart" in r["tag_name"] or bool(chart and r["tag_name"].startswith(chart)))
+        elif prefer:
+            cands.sort(key=lambda r: (not r["tag_name"].startswith(prefer), "chart" not in r["tag_name"]))
         newtag = cands[0]["tag_name"]
         prefix = newtag[: newtag.rfind(newc)] if newc in newtag else ""
         out, hit_cur = [], False
@@ -560,9 +578,24 @@ class Evidence:
         msgs = [c["commit"]["message"].splitlines()[0] for c in cmp.get("commits", [])]
         return a, b, msgs
 
-    def notes_for(self, label, repo, cur, new):
-        rels, note = self.releases_between(repo, cur, new)
+    def notes_for(self, label, repos, cur, new, prefer=None):
+        """Release notes for (cur, new] from the first candidate repo that has a release for `new`;
+        falls back to the commit range / CHANGELOG.md of the first candidate."""
+        repos = list(dict.fromkeys(r for r in (repos if isinstance(repos, list) else [repos]) if r))
+        rels, note, repo = None, "no candidate repo", repos[0] if repos else None
+        for cand in repos:
+            rels, note = self.releases_between(cand, cur, new, prefer)
+            if rels:
+                repo = cand
+                break
+        if repo is None:
+            self.say(f"**{label}: NO NOTES FOUND** (no source repo) — evidence gap")
+            self.ledger.setdefault("notes", []).append(f"{label}:NONE")
+            return ""
+        if len(repos) > 1:
+            self.say(f"- {label} notes: tried {', '.join(repos)} → {repo}")
         buf = []
+        self.__dict__.setdefault("note_tags", {})[label] = {(repo, r["tag_name"]) for r in rels or []}
         if rels:
             self.say(f"**{label}: {len(rels)} release(s) in ({core_version(cur)}, {core_version(new)}] from {repo}**{note}")
             for r in rels:
@@ -591,6 +624,37 @@ class Evidence:
         text = "\n".join(buf)
         (self.out / f"notes-{label}.md").write_text(text)
         return text
+
+    def upgrade_doc(self, repos, chart, cur, new):
+        """Chart majors: the chart's UPGRADE.md / README 'Upgrading' sections for majors in (cur, new].
+        kube-prometheus-stack puts its breaking changes only there — the release body is one line."""
+        cm, nm = (vtuple(core_version(cur)) or (0,))[0], (vtuple(core_version(new)) or (0,))[0]
+        if not chart or nm <= cm:
+            return ""
+        paths = [f"charts/{chart}/UPGRADE.md", f"charts/{chart}/UPGRADING.md", "UPGRADE.md", "UPGRADING.md",
+                 f"charts/{chart}/README.md"]
+        for repo in dict.fromkeys(r for r in repos if r):
+            for path in paths:
+                doc = self.gh.contents(repo, path)
+                if not doc:
+                    continue
+                keep, take, level = [], False, 0
+                for line in doc.splitlines():
+                    h = re.match(r"(#{1,4}) ", line)
+                    # a heading ends the kept section only at its own level or above
+                    if h and (not take or len(h.group(1)) <= level):
+                        nums = {int(n) for n in re.findall(r"\b(\d+)(?:\.x|\.0\.0)?\b", line)}
+                        take, level = any(cm < n <= nm for n in nums), len(h.group(1))
+                    if take:
+                        keep.append(line)
+                if keep:
+                    text = "\n".join(keep)
+                    self.say(f"**upgrade doc: {repo}/{path} — {len(keep)} line(s) for majors ({cm}, {nm}]** ({self.out}/notes-upgrade.md)")
+                    (self.out / "notes-upgrade.md").write_text(text)
+                    self.ledger.setdefault("notes", []).append("upgrade-doc")
+                    return "## upgrade-doc\n" + text
+        self.say(f"- upgrade doc: none found for chart major {cm}→{nm} (tried {', '.join(paths)})")
+        return ""
 
     # ---- signals + cross-reference
     def signals(self, text, label):
@@ -814,14 +878,37 @@ class Evidence:
                 how = "chart sources"
             self.say(f"- source repo: {repo or 'UNRESOLVED'} ({how})" + (f"; vendor notes: {VENDOR_NOTES[p['name']]}" if p["name"] in VENDOR_NOTES else ""))
             hits = []
+            srcs = [re.sub(r"https://github\.com/", "", s).rstrip("/") for s in (ci or {}).get("sources", [])]
             if repo:
-                text = self.notes_for("pkg", repo, p["cur"], p["new"])
+                # the renovate-body link can name the wrong repo for a chart (kube-prometheus for
+                # kube-prometheus-stack), so the chart's own sources are tried too
+                text = self.notes_for("pkg", [repo] + srcs, p["cur"], p["new"], prefer=(ci or {}).get("chart"))
+                if ci:
+                    text += "\n" + self.upgrade_doc([repo] + srcs, ci.get("chart"), p["cur"], p["new"])
                 hits += self.signals(text, "pkg")
-                # app inside a chart
-                if ci and ci.get("cur", {}).get("appVersion") != ci.get("new", {}).get("appVersion") and ci.get("sources"):
-                    app_repo = re.sub(r"https://github\.com/", "", ci["sources"][0]).rstrip("/")
-                    if app_repo != repo:
-                        atext = self.notes_for("app", app_repo, ci["cur"].get("appVersion", ""), ci["new"].get("appVersion", ""))
+                # app inside a chart: whenever appVersion moves — including when chart and app ship
+                # from one repo (external-dns 1.22.0 carried app v0.22.0; skipping it cost an outage)
+                acur, anew = (ci or {}).get("cur", {}).get("appVersion", ""), (ci or {}).get("new", {}).get("appVersion", "")
+                if ci and acur and anew and acur != anew:
+                    self.say(f"- **appVersion moved {acur} → {anew}: the app's own notes below are required reading**")
+                    self.ledger["app"] = f"{acur}→{anew}"
+                    # <org>/<chart> catches split chart/app repos (cloudnative-pg/charts → cloudnative-pg/cloudnative-pg)
+                    guess = [f"{s.split('/')[0]}/{ci.get('chart')}" for s in srcs + [repo] if "/" in s]
+                    guess = [g for g in guess if g not in srcs and self.gh.repo_exists(g)]
+                    atext = self.notes_for("app", [CHART_APP_MAP.get(ci.get("chart"))] + srcs + guess + [repo], acur, anew,
+                                           prefer=f"app:{ci.get('chart') or ''}")
+                    tags = self.note_tags
+                    if tags.get("app") and tags["app"] <= tags.get("pkg", set()):
+                        chartish = [t for _, t in tags["app"] if "chart" in t or t.startswith(ci.get("chart") or "\0")]
+                        if chartish:
+                            self.say("- **app notes resolved to the chart's own release — the app's changes are NOT covered.** "
+                                     "Find the app repo by hand and add it to CHART_APP_MAP.")
+                            self.ledger["notes"][-1] = "app:SAME-AS-CHART"
+                        else:  # one release covers both (cilium v1.20.2): already scanned as pkg
+                            self.say("- app and chart share one release — covered by the pkg notes above")
+                            self.ledger["notes"][-1] = "app:=pkg"
+                            atext = ""
+                    if atext:
                         hits += self.signals(atext, "app")
             else:
                 self.ledger.setdefault("notes", []).append("UNRESOLVED")
@@ -834,7 +921,7 @@ class Evidence:
         pk = self.packages[0] if self.packages else {"name": "?", "cur": "", "new": ""}
         row = (f"| #{self.pr} | {pk['name']} {pk['cur']}→{pk['new']} | {L.get('kind')} | "
                f"fluxdiff={','.join(L.get('fluxdiff', ['-']))} branch={L.get('fresh')} imm={L.get('immutable', 0)} | "
-               f"notes={','.join(L.get('notes', ['-']))} | signals={L.get('signals', 0)} xref={L.get('xref', 0)} locks={L.get('locks', 0)} | "
+               f"notes={','.join(L.get('notes', ['-']))}" + (f" app={L['app']}" if "app" in L else "") + f" | signals={L.get('signals', 0)} xref={L.get('xref', 0)} locks={L.get('locks', 0)} | "
                f"cluster={L.get('cluster', 'skipped')}"
                + (f" schematic={L['schematic']}" if "schematic" in L else "") + " | verdict=? |")
         self.say(f"\n_{self.gh.footer()}_")

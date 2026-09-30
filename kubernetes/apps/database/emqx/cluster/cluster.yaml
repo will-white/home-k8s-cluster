@@ -44,6 +44,13 @@ spec:
         # the limit so the full device manifest fits.
         max_packet_size = "10MB"
       }
+      retainer {
+        # The retainer has its own 1MB cap, separate from max_packet_size:
+        # bridge/devices was delivered live but never retained, so any client
+        # connecting later (the weekly zigbee2mqtt-ota job) got no device list
+        # and timed out every week. Keep in step with max_packet_size.
+        max_payload_size = "10MB"
+      }
   coreTemplate:
     metadata:
       annotations:

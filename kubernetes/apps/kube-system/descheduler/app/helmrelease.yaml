@@ -37,12 +37,27 @@ spec:
                 evictLocalStoragePods: true
                 evictSystemCriticalPods: true
                 nodeFit: true
+                # Never evict GitHub Actions runner pods: each one is a single
+                # in-flight CI job, and eviction cancels it ("runner has received
+                # a shutdown signal"). Their soft topology spread made
+                # RemovePodsViolatingTopologySpreadConstraint kill jobs mid-run.
+                labelSelector:
+                  matchExpressions:
+                    - key: actions-ephemeral-runner
+                      operator: DoesNotExist
             - name: RemovePodsViolatingInterPodAntiAffinity
             - name: RemovePodsViolatingNodeAffinity
               args:
                 nodeAffinityType:
                   - requiredDuringSchedulingIgnoredDuringExecution
+            # cilium-operator (set-cilium-node-taints) puts this NoSchedule taint
+            # on a node while its agent restarts; it is gone within seconds.
+            # Without the exclusion every cilium roll evicted unrelated pods
+            # (komga, komf, manyfold on 2026-09-29) mid-rollout.
             - name: RemovePodsViolatingNodeTaints
+              args:
+                excludedTaints:
+                  - node.cilium.io/agent-not-ready
             - name: RemovePodsViolatingTopologySpreadConstraint
               args:
                 constraints:

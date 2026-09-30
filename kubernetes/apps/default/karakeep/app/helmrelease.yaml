@@ -60,10 +60,11 @@ spec:
               CRAWLER_VIDEO_DOWNLOAD: "true"
               CRAWLER_VIDEO_DOWNLOAD_MAX_SIZE: "500"
               CRAWLER_VIDEO_DOWNLOAD_TIMEOUT_SEC: "900"
+            # 7-day peak 537Mi against a 256Mi request.
             resources:
               requests:
                 cpu: 100m
-                memory: 256Mi
+                memory: 600Mi
               limits:
                 memory: 2Gi
           browser:
