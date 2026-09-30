@@ -41,6 +41,14 @@ spec:
       - --cloudflare-proxied
       - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
       - --crd-source-kind=DNSEndpoint
+      # external-dns 0.22 switched the default annotation prefix to
+      # external-dns.kubernetes.io/ with no fallback; every ingress here uses
+      # the alpha prefix. Without this, 0.22 ignores target annotations and
+      # deletes records (tunnel CNAMEs were lost once, see #1381/#1402).
+      - --annotation-prefix=external-dns.alpha.kubernetes.io/
+      # TEMPORARY: first 0.22 rollout only logs its plan; removed in a follow-up
+      # PR once the plan shows no deletions.
+      - --dry-run
     policy: sync
     sources: ["crd", "ingress"]
     txtPrefix: k8s.
