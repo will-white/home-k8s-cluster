@@ -37,6 +37,14 @@ spec:
                 evictLocalStoragePods: true
                 evictSystemCriticalPods: true
                 nodeFit: true
+                # Never evict GitHub Actions runner pods: each one is a single
+                # in-flight CI job, and eviction cancels it ("runner has received
+                # a shutdown signal"). Their soft topology spread made
+                # RemovePodsViolatingTopologySpreadConstraint kill jobs mid-run.
+                labelSelector:
+                  matchExpressions:
+                    - key: actions-ephemeral-runner
+                      operator: DoesNotExist
             - name: RemovePodsViolatingInterPodAntiAffinity
             - name: RemovePodsViolatingNodeAffinity
               args:
