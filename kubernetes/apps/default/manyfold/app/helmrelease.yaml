@@ -39,9 +39,10 @@ spec:
               - secretRef:
                   name: manyfold-secret
             resources:
+              # 7-day peak 1273Mi against a 512Mi request.
               requests:
                 cpu: 100m
-                memory: 512Mi
+                memory: 1280Mi
               limits:
                 memory: 2Gi
     service:

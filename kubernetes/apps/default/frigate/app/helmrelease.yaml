@@ -95,8 +95,10 @@ spec:
             resources:
               # Sized from observed steady-state usage (~900m CPU / ~3.9Gi RSS)
               # so the scheduler reserves what Frigate actually draws.
+              # 7-day CPU p95 1.24 / max 1.36 cores (2026-09-30) — above the old
+              # 1000m, so it was stealing from its 4-core node's neighbours.
               requests:
-                cpu: 1000m
+                cpu: 1500m
                 memory: 6Gi
                 gpu.intel.com/i915: 1
               limits:

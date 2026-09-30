@@ -99,10 +99,11 @@ spec:
                     name: paperless-secret
                     key: PAPERLESS_ADMIN_PASSWORD
             envFrom: *envFrom
+            # 7-day peak 754Mi against a 512Mi request.
             resources:
               requests:
                 cpu: 100m
-                memory: 512Mi
+                memory: 800Mi
               limits:
                 memory: 2Gi
             probes:

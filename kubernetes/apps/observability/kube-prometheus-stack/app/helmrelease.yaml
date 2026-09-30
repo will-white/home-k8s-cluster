@@ -321,6 +321,17 @@ spec:
                       suspended: [spec, suspend]
     kubeApiServer:
       enabled: true
+      serviceMonitor:
+        # The apiserver job was 154k of 389k series, mostly histogram buckets
+        # that no PrometheusRule, dashboard ConfigMap or grafana.com dashboard
+        # (checked all gnetIds in grafana/app/helmrelease.yaml) reads. Drop
+        # only those _bucket series (~93k); keep _sum/_count, and keep
+        # apiserver_request_sli_duration_seconds_bucket — the SLO burn-rate
+        # alerts depend on it.
+        metricRelabelings:
+          - sourceLabels: [__name__]
+            regex: (apiserver_request_duration_seconds|apiserver_request_body_size_bytes|etcd_request_duration_seconds|apiserver_watch_list_duration_seconds|apiserver_watch_cache_read_wait_seconds|apiserver_response_sizes|apiserver_watch_events_sizes|apiserver_admission_controller_admission_duration_seconds)_bucket
+            action: drop
     kubeControllerManager:
       service: &ref_0
         selector:
@@ -366,9 +377,15 @@ spec:
           timeout: 2m
           maxConcurrency: 20
           maxSamples: 50000000
+        # Peaked at ~8.1GiB with no memory request at all, so the scheduler
+        # treated the heaviest pod in the cluster as weightless. Limit is
+        # deliberately loose (2x) — this is a reservation, not a cap.
         resources:
           requests:
-            cpu: 100m
+            cpu: 400m
+            memory: 7Gi
+          limits:
+            memory: 16Gi
         # 90d of scrape data measures ~141GB, so a 200Gi (214.7GB) PVC holds
         # the full window with ~35% headroom for WAL/compaction. retentionSize
         # must stay under the PVC size or it can never trigger: the previous
