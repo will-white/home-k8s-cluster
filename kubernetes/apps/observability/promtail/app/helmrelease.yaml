@@ -66,5 +66,11 @@ spec:
                     level:
     serviceMonitor:
       enabled: true
+    resources:
+      requests:
+        cpu: 40m
+        memory: 368Mi
+      limits:
+        memory: 1216Mi
   driftDetection:
     mode: enabled

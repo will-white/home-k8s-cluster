@@ -116,6 +116,12 @@ spec:
                 requests:
                   storage: 1Gi
               storageClassName: ceph-block
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
       config:
         global:
           resolve_timeout: 5m
@@ -319,6 +325,12 @@ spec:
                       exported_namespace: [metadata, namespace]
                       ready: [status, conditions, "[type=Ready]", status]
                       suspended: [spec, suspend]
+      resources:
+        requests:
+          cpu: 10m
+          memory: 208Mi
+        limits:
+          memory: 704Mi
     kubeApiServer:
       enabled: true
       serviceMonitor:
@@ -414,5 +426,25 @@ spec:
               replacement: $1
               sourceLabels: ["__meta_kubernetes_pod_node_name"]
               targetLabel: kubernetes_node
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 256Mi
+    prometheusOperator:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 48Mi
+        limits:
+          memory: 256Mi
+      prometheusConfigReloader:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 256Mi
   driftDetection:
     mode: enabled

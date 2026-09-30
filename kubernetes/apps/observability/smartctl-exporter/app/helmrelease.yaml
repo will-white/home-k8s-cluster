@@ -33,5 +33,11 @@ spec:
       enabled: true
     prometheusRules:
       enabled: false
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 256Mi
   driftDetection:
     mode: enabled
