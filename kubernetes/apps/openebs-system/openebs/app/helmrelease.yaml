@@ -28,6 +28,20 @@ spec:
       enabled: true
       serviceMonitor:
         enabled: true
+      alloy:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 336Mi
+          limits:
+            memory: 1088Mi
+      configReloader:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 256Mi
     engines:
       local:
         lvm:
@@ -50,6 +64,12 @@ spec:
         basePath: /var/mnt/local-hostpath
         image:
           registry: quay.io/
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 256Mi
     loki:
       enabled: false
     lvm-localpv:

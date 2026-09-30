@@ -17,10 +17,38 @@ endpointRoutes:
   enabled: true
 envoy:
   enabled: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 256Mi
 gatewayAPI:
   enabled: true
 hubble:
   enabled: false
+  relay:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 256Mi
+  ui:
+    backend:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 256Mi
+    frontend:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 256Mi
 ipam:
   mode: kubernetes
 ipv4NativeRoutingCIDR: "10.69.0.0/16"
@@ -50,6 +78,12 @@ operator:
       labelSelector:
         matchLabels:
           name: cilium-operator
+  resources:
+    requests:
+      cpu: 20m
+      memory: 208Mi
+    limits:
+      memory: 704Mi
 rollOutCiliumPods: true
 upgradeCompatibility: "1.18"
 daemonSet:
@@ -78,3 +112,9 @@ securityContext:
       - SYS_RESOURCE
 socketLB:
   hostNamespaceOnly: true
+resources:
+  requests:
+    cpu: 100m
+    memory: 368Mi
+  limits:
+    memory: 2Gi

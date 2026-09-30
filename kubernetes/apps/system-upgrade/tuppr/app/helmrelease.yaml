@@ -14,6 +14,12 @@ spec:
     monitoring:
       serviceMonitor:
         enabled: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 224Mi
+      limits:
+        memory: 768Mi
   driftDetection:
     mode: enabled
   install:

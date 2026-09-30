@@ -28,5 +28,11 @@ spec:
       replicaCount: 2
       serviceMonitor:
         create: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 80Mi
+        limits:
+          memory: 256Mi
   driftDetection:
     mode: enabled

@@ -52,5 +52,11 @@ spec:
     # only scrapes the exporter's own metrics.
     serviceMonitor:
       enabled: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 256Mi
   driftDetection:
     mode: enabled

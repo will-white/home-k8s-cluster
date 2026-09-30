@@ -119,6 +119,12 @@ spec:
         # Loki logged "unable to read rule dir /rules/fake: no such file or
         # directory" and evaluated nothing — no alerts, no recording rules.
         folder: /rules/fake
+      resources:
+        requests:
+          cpu: 10m
+          memory: 96Mi
+        limits:
+          memory: 320Mi
     singleBinary:
       # ~1GiB working set (7-day peak 1028Mi) with no request; loose limit
       # so a heavy query burst isn't OOM-killed.
