@@ -1,4 +1,4 @@
-version: 0.16-0
+version: 0.18-0
 
 auth:
   enabled: false
@@ -125,7 +125,11 @@ cameras:
             - detect
             - audio
     motion:
-      mask: 0.68,0.302,1,0.095,1,0,0.803,0,0.681,0.262
+      mask:
+        motion_mask_1:
+          friendly_name: Motion Mask 1
+          enabled: true
+          coordinates: 0.68,0.302,1,0.095,1,0,0.803,0,0.681,0.262
   camera1:
     ffmpeg:
       inputs:
