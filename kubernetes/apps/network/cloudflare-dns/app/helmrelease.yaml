@@ -46,9 +46,6 @@ spec:
       # the alpha prefix. Without this, 0.22 ignores target annotations and
       # deletes records (tunnel CNAMEs were lost once, see #1381/#1402).
       - --annotation-prefix=external-dns.alpha.kubernetes.io/
-      # TEMPORARY: first 0.22 rollout only logs its plan; removed in a follow-up
-      # PR once the plan shows no deletions.
-      - --dry-run
     policy: sync
     sources: ["crd", "ingress"]
     txtPrefix: k8s.
@@ -58,5 +55,11 @@ spec:
       enabled: true
     podAnnotations:
       secret.reloader.stakater.com/reload: cloudflare-dns-secret
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
   driftDetection:
     mode: enabled

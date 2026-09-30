@@ -41,9 +41,6 @@ spec:
       # the alpha prefix. Without this, 0.22 ignores target annotations and
       # deletes records (tunnel CNAMEs were lost once, see #1381/#1402).
       - --annotation-prefix=external-dns.alpha.kubernetes.io/
-      # TEMPORARY: first 0.22 rollout only logs its plan; removed in a follow-up
-      # PR once the plan shows no deletions.
-      - --dry-run
     extraContainers:
       - name: adguard-sidecar
         image: ghcr.io/will-white/adguard-external-dns-sidecar:v0.3.14@sha256:67f3b2512b0aac62ca356da0e2ab3d24185bd5e0ca8db2093bbe11055d5398f9
@@ -91,6 +88,12 @@ spec:
             value: "192.168.5.1"
           - name: CHECK_INTERVAL
             value: "60"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
     logLevel: debug
     podAnnotations:
       secret.reloader.stakater.com/reload: adguard-dns-secret
@@ -133,6 +136,12 @@ spec:
                 key: ADGUARD_PASSWORD
           - name: DRY_RUN
             value: "false"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 256Mi
     registry: txt
     sources:
       - ingress
@@ -143,5 +152,11 @@ spec:
     txtPrefix: k8s.
     serviceMonitor:
       enabled: false
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
   driftDetection:
     mode: enabled
