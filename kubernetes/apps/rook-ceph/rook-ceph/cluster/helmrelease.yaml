@@ -263,6 +263,30 @@ spec:
           requests:
             cpu: 500m
             memory: 1Gi
+        # Chart defaults for the three below reserved ~8.5 cores (mon 1000m x5,
+        # log-collector 100m x27 sidecars, ceph-crash 100m x8) against 7-day
+        # peaks of 0.063 / 0.016 / 0.000 cores. With workers at 83-99% CPU
+        # requested, that starved scheduling (CI runners piled onto the one or
+        # two nodes with room). mon keeps 4x its peak: the request is also its
+        # CPU weight under contention, and mon latency matters.
+        mon:
+          limits:
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            memory: 1Gi
+        logcollector:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 10m
+            memory: 100Mi
+        crashcollector:
+          limits:
+            memory: 60Mi
+          requests:
+            cpu: 10m
+            memory: 60Mi
     cephFileSystemVolumeSnapshotClass:
       deletionPolicy: Delete
       enabled: true
@@ -297,9 +321,11 @@ spec:
             resources:
               limits:
                 memory: 4Gi
+              # MDS working set runs ~2.4Gi (7-day p95 2371Mi); a 1Gi request
+              # let the scheduler place it as if it were less than half its size.
               requests:
                 cpu: 100m
-                memory: 1Gi
+                memory: 2560Mi
         storageClass:
           allowVolumeExpansion: true
           enabled: true
