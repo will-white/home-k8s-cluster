@@ -1,0 +1,69 @@
+---
+# Daily etcd defragmentation. etcd compacts old revisions but never shrinks
+# its db file; Talos does not defrag on its own. The cluster's live data sits
+# around 100MiB — right at the floor of etcdDatabaseHighFragmentationRatio
+# (>100MiB in use and <50% of the file) — so every rollout burst that grew
+# the file left the alert flapping for days (2026-09-29..10-01).
+#
+# Members are defragmented strictly one at a time (init containers run in
+# order and a failure stops the run); a member is briefly unavailable while
+# its file is rewritten (seconds at ~250MB), which the other two cover.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-defrag
+spec:
+  # 03:45 daily — clear of talos-backup (:15 every 6h) and the volsync hour.
+  schedule: "45 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      template:
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile: { type: RuntimeDefault }
+          initContainers:
+            - &defrag
+              name: defrag-cp1
+              image: ghcr.io/siderolabs/talosctl:v1.13.8@sha256:4ef662a5e264af865e9d8ce665d0d5b9073c2d08bd7e72bce27d3cce5ae1550a
+              args: ["--nodes", "${CONTROL_PLANE_1_IP}", "etcd", "defrag"]
+              env:
+                - name: TALOSCONFIG
+                  value: /var/run/secrets/talos.dev/config
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: { drop: ["ALL"] }
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: talos-secrets
+                  mountPath: /var/run/secrets/talos.dev
+                  readOnly: true
+            - <<: *defrag
+              name: defrag-cp2
+              args: ["--nodes", "${CONTROL_PLANE_2_IP}", "etcd", "defrag"]
+            - <<: *defrag
+              name: defrag-cp3
+              args: ["--nodes", "${CONTROL_PLANE_3_IP}", "etcd", "defrag"]
+          containers:
+            # Log the post-defrag sizes (db size vs in use) for the record.
+            - <<: *defrag
+              name: status
+              args: ["--nodes", "${CONTROL_PLANE_1_IP},${CONTROL_PLANE_2_IP},${CONTROL_PLANE_3_IP}", "etcd", "status"]
+          volumes:
+            - name: talos-secrets
+              secret:
+                secretName: etcd-defrag-secrets
