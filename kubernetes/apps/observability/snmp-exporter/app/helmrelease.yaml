@@ -5,6 +5,7 @@ metadata:
   name: &app snmp-exporter
 spec:
   interval: 1h
+  maxHistory: 2
   chartRef:
     kind: OCIRepository
     name: snmp-exporter

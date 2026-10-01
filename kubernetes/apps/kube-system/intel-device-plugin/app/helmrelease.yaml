@@ -6,6 +6,7 @@ metadata:
   name: intel-device-plugin-operator
 spec:
   interval: 30m
+  maxHistory: 2
   chart:
     spec:
       chart: intel-device-plugins-operator

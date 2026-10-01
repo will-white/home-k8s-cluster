@@ -6,6 +6,7 @@ metadata:
   name: &app zigbee2mqtt-ota
 spec:
   interval: 30m
+  maxHistory: 2
   chartRef:
     kind: OCIRepository
     name: zigbee2mqtt-ota

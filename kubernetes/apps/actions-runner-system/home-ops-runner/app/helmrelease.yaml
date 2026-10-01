@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: home-ops-runner
   interval: 1h
+  maxHistory: 2
   values:
     githubConfigUrl: https://github.com/will-white/home-k8s-cluster
     githubConfigSecret: home-ops-runner-secret

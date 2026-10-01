@@ -9,6 +9,7 @@ metadata:
   name: plugin-barman-cloud
 spec:
   interval: 30m
+  maxHistory: 2
   chart:
     spec:
       chart: plugin-barman-cloud

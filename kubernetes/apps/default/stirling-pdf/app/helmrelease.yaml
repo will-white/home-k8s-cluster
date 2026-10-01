@@ -6,6 +6,7 @@ metadata:
   name: &app stirling-pdf
 spec:
   interval: 30m
+  maxHistory: 2
   chartRef:
     kind: OCIRepository
     name: stirling-pdf

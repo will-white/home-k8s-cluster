@@ -4,6 +4,7 @@ metadata:
   name: cloudnative-pg
 spec:
   interval: 30m
+  maxHistory: 2
   chart:
     spec:
       chart: cloudnative-pg

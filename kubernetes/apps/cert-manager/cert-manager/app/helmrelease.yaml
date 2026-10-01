@@ -4,6 +4,7 @@ metadata:
   name: cert-manager
 spec:
   interval: 30m
+  maxHistory: 2
   chart:
     spec:
       chart: cert-manager

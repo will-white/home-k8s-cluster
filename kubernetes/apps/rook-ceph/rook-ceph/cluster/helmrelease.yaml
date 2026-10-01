@@ -23,6 +23,7 @@ spec:
     remediation:
       retries: 3
   interval: 30m
+  maxHistory: 2
   # A full roll of all 19 Ceph daemons takes longer than 15m; the short
   # timeout is what escalated a healthy-but-slow upgrade into a rollback.
   timeout: 40m

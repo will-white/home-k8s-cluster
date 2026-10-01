@@ -5,6 +5,7 @@ metadata:
   name: coredns
 spec:
   interval: 30m
+  maxHistory: 2
   chart:
     spec:
       chart: coredns

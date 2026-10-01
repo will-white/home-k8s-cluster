@@ -6,6 +6,7 @@ metadata:
   name: go2rtc
 spec:
   interval: 30m
+  maxHistory: 2
   chartRef:
     kind: OCIRepository
     name: go2rtc

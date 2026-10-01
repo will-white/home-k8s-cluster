@@ -6,6 +6,7 @@ metadata:
   name: adguard-exporter
 spec:
   interval: 30m
+  maxHistory: 2
   chartRef:
     kind: OCIRepository
     name: adguard-exporter
