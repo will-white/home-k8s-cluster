@@ -4,6 +4,7 @@ metadata:
   name: emqx
 spec:
   interval: 30m
+  maxHistory: 2
   chart:
     spec:
       chart: emqx-operator

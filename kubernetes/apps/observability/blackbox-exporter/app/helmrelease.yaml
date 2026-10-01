@@ -4,6 +4,7 @@ metadata:
   name: &app blackbox-exporter
 spec:
   interval: 30m
+  maxHistory: 2
   chart:
     spec:
       chart: prometheus-blackbox-exporter

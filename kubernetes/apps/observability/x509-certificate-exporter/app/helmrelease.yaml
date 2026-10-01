@@ -5,6 +5,7 @@ metadata:
   name: &app x509-certificate-exporter
 spec:
   interval: 30m
+  maxHistory: 2
   chart:
     spec:
       chart: x509-certificate-exporter

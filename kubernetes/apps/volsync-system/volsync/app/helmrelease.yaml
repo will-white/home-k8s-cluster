@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: volsync
   interval: 1h
+  maxHistory: 2
   values:
     fullnameOverride: volsync # Required for volsync-perfectra1n fork
     image: &image

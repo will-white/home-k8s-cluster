@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: actions-runner-controller
   interval: 1h
+  maxHistory: 2
   values:
     # Keeps the ServiceAccount name predictable so the runner scale set's
     # controllerServiceAccount reference doesn't depend on Helm name mangling.

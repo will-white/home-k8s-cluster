@@ -9,6 +9,7 @@ spec:
     kind: OCIRepository
     name: kopia
   interval: 1h
+  maxHistory: 2
   values:
     controllers:
       kopia:

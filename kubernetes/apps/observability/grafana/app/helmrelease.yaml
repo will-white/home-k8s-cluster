@@ -17,6 +17,7 @@ spec:
     remediation:
       retries: 3
   interval: 30m
+  maxHistory: 2
   upgrade:
     cleanupOnFail: true
     remediation:

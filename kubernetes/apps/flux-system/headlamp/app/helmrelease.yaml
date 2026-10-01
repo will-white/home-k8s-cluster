@@ -21,6 +21,7 @@ metadata:
   name: headlamp
 spec:
   interval: 1h
+  maxHistory: 2
   chartRef:
     kind: OCIRepository
     name: headlamp

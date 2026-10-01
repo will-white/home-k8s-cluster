@@ -6,6 +6,7 @@ metadata:
   namespace: network
 spec:
   interval: 30m
+  maxHistory: 2
   chart:
     spec:
       chart: ingress-nginx
