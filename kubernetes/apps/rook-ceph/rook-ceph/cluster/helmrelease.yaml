@@ -412,6 +412,16 @@ spec:
       prometheusRuleOverrides:
         CephPGImbalance:
           disabled: true
+        # predict_linear(node_filesystem_free_bytes[2d], 5d) < 0 with no `for`,
+        # on every node filesystem (not Ceph's). node-exporter series carry the
+        # exporter pod name, so each node-exporter restart leaves a short dead
+        # series in the 2d window; an image-pull dip inside it extrapolates to
+        # "-55GiB/day" and the alert fires for ~2 days on a flat /var
+        # (2026-09-30..10-02, 24 episodes, old pod names). Genuine fill-up is
+        # covered by node-exporter's NodeFilesystemSpaceFillingUp (low free %
+        # AND predicted full, for 1h) and NodeFilesystemAlmostOutOfSpace.
+        CephNodeDiskspaceWarning:
+          disabled: true
     toolbox:
       enabled: true
   driftDetection:
