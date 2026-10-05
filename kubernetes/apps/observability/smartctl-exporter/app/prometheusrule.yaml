@@ -87,3 +87,48 @@ spec:
           for: 15m
           labels:
             severity: critical
+        #
+        # SATA boot SSDs (Kingston SA400 240G on every node). NVMe-only metrics
+        # above (percentage_used, media_errors) never fire for these, so wear
+        # and grown defects are read from vendor attributes instead.
+        # SATA_CRC_Error_Count is deliberately NOT alerted on: the A400 packs
+        # it (high 16 bits flip 1<->2, low 16 bits wander 18-21), so increase()
+        # fires constantly. Ref: 2026-10-05 mj05ajfj sda failure post-mortem.
+        #
+        - alert: SmartSataSsdWearing
+          annotations:
+            summary:
+              SATA SSD {{ $labels.device }} on {{ $labels.instance }} has
+              {{ $value }}% life left.
+            description: >-
+              Plan a replacement. These SSDs hold Talos and EPHEMERAL; when one
+              degrades the node goes NotReady with I/O errors and needs a
+              manual power-off + out-of-service taint.
+          expr: |
+            smartctl_device_attribute{attribute_name="SSD_Life_Left",attribute_value_type="raw"} < 25
+          for: 1h
+          labels:
+            severity: warning
+        - alert: SmartSataBadBlocksHigh
+          annotations:
+            summary:
+              SATA SSD {{ $labels.device }} on {{ $labels.instance }} reports
+              Bad_Block_Rate {{ $value }}.
+            description: >-
+              The fleet sits at 0-9. The sda that failed on mj05ajfj on
+              2026-10-05 read 44 for at least 5 days beforehand.
+          expr: |
+            smartctl_device_attribute{attribute_name="Bad_Block_Rate",attribute_value_type="raw"} > 20
+          for: 1h
+          labels:
+            severity: warning
+        - alert: SmartSataUncorrectableErrors
+          annotations:
+            summary:
+              SATA SSD {{ $labels.device }} on {{ $labels.instance }} logged new
+              uncorrectable errors.
+          expr: |
+            increase(smartctl_device_attribute{attribute_name=~"Reported_Uncorrect|Reallocated_Event_Count",attribute_value_type="raw"}[24h]) > 0
+          for: 5m
+          labels:
+            severity: warning

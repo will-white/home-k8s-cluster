@@ -75,8 +75,15 @@ spec:
               (see NodeUnreachable), insufficient capacity, image pull
               failure, missing PVC. Inspect with
               `kubectl describe pod -n {{ $labels.namespace }} {{ $labels.pod }}`.
+          # group_left(node) copies the pod's node onto the alert so the
+          # NodeNotReady/NodeUnreachable inhibit rule in Alertmanager can
+          # match it (equal: [node]). Unscheduled pods get node="" and are
+          # never inhibited.
           expr: |
-            kube_pod_status_phase{phase="Pending"} == 1
+            kube_pod_status_phase{phase="Pending"}
+            * on (namespace, pod) group_left (node)
+            max by (namespace, pod, node) (kube_pod_info)
+            == 1
           for: 15m
           labels:
             severity: warning
@@ -91,10 +98,17 @@ spec:
               hosting it is unreachable and kubelet cannot confirm shutdown.
               Will resolve when the node returns or node-fencer applies the
               out-of-service taint.
+          # node label attached for Alertmanager inhibition (see
+          # PodPendingTooLong). On 2026-10-05 a single NotReady node produced
+          # 39 of these, burying the root cause.
           expr: |
-            kube_pod_deletion_timestamp > 0
-            and on (namespace, pod)
-            (time() - kube_pod_deletion_timestamp) > 1800
+            (
+              kube_pod_deletion_timestamp > 0
+              and on (namespace, pod)
+              (time() - kube_pod_deletion_timestamp) > 1800
+            )
+            * on (namespace, pod) group_left (node)
+            max by (namespace, pod, node) (kube_pod_info)
           for: 5m
           labels:
             severity: warning
@@ -152,21 +166,24 @@ spec:
               Ceph maintenance flags have been left set for over 4 hours.
             description: >-
               One or more of noout/norebalance/nobackfill/norecover is still
-              set on the osdmap. These are set deliberately while nodes are
+              set on the osdmap or on an individual OSD/host. These are set deliberately while nodes are
               down and MUST be unset on the way back — norecover and
               nobackfill are precisely what stop Ceph healing degraded PGs,
               so the cluster quietly sits at reduced redundancy with no other
               symptom until something else fails. Nothing else alerts on this.
               Unset via `task talos:nodes-up`, or by hand with
               `for f in norecover nobackfill norebalance noout; do ceph osd
-              unset $f; done`. Run `ceph status` to see which are set.
+              unset $f; done` (per-OSD: `ceph osd rm-noout osd.N`). Run
+              `ceph health detail` to see which are set.
           # OSDMAP_FLAGS only counts the operator-settable flags — the
           # permanent ones (sortbitwise, recovery_deletes, purged_snapdirs,
           # pglog_hardlimit) do not trip it. 4h is deliberately longer than a
           # normal maintenance window so this fires on a forgotten unset
           # rather than on legitimate work in progress.
+          # OSD_FLAGS covers per-OSD/per-host flags (`ceph osd add-noout
+          # osd.N`), which OSDMAP_FLAGS does not see.
           expr: |
-            ceph_health_detail{name="OSDMAP_FLAGS"} == 1
+            ceph_health_detail{name=~"OSDMAP_FLAGS|OSD_FLAGS"} == 1
           for: 4h
           labels:
             severity: warning

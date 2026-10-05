@@ -185,12 +185,24 @@ spec:
             target_matchers:
               - severity = "warning"
             equal: ['alertname', 'namespace']
-          # NodeNotReady silences pod-level noise from that node.
+          # A NotReady/unreachable node silences the per-pod and per-volume
+          # cascade from that node; the node alert is the one to act on.
+          # Targets must carry a `node` label -- the custom pod rules attach it
+          # from kube_pod_info. Upstream KubePodNotReady/KubePodCrashLooping
+          # have no `node` label, so they cannot be matched here.
+          # (2026-10-05: one zombie node raised 107 alerts.)
           - source_matchers:
-              - alertname = "NodeNotReady"
+              - alertname =~ "NodeNotReady|NodeUnreachable|NodeFenced"
             target_matchers:
-              - alertname =~ "KubePodNotReady|KubePodCrashLooping"
+              - alertname =~ "PodStuckTerminating|PodPendingTooLong|PodRunningNotReady|VolumeAttachmentStuck|KubeNodeUnreachable|KubeletInstanceUnreachable"
             equal: ['node']
+          # Every healthy Cilium agent reports the lost node as unreachable;
+          # its own `node` label is the reporter, not the lost node, so this
+          # one is not scoped by node.
+          - source_matchers:
+              - alertname =~ "NodeNotReady|NodeUnreachable|NodeFenced"
+            target_matchers:
+              - alertname = "CiliumAgentUnreachableHealthEndpoint"
       ingress:
         annotations:
           gethomepage.dev/app: alertmanager

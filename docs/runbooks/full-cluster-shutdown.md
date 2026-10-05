@@ -382,6 +382,35 @@ also one of the things that comes back read-only.
    unreachable — the taint evicts every pod on the node. And remove it when the
    node returns; see [Gotcha 1](#gotcha-1-the-out-of-service-taint-highest-time-cost).
 
+### Half-alive node: `Ready=False`, "container runtime is down"
+
+The worst variant, and `node-fencer` will **not** help: it only fences
+`Ready=Unknown` (kubelet silent). A node whose boot SSD is throwing I/O errors
+keeps its kubelet heartbeating, so it sits at `Ready=False` indefinitely.
+Already-running containers keep running, but kubelet can neither stop nor
+report them, so every evicted pod hangs in `Terminating`, StatefulSets
+(`seerr-0`, `loki-0`) are never recreated, and RWO volumes stay attached.
+Deployments reschedule on their own, so the outage looks smaller than it is —
+and their old copies may still be writing to the same CephFS data.
+
+Seen 2026-10-05 on mj05ajfj (sda Kingston A400): `talosctl dmesg` full of
+`input/output error` on `/etc/kubernetes`, `/var/log`, `/var/run/netns`.
+
+1. Confirm: `kubectl describe node <node>` → `container runtime is down`,
+   and `talosctl -n <ip> dmesg | grep 'input/output error'`.
+2. `talosctl -n <ip> shutdown --force`. Expect it to **hang** at
+   `volumeFinalize` (phase 8/10) — it cannot unmount the failing disk. Once
+   `ceph osd tree` shows the node's OSD down, the containers are dead; hard
+   power off (button / PDU — AMT is not yet provisioned, see
+   [intel-amt-vpro.md](./intel-amt-vpro.md)) and confirm `talosctl version`
+   no longer answers.
+3. Only then apply the `out-of-service` taint (above). Fencing while the old
+   containers can still write risks a double-mount; this is why node-fencer
+   leaves `Ready=False` to a human.
+4. If the OSD's own NVMe is intact and the fix is a boot-SSD swap,
+   `ceph osd add-noout osd.<N>` (per-OSD, not cluster-wide) avoids a full
+   re-replication; `CephOsdMapFlagsSet` reminds you after 4h if forgotten.
+
 ### Then treat it as a bring-up
 
 Once the node is back, `task talos:nodes-up NODES="<the node>"` does the whole
