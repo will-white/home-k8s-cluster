@@ -33,7 +33,7 @@ spec:
           initContainers:
             - &defrag
               name: defrag-cp1
-              image: ghcr.io/siderolabs/talosctl:v1.13.8@sha256:4ef662a5e264af865e9d8ce665d0d5b9073c2d08bd7e72bce27d3cce5ae1550a
+              image: ghcr.io/siderolabs/talosctl:v1.13.11@sha256:f2a2faca6f5ec78a0be07d74dff5d33169d9b58bf7090535c9b598c8e7558c43
               args: ["--nodes", "${CONTROL_PLANE_1_IP}", "etcd", "defrag"]
               env:
                 - name: TALOSCONFIG
