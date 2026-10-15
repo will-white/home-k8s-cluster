@@ -44,7 +44,7 @@ spec:
       - --annotation-prefix=external-dns.alpha.kubernetes.io/
     extraContainers:
       - name: adguard-sidecar
-        image: ghcr.io/will-white/adguard-external-dns-sidecar:v0.3.14@sha256:67f3b2512b0aac62ca356da0e2ab3d24185bd5e0ca8db2093bbe11055d5398f9
+        image: ghcr.io/will-white/adguard-external-dns-sidecar:v0.4.0@sha256:a7f0598befd0d703691cf41736587356d3a76728d746f58cc29dca66db24949a
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -89,6 +89,18 @@ spec:
             value: "192.168.5.1"
           - name: CHECK_INTERVAL
             value: "60"
+          # No catch-all: AdGuard answers with the union of every matching rewrite,
+          # so a wildcard to the router also answered for LoadBalancer Services and
+          # off-cluster hosts, giving them two addresses. Router-served (Caddy) names
+          # are listed explicitly instead; anything undeclared resolves upstream.
+          - name: WILDCARD_FALLBACK
+            value: "false"
+          - name: STATIC_RECORDS
+            value: >-
+              nas=192.168.5.1,opnsense=192.168.5.1,plex=192.168.5.1,
+              portainer=192.168.5.1,netboot=192.168.5.1,konnected=192.168.5.1,
+              pikvm=192.168.5.1,s3=192.168.5.1,weather=192.168.5.1,
+              adguard=192.168.5.2
         resources:
           requests:
             cpu: 10m
