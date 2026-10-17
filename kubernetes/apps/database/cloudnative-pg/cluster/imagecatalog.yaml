@@ -14,4 +14,4 @@ metadata:
 spec:
   images:
     - major: 16
-      image: ghcr.io/cloudnative-pg/postgresql:16.15-standard-bookworm@sha256:370eae69bfd20329909b1510671a201e566b89d8f9880d09ae4e8f3d9bac64d0
+      image: ghcr.io/cloudnative-pg/postgresql:16.15-standard-bookworm@sha256:1fe514471d8b75bb87cbdf63164a9cd9fe7dad92a363eeb621db4fa5ea249c45
