@@ -30,7 +30,7 @@ spec:
           app:
             image:
               repository: gotson/komga
-              tag: 1.27.1@sha256:9cf102f5fb78e2e020700c53eca757e4f4d4e347121b0a16380822760337cca9
+              tag: 1.29.1@sha256:9fa656e8259bbd75c0f654bdfa91abf2b4813cbf4f40e80eb292495446ffdf1f
             env:
               TZ: ${TIMEZONE}
             probes:
