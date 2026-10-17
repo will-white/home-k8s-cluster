@@ -145,7 +145,7 @@ spec:
               value: Prometheus
           # renovate: depName="Kubernetes / Persistent Volumes"
           gnetId: 23233
-          revision: 6
+          revision: 10
       infrastructure:
         cert-manager:
           datasource: Prometheus
