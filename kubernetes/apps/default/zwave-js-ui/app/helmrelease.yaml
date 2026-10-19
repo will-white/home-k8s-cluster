@@ -37,7 +37,7 @@ spec:
               BACKUPS_DIR: /config/backups
               ZWAVEJS_EXTERNAL_CONFIG: /config/.config-db
               # Radio 3 (EFR32ZG23 Z-Wave add-on) exposed as a TCP socket by
-              # SLZB-OS — same remote-serial pattern as zigbee2mqtt on slzb-06m.
+              # SLZB-OS — same remote-serial pattern as zigbee2mqtt (radio 1, :6638).
               # Setting this also force-enables the Z-Wave driver.
               ZWAVE_PORT: tcp://slzb-ultima3.internal:9638
               # Declaratively manage the Z-Wave JS server + driver knobs that

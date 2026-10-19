@@ -46,7 +46,10 @@ spec:
               ZIGBEE2MQTT_CONFIG_MQTT_VERSION: 5
               ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER: ember
               ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE: 115200
-              ZIGBEE2MQTT_CONFIG_SERIAL_PORT: tcp://slzb-06m.internal:6638
+              # Radio 1 (EFR32MG24) of the SLZB-Ultima3, which also carries Thread
+              # (:7638) and Z-Wave (:9638). Migrated off the SLZB-06M 2026-10-19 by
+              # an Ember backup restore (same PAN/key/IEEE), so no re-pairing.
+              ZIGBEE2MQTT_CONFIG_SERIAL_PORT: tcp://slzb-ultima3.internal:6638
               ZIGBEE2MQTT_DATA: /config
             envFrom:
               - secretRef:
