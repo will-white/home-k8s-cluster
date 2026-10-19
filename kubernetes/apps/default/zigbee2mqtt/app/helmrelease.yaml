@@ -48,7 +48,12 @@ spec:
               ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE: 115200
               # Radio 1 (EFR32MG24) of the SLZB-Ultima3, which also carries Thread
               # (:7638) and Z-Wave (:9638). Migrated off the SLZB-06M 2026-10-19 by
-              # an Ember backup restore (same PAN/key/IEEE), so no re-pairing.
+              # an Ember backup restore (same PAN/key/frame counter), no re-pairing.
+              # The restore did NOT carry the coordinator IEEE (0x00124b0026b88196):
+              # routers then saw 0x0000 under a new IEEE, logged
+              # ROUTE_ERROR_ADDRESS_CONFLICT, and the NCP hit RESET_ASSERT in a loop.
+              # Fixed with SLZB-OS's IEEE write (/api2?action=4&cmd=11&ieee=0x...).
+              # Next coordinator swap: write the IEEE before pointing Z2M at it.
               ZIGBEE2MQTT_CONFIG_SERIAL_PORT: tcp://slzb-ultima3.internal:6638
               ZIGBEE2MQTT_DATA: /config
             envFrom:
