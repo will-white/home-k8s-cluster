@@ -13,6 +13,7 @@ resources:
   - ./karakeep/ks.yaml
   - ./litellm/ks.yaml
   - ./manyfold/ks.yaml
+  - ./matter-server/ks.yaml
   - ./mealie/ks.yaml
   - ./meilisearch/ks.yaml
   - ./paperless/ks.yaml

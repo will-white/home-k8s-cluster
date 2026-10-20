@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app matter-server
+  namespace: flux-system
+spec:
+  targetNamespace: default
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: external-secrets-stores
+    - name: volsync
+  path: ./kubernetes/apps/default/matter-server/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
+  postBuild:
+    substitute:
+      APP: *app
+      NAMESPACE: default
+      GATUS_PORT: "5580"
+      GATUS_PATH: /health
+      VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: default
+      VOLSYNC_CAPACITY: 1Gi
+      # explicit: the claim's class is immutable once created
+      PVC_VOLSYNC_STORAGECLASS: ceph-block
+      # Fabric data only changes on commission/remove; daily backup is sufficient.
+      VOLSYNC_SCHEDULE: "0 4 * * *"
