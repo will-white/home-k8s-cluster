@@ -1,0 +1,141 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: matter-server
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: matter-server
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: volsync
+      namespace: volsync-system
+  install:
+    remediation:
+      retries: 3
+  interval: 30m
+  maxHistory: 2
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    controllers:
+      matter-server:
+        annotations:
+          reloader.stakater.com/auto: 'true'
+        containers:
+          app:
+            env:
+              TZ: ${TIMEZONE}
+              LOG_LEVEL: info
+              STORAGE_PATH: /data
+              # rootfs is read-only; keep any stray dotfile writes on the emptyDir
+              HOME: /tmp
+              # Matter is IPv6 link-local multicast (mDNS, operational
+              # discovery), so the pod needs the node's LAN interface — hence
+              # hostNetwork — and must not wander onto cilium_* interfaces.
+              # eno1 is the LAN NIC on every node (see Talos EthernetConfig).
+              PRIMARY_INTERFACE: eno1
+              # Dashboard is served behind the internal ingress, not on :5580.
+              PRODUCTION_MODE: true
+              # Reaching Thread devices additionally needs the node to accept
+              # the OTBR's RA (SLAAC address + RIO route to the OMR prefix):
+              # net.ipv6.conf.eno1.accept_ra=2, accept_ra_rt_info_max_plen=64.
+              # That is a Talos machine patch, tracked separately.
+            image:
+              repository: ghcr.io/matter-js/matterjs-server
+              tag: 1.4.0@sha256:54232d0d3e7dff5a54759469d2753399270412b4c30c55b31750a4595e4cb236
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 5580
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 5580
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: 5580
+                  # first start migrates/seeds certificate data; upstream
+                  # allows a 900s start period
+                  periodSeconds: 10
+                  failureThreshold: 90
+            resources:
+              limits:
+                memory: 1Gi
+              requests:
+                cpu: 25m
+                memory: 256Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              readOnlyRootFilesystem: true
+    defaultPodOptions:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+    ingress:
+      app:
+        annotations:
+          gethomepage.dev/enabled: 'true'
+          gethomepage.dev/group: Smart Home
+          gethomepage.dev/icon: matter.png
+          gethomepage.dev/name: Matter
+          gethomepage.dev/description: Matter controller
+        className: internal
+        hosts:
+          - host: matter.${SECRET_DOMAIN}
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+    persistence:
+      data:
+        existingClaim: matter-server
+        globalMounts:
+          - path: /data
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+    service:
+      app:
+        controller: matter-server
+        ports:
+          # WebSocket API (/ws) — the Home Assistant Matter integration connects
+          # to ws://matter-server.default.svc.cluster.local:5580/ws.
+          http:
+            port: 5580
+  driftDetection:
+    mode: enabled
