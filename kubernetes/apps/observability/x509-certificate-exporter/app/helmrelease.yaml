@@ -58,9 +58,13 @@ spec:
       create: true
     prometheusRules:
       create: true
-      # Warn well before expiry, critical when renewal is genuinely overdue.
-      warningDaysLeft: 21
-      criticalDaysLeft: 7
+      # Backstop for certs cert-manager doesn't manage (CNPG, Cilium, Hubble).
+      # Must sit below the shortest renewal window: CNPG renews 7d before
+      # expiry and the barman-cloud plugin 15d, so the old 21/7 warned on
+      # healthy certs and could page during a normal CNPG renewal.
+      # cert-manager certs are covered precisely by CertManagerCertRenewalOverdue.
+      warningDaysLeft: 6
+      criticalDaysLeft: 3
       # Alert if the exporter itself can't read Secrets / reach the API —
       # otherwise a monitoring regression would go silent.
       #
