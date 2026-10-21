@@ -5,6 +5,7 @@ resources:
   - ./objectstore-user.yaml
   - ./buckets.yaml
   - ./cloudnative-pg-push-secret.yaml
+  - ./servicemonitors.yaml
 configMapGenerator:
   - name: rook-ceph-loki-rules
     files:
