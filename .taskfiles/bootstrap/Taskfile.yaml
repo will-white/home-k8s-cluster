@@ -24,7 +24,8 @@ tasks:
       - until talhelper gencommand bootstrap --config-file {{.TALHELPER_CONFIG_FILE}} --out-dir {{.TALHELPER_CLUSTER_DIR}} | bash; do sleep 10; done
       - until talhelper gencommand kubeconfig --config-file {{.TALHELPER_CONFIG_FILE}} --out-dir {{.TALHELPER_CLUSTER_DIR}} --extra-flags="{{.ROOT_DIR}} --force" | bash; do sleep 10; done
       - task: apps
-      - talosctl health --server=false
+      # Explicit node lists: discovery is off in talconfig.yaml (see talos:health).
+      - task: :talos:health
     vars:
       TALHELPER_SECRET_EXISTS:
         sh: test -f {{.TALHELPER_SECRET_FILE}} && echo true || echo false
