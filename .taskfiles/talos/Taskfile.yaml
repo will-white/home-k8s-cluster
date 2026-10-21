@@ -7,6 +7,13 @@ vars:
   TALHELPER_CONFIG_FILE: '{{.KUBERNETES_DIR}}/bootstrap/talos/talconfig.yaml'
   TALHELPER_SECRET_FILE: '{{.KUBERNETES_DIR}}/bootstrap/talos/talsecret.sops.yaml'
   TALOSCONFIG: '{{.TALHELPER_CLUSTER_DIR}}/talosconfig'
+  # Node lists come from talconfig.yaml. Cluster discovery is disabled there,
+  # so `talosctl health` cannot find the members on its own and stalls at
+  # "waiting for all nodes to finish boot sequence" until it times out.
+  CONTROLPLANE_IPS:
+    sh: yq '[.nodes[] | select(.controlPlane) | .ipAddress] | join(",")' {{.TALHELPER_CONFIG_FILE}}
+  WORKER_IPS:
+    sh: yq '[.nodes[] | select(.controlPlane | not) | .ipAddress] | join(",")' {{.TALHELPER_CONFIG_FILE}}
 
 env:
   TALOSCONFIG: '{{.TALOSCONFIG}}'
@@ -33,16 +40,22 @@ tasks:
   apply-node:
     desc: Apply Talos config to a node [HOSTNAME=required]
     cmds:
-      - talosctl --nodes {{.HOSTNAME}} apply-config --mode={{.MODE}} --file {{.TALHELPER_CLUSTER_DIR}}/{{.CLUSTER_NAME}}-{{.HOSTNAME}}.yaml
-      - talosctl --nodes {{.HOSTNAME}} health --wait-timeout=10m --server=false
+      - talosctl --nodes {{.NODE_IP}} apply-config --mode={{.MODE}} --file {{.TALHELPER_CLUSTER_DIR}}/{{.CLUSTER_NAME}}-{{.HOSTNAME}}.yaml
+      - task: health
+        vars: { NODE_IP: '{{.NODE_IP}}' }
     vars:
       CLUSTER_NAME:
         sh: yq '.clusterName' {{.TALHELPER_CONFIG_FILE}}
+      # Hostnames don't resolve from the workstation; talk to the node by IP.
+      NODE_IP:
+        sh: yq '.nodes[] | select(.hostname == "{{.HOSTNAME}}") | .ipAddress' {{.TALHELPER_CONFIG_FILE}}
       MODE: '{{.MODE | default "auto"}}'
     requires:
       vars: [HOSTNAME]
     preconditions:
-      - talosctl --nodes {{.HOSTNAME}} get machineconfig &>/dev/null
+      - sh: test -n "{{.NODE_IP}}"
+        msg: "{{.HOSTNAME}} is not a node in talconfig.yaml"
+      - talosctl --nodes {{.NODE_IP}} get machineconfig &>/dev/null
       - talosctl config info &>/dev/null
       - test -f {{.TALHELPER_CLUSTER_DIR}}/{{.CLUSTER_NAME}}-{{.HOSTNAME}}.yaml
       - test -f {{.TALOSCONFIG}}
@@ -52,10 +65,13 @@ tasks:
     desc: Upgrade Talos on a single node [HOSTNAME=required]
     cmds:
       - task: down
-      - talosctl --nodes {{.HOSTNAME}} upgrade --image="factory.talos.dev/installer{{if eq .TALOS_SECUREBOOT "true"}}-secureboot{{end}}/{{.TALOS_SCHEMATIC_ID}}:{{.TALOS_VERSION}}" --timeout=10m
-      - talosctl --nodes {{.HOSTNAME}} health --wait-timeout=10m --server=false
+      - talosctl --nodes {{.NODE_IP}} upgrade --image="factory.talos.dev/installer{{if eq .TALOS_SECUREBOOT "true"}}-secureboot{{end}}/{{.TALOS_SCHEMATIC_ID}}:{{.TALOS_VERSION}}" --timeout=10m
+      - task: health
+        vars: { NODE_IP: '{{.NODE_IP}}' }
       - task: up
     vars:
+      NODE_IP:
+        sh: yq '.nodes[] | select(.hostname == "{{.HOSTNAME}}") | .ipAddress' {{.TALHELPER_CONFIG_FILE}}
       # Schematic comes from talconfig.yaml (git), NOT the node's
       # extensions.talos.dev/schematic annotation: a node running a stale
       # schematic would otherwise re-pin itself forever, and extension
@@ -64,7 +80,7 @@ tasks:
       TALOS_SCHEMATIC_ID:
         sh: yq '.nodes[] | select(.hostname == "{{.HOSTNAME}}") | .talosImageURL | split("/") | .[-1]' {{.TALHELPER_CONFIG_FILE}}
       TALOS_SECUREBOOT:
-        sh: talosctl --nodes {{.HOSTNAME}} get securitystate --output=jsonpath='{.spec.secureBoot}'
+        sh: talosctl --nodes {{.NODE_IP}} get securitystate --output=jsonpath='{.spec.secureBoot}'
       TALOS_VERSION:
         sh: yq '.talosVersion' {{.TALHELPER_CONFIG_FILE}}
     requires:
@@ -72,9 +88,23 @@ tasks:
     preconditions:
       - curl -fsSL -o /dev/null --fail https://github.com/siderolabs/talos/releases/tag/{{.TALOS_VERSION}}
       - yq --exit-status '.nodes[] | select(.hostname == "{{.HOSTNAME}}") | .talosImageURL' {{.TALHELPER_CONFIG_FILE}} >/dev/null
-      - talosctl --nodes {{.HOSTNAME}} get machineconfig &>/dev/null
+      - talosctl --nodes {{.NODE_IP}} get machineconfig &>/dev/null
       - talosctl config info &>/dev/null
       - test -f {{.TALOSCONFIG}}
+      - which talosctl yq
+
+  health:
+    desc: Cluster health check with explicit node lists [NODE_IP=optional, node to avoid querying]
+    # Queried through a control-plane node other than the one just changed,
+    # so the check isn't asking a node that may still be settling.
+    cmd: >-
+      talosctl --nodes {{.HEALTH_NODE}} health --wait-timeout={{.TIMEOUT}} --server=false
+      --control-plane-nodes {{.CONTROLPLANE_IPS}} --worker-nodes {{.WORKER_IPS}}
+    vars:
+      HEALTH_NODE:
+        sh: yq '[.nodes[] | select(.controlPlane and .ipAddress != "{{.NODE_IP}}") | .ipAddress] | .[0]' {{.TALHELPER_CONFIG_FILE}}
+      TIMEOUT: '{{.TIMEOUT | default "10m"}}'
+    preconditions:
       - which talosctl yq
 
   upgrade-k8s:

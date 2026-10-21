@@ -22,28 +22,35 @@ dark. For remotely re-imaging a node once you have AMT KVM, see
   `talosctl -n <ip> read /proc/modules | grep mei_me`.
 - **AMT listens on** 16992 (HTTP/WSMAN), 16993 (HTTPS), 16994/16995
   (redirection), and 5900 (KVM/VNC when enabled) — on *AMT's* IP, which is
-  only the host's IP if you configure it that way.
+  only the host's IP if you configure it that way. **Here it is**: see below.
 - **Hosts are static-IP'd** (`dhcp: false` in `talconfig.yaml`), which is
-  why AMT's factory-default DHCP shared-IP mode was flaky here: the ME runs
-  its own DHCP client, gets a pool address nobody expects (or none at all),
-  and drops off on lease/link hiccups. This is the root cause of
-  "sometimes it works, sometimes it doesn't".
+  why AMT's factory-default DHCP mode was flaky here: the ME runs its own
+  DHCP client and gets a pool address nobody expects (mj04968e's MAC was
+  seen at a stray 192.168.5.25), or none at all. The observable symptom is
+  **AMT answers until Talos boots, then goes deaf** — the ME and the host
+  disagree about who owns the link and the address.
+- **The fix is a static AMT IP equal to the host IP.** In shared-IP mode the
+  ME intercepts traffic for its own ports (16992–16995, 5900) on the host's
+  address and passes everything else to the OS, so the two never disagree.
+  Verified 2026-10-20 on mj04ew44 (.51) and mj05ajfj (.50): `:16992`
+  answers with Talos fully up. This replaces the earlier "host IP + 100"
+  plan.
 
 ## Node inventory
 
-AMT IPs follow the host IP + 100 convention. Confirm they sit outside the
-OPNsense DHCP pool (or add static mappings for them) before provisioning.
+AMT IP = host IP on every node (shared-IP mode, static — see above). The
+host IPs are already static and outside the OPNsense DHCP pool.
 
-| Hostname | Host IP        | MAC                 | AMT IP (planned) |
-| -------- | -------------- | ------------------- | ---------------- |
-| mj0583jp | 192.168.5.40   | `6c:0b:84:e3:07:55` | 192.168.5.140    |
-| mj0581m7 | 192.168.5.41   | `6c:0b:84:e3:64:51` | 192.168.5.141    |
-| mj0583eq | 192.168.5.42   | `6c:0b:84:e3:05:cd` | 192.168.5.142    |
-| mj05ajfj | 192.168.5.50   | `6c:4b:90:01:c4:11` | 192.168.5.150    |
-| mj04ew44 | 192.168.5.51   | `6c:0b:84:e0:20:b1` | 192.168.5.151    |
-| mj0581rw | 192.168.5.52   | `6c:0b:84:e3:64:b1` | 192.168.5.152    |
-| mj04968e | 192.168.5.53   | `00:23:24:ba:59:9d` | 192.168.5.153    |
-| mj05g4ub | 192.168.5.54   | `6c:4b:90:0a:7b:a7` | 192.168.5.154    |
+| Hostname | Host / AMT IP  | MAC                 | AMT static IP set      |
+| -------- | -------------- | ------------------- | ---------------------- |
+| mj0583jp | 192.168.5.40   | `6c:0b:84:e3:07:55` | not yet                |
+| mj0581m7 | 192.168.5.41   | `6c:0b:84:e3:64:51` | not yet                |
+| mj0583eq | 192.168.5.42   | `6c:0b:84:e3:05:cd` | not yet                |
+| mj05ajfj | 192.168.5.50   | `6c:4b:90:01:c4:11` | ✅ 2026-10-20          |
+| mj04ew44 | 192.168.5.51   | `6c:0b:84:e0:20:b1` | ✅ (found working)     |
+| mj0581rw | 192.168.5.52   | `6c:0b:84:e3:64:b1` | not yet                |
+| mj04968e | 192.168.5.53   | `00:23:24:ba:59:9d` | not yet                |
+| mj05g4ub | 192.168.5.54   | `6c:4b:90:0a:7b:a7` | not yet                |
 
 (192.168.5.45 is the k8s control-plane VIP — unrelated to AMT.)
 
@@ -55,11 +62,12 @@ OPNsense DHCP pool (or add static mappings for them) before provisioning.
   headless nodes. ACM = consent-free KVM. The cert-based zero-touch ACM
   path needs a purchased provisioning cert plus a DHCP-supplied DNS suffix;
   not worth it for 8 static-IP machines.
-- **Static AMT IPs.** CIRA does not require them (the tunnel is outbound),
-  but they are the fallback path when the CIRA/MeshCentral layer is itself
-  what broke, and they keep AMT reachable during exactly the disasters
-  (power/DHCP outages) where you want it most. Costs ~30s while already in
-  MEBx.
+- **Static AMT IPs, equal to the host IP.** CIRA does not require them (the
+  tunnel is outbound), but they are the fallback path when the
+  CIRA/MeshCentral layer is itself what broke, and they keep AMT reachable
+  during exactly the disasters (power/DHCP outages) where you want it most.
+  A *separate* AMT IP on the shared NIC buys nothing and is the variant that
+  drops off once the OS owns the link. Costs ~30s while already in MEBx.
 - **CIRA to MeshCentral for day-to-day**, direct-to-static-IP as fallback.
 
 ## 1. MEBx activation (per node, one console visit)
@@ -68,21 +76,33 @@ OPNsense DHCP pool (or add static mappings for them) before provisioning.
 > **BIOS/ME firmware updates first** (they can reset MEBx settings), then
 > BIOS settings, then this section.
 
-1. Reboot, press **Ctrl+P** during POST (Lenovo Tiny: if no prompt, enable
-   the MEBx hotkey in BIOS setup first).
+1. Reboot (`talosctl -n <ip> reboot` — cordon and `ceph osd add-noout
+   osd.N` first), press **Ctrl+P** during POST. The window is short: start
+   tapping as soon as the screen lights up. (Lenovo Tiny: if no prompt,
+   enable the MEBx hotkey in BIOS setup first.)
 2. Log in with default password `admin`; it forces a change. **One shared
    password for the fleet, stored in Bitwarden SM** (suggested key:
    `CLUSTER_AMT_MEBX_PASSWORD`) — never in git. With manual provisioning
    this MEBx password *is* the network `admin` password AMT tools use.
-3. Intel AMT Configuration → **Network Setup**: static IP from the table
-   above, netmask `255.255.255.0`, gateway `192.168.5.1`, and DNS —
-   required for CIRA if the MPS is configured by FQDN rather than IP.
+3. Intel AMT Configuration → **Network Setup**:
+   - Network Name Settings: Host Name = the node's hostname, Domain Name
+     blank, **Shared/Dedicated FQDN: Shared**, Dynamic DNS Update:
+     Disabled.
+   - TCP/IP Settings → Wired LAN IPV4 Configuration: **DHCP Mode:
+     Disabled**, IP = the node's **host IP** from the table, netmask
+     `255.255.255.0`, gateway `192.168.5.1`, preferred DNS `192.168.5.1`
+     (resolves local names and works during a WAN outage), alternate DNS
+     `1.1.1.1`. DNS is required for CIRA if the MPS is configured by FQDN.
+   - **Re-read the IP before saving.** A `191.168.5.50` typo cost a full
+     reboot round on mj05ajfj.
 4. Intel AMT Configuration → **Activate Network Access** (confirm).
 5. **Power Policies → "Always On (S0–S5)"** and disable any idle/link
    power-saving timeout. Without this, AMT sleeps when the host is off —
    the single most common "AMT was reachable yesterday" cause.
-6. Exit; from any LAN machine verify:
-   `for p in 16992 16993; do nc -zvw2 <amt-ip> $p; done`
+6. Exit, let Talos boot, and verify **with the OS up** (that is the case
+   that used to fail) from any LAN machine:
+   `curl -s -o /dev/null -w '%{http_code}\n' http://<host-ip>:16992/` →
+   `303`. Then uncordon / `ceph osd rm-noout osd.N`.
 
 ## 2. MeshCentral + CIRA
 
@@ -105,7 +125,7 @@ Per fleet:
 
    ```bash
    meshcmd amtscript --script cira_setup.mescript \
-     --host 192.168.5.140 --user admin --pass '<mebx-password>'
+     --host 192.168.5.40 --user admin --pass '<mebx-password>'
    ```
 
 4. The device flips to a persistent CIRA connection in MeshCentral within
@@ -126,6 +146,9 @@ console visit is impractical, or if power control is all you need.
 
 ## Troubleshooting
 
+- **AMT answers before Talos boots, then stops:** the ME is in DHCP mode or
+  has an AMT IP different from the host's. Set it to static = host IP (§1
+  step 3). Talos runs no Intel LMS, so nothing in the OS will reconcile it.
 - **Is AMT alive anywhere?** Port-probe the expected IPs, then sweep every
   node's ARP cache for a node MAC appearing at a *second* IP (= a live AMT
   DHCP lease somewhere unexpected):

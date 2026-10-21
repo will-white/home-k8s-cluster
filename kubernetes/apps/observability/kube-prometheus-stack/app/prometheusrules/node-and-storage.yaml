@@ -182,8 +182,13 @@ spec:
           # rather than on legitimate work in progress.
           # OSD_FLAGS covers per-OSD/per-host flags (`ceph osd add-noout
           # osd.N`), which OSDMAP_FLAGS does not see.
+          # Aggregated away from instance/pod: the metric comes from whichever
+          # mgr is active, and mgr.a/mgr.b trade that role constantly. Per-pod
+          # series restarted the 4h `for` on every switch, so while noout sat
+          # on osd.4 for 15 days (2026-10-05..20) this fired and resolved 46
+          # separate times. max_over_time bridges the scrape gap at a switch.
           expr: |
-            ceph_health_detail{name=~"OSDMAP_FLAGS|OSD_FLAGS"} == 1
+            max by (name) (max_over_time(ceph_health_detail{name=~"OSDMAP_FLAGS|OSD_FLAGS"}[10m])) == 1
           for: 4h
           labels:
             severity: warning
