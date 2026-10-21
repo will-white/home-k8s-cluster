@@ -408,7 +408,10 @@ spec:
         ingressClassName: internal
     monitoring:
       createPrometheusRules: true
-      enabled: true
+      # Rook's own ServiceMonitors are replaced by ./servicemonitors.yaml,
+      # which pins the mgr's pod/instance labels so the 8h mgr failover
+      # doesn't resolve + re-fire every Ceph alert. Rules are unaffected.
+      enabled: false
       prometheusRuleOverrides:
         CephPGImbalance:
           disabled: true

@@ -1,0 +1,72 @@
+---
+# Flux-owned replacements for the ServiceMonitors Rook creates itself
+# (CephCluster `monitoring.enabled`, now false in helmrelease.yaml). Same
+# names, so Flux adopts the existing objects instead of double-scraping.
+#
+# Why: Rook's mgr ServiceMonitor keeps the per-pod target labels (`pod`,
+# `instance`, `container`). The rook-ceph-mgr-failover CronJob
+# (../mgr-maintenance) flips the active mgr every 8h, so every mgr-sourced
+# series — and every Ceph alert built on them — got a new identity 3x/day:
+# each active Ceph alert resolved and re-fired after its `for:` (a ~20 min gap
+# at 00/08/16:00), producing RESOLVED + FIRING Pushover pairs. Rook's
+# ServiceMonitor spec has no relabel hook and the operator overwrites edits,
+# so the labels have to be pinned here.
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/servicemonitor_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: rook-ceph-mgr
+  labels:
+    team: rook
+spec:
+  endpoints:
+    - honorLabels: true
+      interval: 10s
+      path: /metrics
+      port: http-metrics
+      relabelings:
+        - action: replace
+          replacement: rook-ceph
+          targetLabel: cluster
+        # Only the active mgr is behind the service (selector mgr_role=active),
+        # so a constant instance is unique and survives failover. Rook rules
+        # join mgr series `on(cluster,pool_id,instance)`, which stays valid.
+        - action: replace
+          replacement: rook-ceph-mgr
+          targetLabel: instance
+        - action: labeldrop
+          regex: pod|container
+  namespaceSelector:
+    matchNames:
+      - rook-ceph
+  selector:
+    matchLabels:
+      app: rook-ceph-mgr
+      rook_cluster: rook-ceph
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/servicemonitor_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: rook-ceph-exporter
+  labels:
+    team: rook
+spec:
+  # Verbatim copy of Rook's: exporter runs one pod per node, so its pod labels
+  # are already stable across mgr failovers.
+  endpoints:
+    - honorLabels: true
+      interval: 10s
+      path: /metrics
+      port: ceph-exporter-http-metrics
+      relabelings:
+        - action: replace
+          replacement: rook-ceph
+          targetLabel: cluster
+  namespaceSelector:
+    matchNames:
+      - rook-ceph
+  selector:
+    matchLabels:
+      app: rook-ceph-exporter
+      rook_cluster: rook-ceph
