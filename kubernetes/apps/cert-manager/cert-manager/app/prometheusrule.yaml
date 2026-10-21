@@ -20,13 +20,28 @@ spec:
 
     - name: certificates
       rules:
-        - alert: CertManagerCertExpirySoon
+        # Keyed on each Certificate's own renewal time rather than a fixed
+        # days-left threshold: renewBefore varies (Let's Encrypt 30d, the
+        # barman-cloud plugin's 15d), so the old "< 21d" rule paged critical
+        # on healthy barman-cloud certs for 5 days before every renewal.
+        # 1h of grace covers cert-manager's retry backoff.
+        - alert: CertManagerCertRenewalOverdue
           expr: |
-            avg by (exported_namespace, namespace, name) (certmanager_certificate_expiration_timestamp_seconds - time()) < (21 * 24 * 3600)
+            avg by (exported_namespace, namespace, name) (time() - certmanager_certificate_renewal_timestamp_seconds) > 3600
           for: 5m
           annotations:
             summary: >-
-              The cert {{ $labels.name }} is {{ $value | humanizeDuration }} from expiry, it should have renewed over a week ago
+              The cert {{ $labels.exported_namespace }}/{{ $labels.name }} is {{ $value | humanizeDuration }} past its renewal time and has not renewed
+          labels:
+            severity: warning
+
+        - alert: CertManagerCertExpirySoon
+          expr: |
+            avg by (exported_namespace, namespace, name) (certmanager_certificate_expiration_timestamp_seconds - time()) < (7 * 24 * 3600)
+          for: 5m
+          annotations:
+            summary: >-
+              The cert {{ $labels.exported_namespace }}/{{ $labels.name }} expires in {{ $value | humanizeDuration }} and renewal is overdue
           labels:
             severity: critical
 
