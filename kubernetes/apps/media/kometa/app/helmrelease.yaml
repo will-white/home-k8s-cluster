@@ -52,9 +52,12 @@ spec:
               capabilities: {drop: ["ALL"]}
             resources:
               requests:
-                cpu: 10m
+                # 10m starved the run on busy nodes: the One Piece canon playlist
+                # resolves ~1,000 episodes, each parsing the show's full episode
+                # list, and crawled at ~2 lookups/min. No CPU limit, as usual.
+                cpu: 500m
               limits:
-                memory: 256Mi
+                memory: 512Mi
         pod:
           restartPolicy: Never
     defaultPodOptions:
