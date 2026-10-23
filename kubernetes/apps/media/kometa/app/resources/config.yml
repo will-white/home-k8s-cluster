@@ -4,7 +4,7 @@
 plex:
   # Plex listens on 32400 (nothing answers on :80; Gatus checks plex.internal:32400 too)
   url: http://plex.internal:32400
-  token: <<env.KOMETA_PLEX_TOKEN>>
+  token: <<PLEX_TOKEN>>  # from env KOMETA_PLEX_TOKEN
   timeout: 60
   db_cache: 40
 
@@ -27,12 +27,10 @@ settings:
   verify_ssl: true
 
 libraries:
-  # Kometa requires at least one library. No collection_files here: these
-  # mappings only exist so the playlists below can search them.
+  # Kometa requires at least one library. Left empty (no collection/overlay
+  # files): these mappings only exist so the playlists can search them.
   Movies:
-    collection_files: []
   TV Shows:
-    collection_files: []
 
 # Playlists live in their own file (Kometa ignores a top-level `playlists:` key
 # in config.yml). Mounted from the kometa-lists ConfigMap.
