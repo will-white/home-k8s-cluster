@@ -28,7 +28,12 @@ spec:
           reloader.stakater.com/auto: "true"
         type: cronjob
         cronjob:
-          schedule: "0 0 * * *"
+          # Weekly is plenty: the only playlist (One Piece Canon) changes when
+          # the list in Git changes or new episodes land, and a run takes ~40 min.
+          # After editing a list, run once by hand:
+          #   kubectl -n media create job kometa-manual --from=cronjob/kometa
+          schedule: "0 3 * * 0"
+          timeZone: ${TIMEZONE}
           backoffLimit: 0
           concurrencyPolicy: Forbid
           successfulJobsHistory: 1
