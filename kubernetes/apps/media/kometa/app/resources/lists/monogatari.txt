@@ -1,0 +1,143 @@
+# Monogatari watch order for Kometa (text_file builder), in release order.
+# Hand-maintained. Episodes: tvdb_episode:102261_<season>_<episode> as in the
+# file names (Sonarr / TheTVDB numbering); TheTVDB files several arcs as
+# season 0 specials. Films: plex://movie/<id> from the Movies library. Lines not
+# in Plex yet are skipped by Kometa and added automatically once downloaded
+# (as of 2026-10-23 the season 0 arcs are not downloaded).
+
+# --- Bakemonogatari (2009)
+tvdb_episode:102261_1_1
+tvdb_episode:102261_1_2
+tvdb_episode:102261_1_3
+tvdb_episode:102261_1_4
+tvdb_episode:102261_1_5
+tvdb_episode:102261_1_6
+tvdb_episode:102261_1_7
+tvdb_episode:102261_1_8
+tvdb_episode:102261_1_9
+tvdb_episode:102261_1_10
+tvdb_episode:102261_1_11
+tvdb_episode:102261_1_12
+tvdb_episode:102261_1_13
+tvdb_episode:102261_1_14
+tvdb_episode:102261_1_15
+
+# --- Nisemonogatari (2012)
+tvdb_episode:102261_2_1
+tvdb_episode:102261_2_2
+tvdb_episode:102261_2_3
+tvdb_episode:102261_2_4
+tvdb_episode:102261_2_5
+tvdb_episode:102261_2_6
+tvdb_episode:102261_2_7
+tvdb_episode:102261_2_8
+tvdb_episode:102261_2_9
+tvdb_episode:102261_2_10
+tvdb_episode:102261_2_11
+
+# --- Nekomonogatari (Black) (2012) - TVDb specials 'Tsubasa Family'
+tvdb_episode:102261_0_3
+tvdb_episode:102261_0_4
+tvdb_episode:102261_0_5
+tvdb_episode:102261_0_6
+
+# --- Monogatari Second Season (2013)
+tvdb_episode:102261_3_1
+tvdb_episode:102261_3_2
+tvdb_episode:102261_3_3
+tvdb_episode:102261_3_4
+tvdb_episode:102261_3_5
+tvdb_episode:102261_3_6
+tvdb_episode:102261_3_7
+tvdb_episode:102261_3_8
+tvdb_episode:102261_3_9
+tvdb_episode:102261_3_10
+tvdb_episode:102261_3_11
+tvdb_episode:102261_3_12
+tvdb_episode:102261_3_13
+tvdb_episode:102261_3_14
+tvdb_episode:102261_3_15
+tvdb_episode:102261_3_16
+tvdb_episode:102261_3_17
+tvdb_episode:102261_3_18
+tvdb_episode:102261_3_19
+tvdb_episode:102261_3_20
+tvdb_episode:102261_3_21
+tvdb_episode:102261_3_22
+tvdb_episode:102261_3_23
+
+# --- Hanamonogatari (2014) - TVDb specials 'Suruga Devil'
+tvdb_episode:102261_0_10
+tvdb_episode:102261_0_11
+tvdb_episode:102261_0_12
+tvdb_episode:102261_0_13
+tvdb_episode:102261_0_14
+
+# --- Tsukimonogatari (2014) - TVDb specials 'Yotsugi Doll'
+tvdb_episode:102261_0_15
+tvdb_episode:102261_0_16
+tvdb_episode:102261_0_17
+tvdb_episode:102261_0_18
+
+# --- Owarimonogatari (2015)
+tvdb_episode:102261_4_1
+tvdb_episode:102261_4_2
+tvdb_episode:102261_4_3
+tvdb_episode:102261_4_4
+tvdb_episode:102261_4_5
+tvdb_episode:102261_4_6
+tvdb_episode:102261_4_7
+tvdb_episode:102261_4_8
+tvdb_episode:102261_4_9
+tvdb_episode:102261_4_10
+tvdb_episode:102261_4_11
+tvdb_episode:102261_4_12
+
+# --- Koyomimonogatari (2016) - TVDb specials 'Koyomi ...'
+tvdb_episode:102261_0_21
+tvdb_episode:102261_0_22
+tvdb_episode:102261_0_23
+tvdb_episode:102261_0_24
+tvdb_episode:102261_0_25
+tvdb_episode:102261_0_26
+tvdb_episode:102261_0_27
+tvdb_episode:102261_0_28
+tvdb_episode:102261_0_29
+tvdb_episode:102261_0_30
+tvdb_episode:102261_0_31
+tvdb_episode:102261_0_32
+
+# --- Kizumonogatari I-III (2016-2017 films)
+plex://movie/5d9f3ccfd5fd3f001ee1ee73  # Kizumonogatari Part 1: Tekketsu
+plex://movie/5d776be351dd69001fe35444  # Kizumonogatari Part 2: Nekketsu
+plex://movie/5d776be451dd69001fe35450  # Kizumonogatari Part 3: Reiketsu
+
+# --- Owarimonogatari Second Season (2017)
+# Three multi-episode files (S05E01-E02, E03-E04, E05-E07): one line per file.
+tvdb_episode:102261_5_1  # Mayoi Hell
+tvdb_episode:102261_5_3  # Hitagi Rendezvous
+tvdb_episode:102261_5_5  # Ougi Dark
+
+# --- Zoku Owarimonogatari (2018) - TVDb specials 'Koyomi Reverse'
+tvdb_episode:102261_0_33
+tvdb_episode:102261_0_34
+tvdb_episode:102261_0_35
+tvdb_episode:102261_0_36
+tvdb_episode:102261_0_37
+tvdb_episode:102261_0_38
+
+# --- Monogatari Off & Monster Season (2024)
+tvdb_episode:102261_6_1
+tvdb_episode:102261_6_2
+tvdb_episode:102261_6_3
+tvdb_episode:102261_6_4
+tvdb_episode:102261_6_5
+tvdb_episode:102261_6_6
+tvdb_episode:102261_6_7
+tvdb_episode:102261_6_8
+tvdb_episode:102261_6_9
+tvdb_episode:102261_6_10
+tvdb_episode:102261_6_11
+tvdb_episode:102261_6_12
+tvdb_episode:102261_6_13
+tvdb_episode:102261_6_14

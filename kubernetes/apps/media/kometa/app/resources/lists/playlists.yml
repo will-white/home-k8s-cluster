@@ -12,3 +12,20 @@ playlists:
     sync_to_users: all
     sync_mode: sync
     text_file: /config/lists/one-piece-canon.txt
+
+  # Fate/stay night route order (Fate -> UBW -> Heaven's Feel films -> Fate/Zero).
+  # Mixes TV episodes and films, so it searches both libraries.
+  Fate/stay night Watch Order:
+    libraries: Movies, TV Shows
+    sync_to_users: all
+    sync_mode: sync
+    text_file: /config/lists/fate-stay-night.txt
+    test: true  # lets `--tests --playlists-only` run just this quickly; no effect on normal runs
+
+  # Monogatari in release order, including the Kizumonogatari films.
+  Monogatari Watch Order:
+    libraries: Movies, TV Shows
+    sync_to_users: all
+    sync_mode: sync
+    text_file: /config/lists/monogatari.txt
+    test: true  # lets `--tests --playlists-only` run just this quickly; no effect on normal runs

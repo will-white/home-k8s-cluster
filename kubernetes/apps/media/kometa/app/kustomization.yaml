@@ -13,5 +13,7 @@ configMapGenerator:
     files:
       - ./resources/lists/one-piece-canon.txt
       - ./resources/lists/playlists.yml
+      - ./resources/lists/fate-stay-night.txt
+      - ./resources/lists/monogatari.txt
 generatorOptions:
   disableNameSuffixHash: true
