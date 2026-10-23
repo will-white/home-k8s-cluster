@@ -29,10 +29,13 @@ settings:
   verify_ssl: true
 
 libraries:
-  # Kometa requires at least one library. Left empty (no collection/overlay
-  # files): these mappings only exist so the playlists can search them.
+  # Kometa requires at least one library, and each mapping must be a non-empty
+  # map (a null value crashes the Plex setup). No collection/overlay files:
+  # these mappings only exist so the playlists can search them.
   Movies:
+    library_name: Movies
   TV Shows:
+    library_name: TV Shows
 
 # Playlists live in their own file (Kometa ignores a top-level `playlists:` key
 # in config.yml). Mounted from the kometa-lists ConfigMap.
