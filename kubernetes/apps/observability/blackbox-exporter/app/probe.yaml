@@ -22,7 +22,7 @@ spec:
         - 192.168.5.1 # OPNsense — LAN gateway
         - 192.168.5.10 # truenas
         - 192.168.5.2 # adguard — DNS resolver
-        - 192.168.5.172 # plex
+        - ${PLEX_IP} # plex
       labels:
         probe: icmp
       relabelingConfigs:
