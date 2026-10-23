@@ -86,7 +86,10 @@ Nodes that were down get:
 node.kubernetes.io/out-of-service=nodeshutdown:NoExecute
 ```
 
-**Kubernetes never removes this — an admin must.** It is deeply misleading: the
+**Kubernetes never removes this.** `node-fencer` removes the taints *it*
+applied (nodes carrying the `node-fencer.home.arpa/fenced-at` annotation) once
+the node has been `Ready` for `READY_GRACE_SECONDS` (120) on its next 5-minute
+run; a taint applied by hand must be removed by hand. It is deeply misleading: the
 node reports `Ready`, kubelet is healthy, all Talos services are `OK`, and yet
 no pod can schedule there. `mj05ajfj` looked perfect at every layer while its
 OSD sat `Pending`. Nodes that never went down (`mj0581m7`) do not get it, so
@@ -251,8 +254,10 @@ flags, for the reason in "Order matters at the end" above. CNPG rebuilds the
 missing replicas on its own, and there is no need to switch the primary back.
 
 `node-fencer` in `kube-system` only applies the `out-of-service` taint after
-`UNREACHABLE_THRESHOLD_SECONDS` (3600), so a sub-hour window never trips it.
-Check rather than assume — Gotcha 1 covers why a missed taint is so expensive.
+`UNREACHABLE_THRESHOLD_SECONDS` (3600), so a sub-hour window never trips it. If
+it did fence a node it also unfences it within ~7 minutes of the node returning
+to `Ready`. Check rather than assume — Gotcha 1 covers why a missed taint is so
+expensive.
 
 ### Aftershock: RBD volumes remount read-only
 
@@ -380,7 +385,8 @@ also one of the things that comes back read-only.
    ```
    Only do this once you are certain the kubelet is really gone, not merely
    unreachable — the taint evicts every pod on the node. And remove it when the
-   node returns; see [Gotcha 1](#gotcha-1-the-out-of-service-taint-highest-time-cost).
+   node returns — `node-fencer` only auto-removes taints it applied itself; see
+   [Gotcha 1](#gotcha-1-the-out-of-service-taint-highest-time-cost).
 
 ### Half-alive node: `Ready=False`, "container runtime is down"
 

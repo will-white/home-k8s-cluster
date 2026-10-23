@@ -25,7 +25,9 @@ generate_completion kustomize kustomize.fish
 generate_completion task task.fish
 generate_completion yq yq.fish
 generate_completion helmfile helmfile.fish
-generate_completion claude claude.fish
+# NOTE: do not add claude here - Claude Code has no `completion` subcommand, so
+# `claude completion fish` starts a one-shot Claude session with the prompt
+# "completion" and writes its answer into claude.fish.
 generate_completion gitleaks gitleaks.fish
 
 # gh uses a different completion subcommand signature
