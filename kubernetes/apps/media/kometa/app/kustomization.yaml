@@ -12,5 +12,6 @@ configMapGenerator:
   - name: kometa-lists
     files:
       - ./resources/lists/one-piece-canon.txt
+      - ./resources/lists/playlists.yml
 generatorOptions:
   disableNameSuffixHash: true
