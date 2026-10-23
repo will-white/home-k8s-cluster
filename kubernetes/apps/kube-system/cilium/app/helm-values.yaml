@@ -67,6 +67,9 @@ l2NeighDiscovery:
 loadBalancer:
   algorithm: maglev
   mode: "dsr"
+  # Honour Service trafficDistribution: PreferSameNode. Spegel >=0.8.0 dropped
+  # its hostPort and relies on this so containerd pulls hit the local mirror.
+  serviceTopology: true
 localRedirectPolicy: true
 operator:
   replicas: 2
