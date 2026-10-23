@@ -17,12 +17,13 @@ spec:
   targets:
     staticConfig:
       static:
+        # Public anycast IPs stay literal: they measure the WAN independent of DNS.
         - 1.1.1.1 # internet — Cloudflare (WAN quality / packet loss trend)
         - 8.8.8.8 # internet — Google
-        - 192.168.5.1 # OPNsense — LAN gateway
-        - 192.168.5.10 # truenas
-        - 192.168.5.2 # adguard — DNS resolver
-        - 192.168.5.172 # plex
+        - opnsense.internal # LAN gateway
+        - truenas.internal
+        - adguard.internal # DNS resolver
+        - plex.internal
       labels:
         probe: icmp
       relabelingConfigs:
