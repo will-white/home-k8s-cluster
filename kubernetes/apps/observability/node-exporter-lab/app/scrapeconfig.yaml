@@ -1,0 +1,95 @@
+# Scrape node_exporter (and smartctl_exporter on plex) on non-K8s lab hosts.
+# Agents are managed in the home-lab repo (ansible/playbooks/monitoring.yml);
+# canonical host/target list: home-lab/docs/monitoring.md
+# Targets are DNS names (*.internal, served by OPNsense) so a host changing IP
+# doesn't silently break its scrape. job/instance match the old ServiceMonitors.
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: lab-node-plex
+  namespace: observability
+spec:
+  staticConfigs:
+    - targets:
+        - plex.internal:9100
+  metricsPath: /metrics
+  scrapeInterval: 30s
+  relabelings:
+    - targetLabel: job
+      replacement: lab-node-plex
+    - targetLabel: instance
+      replacement: plex
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: lab-smartctl-plex
+  namespace: observability
+spec:
+  staticConfigs:
+    - targets:
+        - plex.internal:9633
+  metricsPath: /metrics
+  scrapeInterval: 60s
+  relabelings:
+    - targetLabel: job
+      replacement: lab-node-plex
+    - targetLabel: instance
+      replacement: plex
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: lab-node-adguard
+  namespace: observability
+spec:
+  staticConfigs:
+    - targets:
+        - adguard.internal:9100
+  metricsPath: /metrics
+  scrapeInterval: 30s
+  relabelings:
+    - targetLabel: job
+      replacement: lab-node-adguard
+    - targetLabel: instance
+      replacement: adguard
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: lab-node-skylab
+  namespace: observability
+spec:
+  staticConfigs:
+    - targets:
+        - skylab.internal:9100
+  metricsPath: /metrics
+  scrapeInterval: 30s
+  relabelings:
+    - targetLabel: job
+      replacement: lab-node-skylab
+    - targetLabel: instance
+      replacement: skylab
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: lab-node-opnsense
+  namespace: observability
+spec:
+  staticConfigs:
+    - targets:
+        - opnsense.internal:9100
+  metricsPath: /metrics
+  scrapeInterval: 30s
+  relabelings:
+    - targetLabel: job
+      replacement: lab-node-opnsense
+    - targetLabel: instance
+      replacement: opnsense

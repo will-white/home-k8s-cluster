@@ -1,0 +1,22 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: truenas-netdata
+  namespace: observability
+spec:
+  staticConfigs:
+    - targets:
+        - truenas.internal:19999
+  metricsPath: /api/v1/allmetrics
+  params:
+    format:
+      - prometheus
+  scrapeInterval: 30s
+  scrapeTimeout: 30s
+  relabelings:
+    - targetLabel: job
+      replacement: truenas-netdata
+    - targetLabel: instance
+      replacement: truenas
