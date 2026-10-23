@@ -4,7 +4,9 @@
 plex:
   # Plex listens on 32400 (nothing answers on :80; Gatus checks plex.internal:32400 too)
   url: http://plex.internal:32400
-  token: <<PLEX_TOKEN>>  # from env KOMETA_PLEX_TOKEN
+  # "env" = read KOMETA_PLEX_TOKEN. Kometa reserves that variable, so a <<...>>
+  # placeholder is blanked; only the literal value env picks it up.
+  token: env
   timeout: 60
   db_cache: 40
 
