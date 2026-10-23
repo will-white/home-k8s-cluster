@@ -9,7 +9,9 @@ plex:
   db_cache: 40
 
 tmdb:
-  apikey: <<env.KOMETA_TMDB_API_KEY>>
+  # Kometa secret syntax: env KOMETA_<NAME> is substituted where the config says <<NAME>>
+  # (any other <<...>> placeholder is replaced with nothing).
+  apikey: <<TMDB_API_KEY>>
   language: en
 
 settings:
