@@ -351,6 +351,23 @@
     },
     {
       description: [
+        // Sonarr v5 (5.0.0.x) is published as a GitHub pre-release from the
+        // develop branch; the home-operations image tracks it (#1484). v5 runs
+        // a one-way database migration ("downgrading back to v4 is not possible
+        // unless you restore a v4 backup"). Hold on v4 until v5 is GA, then
+        // drop this rule and take the upgrade with a fresh CNPG backup first.
+        'sonarr: hold <5 until v5 is a stable release',
+      ],
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/home-operations/sonarr',
+      ],
+      allowedVersions: '<5',
+    },
+    {
+      description: [
         // Renovate embeds release notes only when it can resolve a source repo
         // whose tags match the new version. The packages below either ship no
         // org.opencontainers.image.source label or point it at a repo without

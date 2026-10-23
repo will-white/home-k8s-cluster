@@ -44,7 +44,9 @@ spec:
           app:
             image:
               repository: ghcr.io/home-operations/sonarr
-              tag: 4.0.19.3008@sha256:bd8f94115e6b9314fb50aff83b5913e249f086beaa9902f5dcd813c4fe6368e0
+              # Last v4 build. Sonarr v5 (5.0.0.x) is still a pre-release on the develop
+              # branch with a one-way DB migration; renovate.json5 holds this <5 until GA.
+              tag: 4.0.20.3012@sha256:1f19eb5e0f421418c1a956bbe01310a0141423afe28bd9a4b1dcb8629ff2bce2
             env:
               SONARR__APP__INSTANCENAME: Sonarr
               SONARR__APP__THEME: dark
@@ -53,7 +55,7 @@ spec:
               SONARR__LOG__DBENABLED: "False"
               SONARR__LOG__LEVEL: info
               SONARR__SERVER__PORT: &port 80
-              SONARR__UPDATE__BRANCH: develop
+              SONARR__UPDATE__BRANCH: main
               TZ: ${TIMEZONE}
             envFrom: *envFrom
             probes:
