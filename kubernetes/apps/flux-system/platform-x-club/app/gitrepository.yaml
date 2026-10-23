@@ -1,0 +1,17 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: platform-x-club
+spec:
+  interval: 30m
+  url: ssh://git@github.com/cawhitecode/platform-x-club.git
+  secretRef:
+    name: platform-x-club-deploy-key
+  ref:
+    branch: main
+  ignore: |
+    # exclude all
+    /*
+    # include kubernetes directory
+    !/kubernetes

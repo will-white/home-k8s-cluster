@@ -1,0 +1,23 @@
+---
+# Outbound HTTPS for the platform's external providers: BunnyCDN
+# (storage/CDN), Brevo (email), Mercury (payouts), payment callbacks.
+# Public internet only — RFC1918 stays covered by default-deny.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-external-https
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - port: 443
+          protocol: TCP
+      to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
