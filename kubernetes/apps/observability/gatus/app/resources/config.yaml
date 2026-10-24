@@ -201,19 +201,6 @@ endpoints:
     alerts:
       - type: pushover
 
-  - name: portainer
-    group: home-lab
-    url: http://skylab.internal:9002
-    interval: 2m
-    client:
-      dns-resolver: tcp://192.168.5.2:53
-      timeout: 10s
-    conditions:
-      - "[STATUS] == any(200, 302)"
-      - "[RESPONSE_TIME] < 5000"
-    alerts:
-      - type: pushover
-
   - name: pikvm
     group: home-lab
     url: https://pikvm.internal

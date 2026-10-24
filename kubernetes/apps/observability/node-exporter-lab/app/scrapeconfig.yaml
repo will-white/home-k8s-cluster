@@ -62,24 +62,6 @@ spec:
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: ScrapeConfig
 metadata:
-  name: lab-node-skylab
-  namespace: observability
-spec:
-  staticConfigs:
-    - targets:
-        - skylab.internal:9100
-  metricsPath: /metrics
-  scrapeInterval: 30s
-  relabelings:
-    - targetLabel: job
-      replacement: lab-node-skylab
-    - targetLabel: instance
-      replacement: skylab
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/scrapeconfig_v1alpha1.json
-apiVersion: monitoring.coreos.com/v1alpha1
-kind: ScrapeConfig
-metadata:
   name: lab-node-opnsense
   namespace: observability
 spec:
