@@ -27,7 +27,7 @@ ARG HELM_VERSION=v4.3.1
 # renovate: datasource=github-releases depName=helmfile/helmfile
 ARG HELMFILE_VERSION=v1.8.2
 # renovate: datasource=github-releases depName=stern/stern
-ARG STERN_VERSION=v1.34.0
+ARG STERN_VERSION=v1.35.0
 # renovate: datasource=github-releases depName=cli/cli
 ARG GH_VERSION=v2.103.0
 # renovate: datasource=github-releases depName=jqlang/jq extractVersion=^jq-(?<version>.+)$
