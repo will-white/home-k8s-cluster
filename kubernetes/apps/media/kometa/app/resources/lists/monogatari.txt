@@ -1,9 +1,15 @@
-# Monogatari watch order for Kometa (text_file builder), in release order.
+# Monogatari watch order for Kometa (text_file builder): broadcast (release)
+# order, the order the r/araragi wiki recommends for first-time viewers. Recap
+# episodes (TVDb S0E1, S0E7-9) are skipped; 'A Cruel Fairy Tale' (2024, not a
+# recap) sits after Off & Monster episode 6. Common alternative: Kizumonogatari
+# right after Bakemonogatari (novel order).
+# Sources: https://myanimelist.net/stacks/407,
+# https://edomonogatari.wordpress.com/2020/05/12/monogatari-anime-guide/
 # Hand-maintained. Episodes: tvdb_episode:102261_<season>_<episode> as in the
 # file names (Sonarr / TheTVDB numbering); TheTVDB files several arcs as
 # season 0 specials. Films: plex://movie/<id> from the Movies library. Lines not
 # in Plex yet are skipped by Kometa and added automatically once downloaded
-# (as of 2026-10-23 the season 0 arcs are not downloaded).
+# (season 0 arcs monitored in Sonarr on 2026-10-24).
 
 # --- Bakemonogatari (2009)
 tvdb_episode:102261_1_1
@@ -133,6 +139,7 @@ tvdb_episode:102261_6_3
 tvdb_episode:102261_6_4
 tvdb_episode:102261_6_5
 tvdb_episode:102261_6_6
+tvdb_episode:102261_0_41  # A Cruel Fairy Tale: The Beautiful Princess (2024)
 tvdb_episode:102261_6_7
 tvdb_episode:102261_6_8
 tvdb_episode:102261_6_9

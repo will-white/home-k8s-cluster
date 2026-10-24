@@ -1,42 +1,20 @@
-# Fate/stay night watch order for Kometa (text_file builder), route order:
-# Fate (2006 TV) -> Unlimited Blade Works (2014 TV) -> Heaven's Feel (3 films)
-# -> Fate/Zero (prequel, best watched after the routes).
+# Fate/stay night watch order for Kometa (text_file builder), following the
+# r/fatestaynight Viewing Order Guide v2 for first-time viewers:
+#   UBW (2014, incl. Prologue) -> Heaven's Feel I-III -> Fate/Zero (prequel, watch
+#   after the routes) -> Lord El-Melloi II's Case Files (optional epilogue-ish
+#   spin-off, set between Zero and stay night).
+# Sources: https://myanimelist.net/stacks/52430 (mirror of the r/fatestaynight
+# guide v2), https://myanimelist.net/stacks/9149
+# Deliberately left out: Fate/stay night (2006, DEEN) - the guide lists it only
+# as an optional extra ("a pretty terrible adaptation") and it spoils the other
+# routes; the 2010 UBW film (replaced by the 2014 series); FGO / Fate/Extra.
 # Hand-maintained. Episodes: tvdb_episode:<TVDb series>_<season>_<episode>, with
-# season/episode as in the file names (Sonarr / TheTVDB numbering). Films:
-# plex://movie/<id> from the Movies library. Lines not in Plex yet are skipped
-# by Kometa and picked up automatically once the files arrive.
-# Left out on purpose: the 2010 Unlimited Blade Works film (a condensed retelling
-# of the 2014 series), Fate/Grand Order, Fate/Extra and Lord El-Melloi II
-# (separate stories / spin-offs).
+# season/episode as in the file names (Sonarr / TheTVDB numbering; season 0 =
+# TheTVDB specials). Films: plex://movie/<id> from the Movies library. Lines not
+# in Plex yet are skipped by Kometa and picked up once the files arrive.
 
-# --- Fate route: Fate/stay night (2006), TVDb 79151
-tvdb_episode:79151_1_1
-tvdb_episode:79151_1_2
-tvdb_episode:79151_1_3
-tvdb_episode:79151_1_4
-tvdb_episode:79151_1_5
-tvdb_episode:79151_1_6
-tvdb_episode:79151_1_7
-tvdb_episode:79151_1_8
-tvdb_episode:79151_1_9
-tvdb_episode:79151_1_10
-tvdb_episode:79151_1_11
-tvdb_episode:79151_1_12
-tvdb_episode:79151_1_13
-tvdb_episode:79151_1_14
-tvdb_episode:79151_1_15
-tvdb_episode:79151_1_16
-tvdb_episode:79151_1_17
-tvdb_episode:79151_1_18
-tvdb_episode:79151_1_19
-tvdb_episode:79151_1_20
-tvdb_episode:79151_1_21
-tvdb_episode:79151_1_22
-tvdb_episode:79151_1_23
-tvdb_episode:79151_1_24
-
-# --- Unlimited Blade Works route: Fate/stay night [UBW] (2014), TVDb 278626
-# Prologue (episode 0) is a TVDb special; episodes 13-25 are not downloaded yet.
+# --- Unlimited Blade Works (2014), TVDb 278626
+# Episode 0 'Prologue' is filed as a TVDb special but is the real first episode.
 tvdb_episode:278626_0_1  # Prologue
 tvdb_episode:278626_1_1
 tvdb_episode:278626_1_2
@@ -63,13 +41,14 @@ tvdb_episode:278626_1_22
 tvdb_episode:278626_1_23
 tvdb_episode:278626_1_24
 tvdb_episode:278626_1_25
+tvdb_episode:278626_0_2  # Sunny Day (OVA, after the series)
 
-# --- Heaven's Feel route: films I-III
+# --- Heaven's Feel (films I-III)
 plex://movie/5d776b0523d5a3001f50bac1  # Heaven's Feel I. Presage Flower (2017)
 plex://movie/5d776d60fb0d55001f59ea20  # Heaven's Feel II. Lost Butterfly (2019)
 plex://movie/5d776d77fb0d55001f5a1130  # Heaven's Feel III. Spring Song (2020)
 
-# --- Prequel: Fate/Zero (2011), TVDb 275798
+# --- Fate/Zero (2011), TVDb 275798 - prequel, after the three routes
 tvdb_episode:275798_1_1
 tvdb_episode:275798_1_2
 tvdb_episode:275798_1_3
@@ -95,3 +74,20 @@ tvdb_episode:275798_1_22
 tvdb_episode:275798_1_23
 tvdb_episode:275798_1_24
 tvdb_episode:275798_1_25
+
+# --- Lord El-Melloi II's Case Files (2019), TVDb 357492 - optional spin-off
+tvdb_episode:357492_0_1  # A Grave Keeper, a Cat, and a Mage (2018 prologue special)
+tvdb_episode:357492_1_1
+tvdb_episode:357492_1_2
+tvdb_episode:357492_1_3
+tvdb_episode:357492_1_4
+tvdb_episode:357492_1_5
+tvdb_episode:357492_1_6
+tvdb_episode:357492_1_7
+tvdb_episode:357492_1_8
+tvdb_episode:357492_1_9
+tvdb_episode:357492_1_10
+tvdb_episode:357492_1_11
+tvdb_episode:357492_1_12
+tvdb_episode:357492_1_13
+tvdb_episode:357492_0_2  # Waver, Reunion, and the Magic Lantern (2021 sequel special)
