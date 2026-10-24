@@ -134,6 +134,16 @@ sonarr:
           - name: Anime
             score: -10000
 
+      # Foreign dubs with neither Japanese nor English audio (e.g. IndoCaps Indonesian
+      # dubs of Bleach) also match "Language: Not English" and would get the +4000
+      # Japanese-audio score. Block them. This CF only fires when NONE of English,
+      # Japanese, Korean, Chinese or German is present, so dual audio, Japanese,
+      # dub-only English and Chinese/Korean-original shows are unaffected.
+      - trash_ids:
+          - 1d1481d01b60a0274d81685b3ccbf7d0 # Not German, Japanese, Korean, Chinese or English
+        assign_scores_to:
+          - name: Anime
+
       # Junk blockers for Anime profile.
       - trash_ids:
           - 32b367365729d530ca1c124a0b180c64 # Bad Dual Groups
@@ -424,6 +434,16 @@ radarr:
         assign_scores_to:
           - name: Anime
             score: -10000
+
+      # Foreign dubs with neither Japanese nor English audio (e.g. IndoCaps Indonesian
+      # dubs of Bleach) also match "Language: Not English" and would get the +4000
+      # Japanese-audio score. Block them. This CF only fires when NONE of English,
+      # Japanese, Korean, Chinese or German is present, so dual audio, Japanese,
+      # dub-only English and Chinese/Korean-original shows are unaffected.
+      - trash_ids:
+          - 9a8f58fae5df94783c214c0ed63f589c # Not German, Japanese, Korean, Chinese or English
+        assign_scores_to:
+          - name: Anime
 
       # Junk blockers for Anime profile.
       - trash_ids:
