@@ -108,7 +108,7 @@ showed an unrelated code-server downgrade). For each open PR:
 
 ```bash
 gh api repos/<o>/<r>/compare/main...<headRefOid> --jq .behind_by   # >0 → stale
-gh pr update-branch <pr> --repo <o>/<r>                             # then wait for Flux Diff to re-run
+gh pr update-branch <pr> --repo <o>/<r> --rebase                    # then wait for Flux Diff to re-run
 ```
 
 Do this for all stale PRs up front, then let CI finish before §2. Also build the
@@ -325,6 +325,33 @@ revert.
 
 ## 8. Merge and verify
 
+**Freeze Renovate for the wave.** With `rebaseWhen: behind-base-branch`, every
+merge makes Renovate rebase every other open PR, so a 15-PR wave re-runs CI on
+the whole backlog 15 times. Once §1's up-front rebases are done and the evidence
+is in, put Renovate's default `stopUpdatingLabel` on every open Renovate PR.
+Renovate then leaves those branches alone until the label comes off:
+
+```bash
+# select by branch: `gh pr list --author` matches no spelling of the Renovate app
+gh pr list --repo <o>/<r> --state open --limit 200 --json number,headRefName \
+  -q '.[] | select(.headRefName|startswith("renovate/")) | .number' \
+  | xargs -I{} gh pr edit {} --repo <o>/<r> --add-label stop-updating
+```
+
+While frozen, Renovate won't fix conflicts either. If a sibling goes CONFLICTING,
+run `gh pr update-branch <pr> --rebase` yourself. `--rebase` keeps renovate[bot]
+as the commit author; a merge commit would make Renovate treat the branch as
+human-edited and stop maintaining it. **Unfreeze when the wave ends**, held PRs
+included, so they get one rebase round instead of one per merge:
+
+```bash
+gh pr list --repo <o>/<r> --state open --label stop-updating --json number -q '.[].number' \
+  | xargs -I{} gh pr edit {} --repo <o>/<r> --remove-label stop-updating
+```
+
+PR workflows have `concurrency` groups, so a rebase cancels the superseded run on
+that PR. Superseded runs no longer need cancelling by hand.
+
 **Squash-merge** (`gh pr merge <pr> --repo <o>/<r> --squash`; branches
 auto-delete). gh is silent on success — verify with
 `gh pr view <pr> --json state,mergedAt`.
@@ -332,7 +359,7 @@ auto-delete). gh is silent on success — verify with
 - **Unique-file GREEN PRs**: batch-merge freely.
 - **YELLOW / same-app PRs**: one at a time, `verify.sh` between.
 - **Shared-file clusters**: merge one, then the rest. If one goes CONFLICTING,
-  `gh pr update-branch <pr>` and retry. If Renovate **auto-closes** a sibling
+  `gh pr update-branch <pr> --rebase` and retry. If Renovate **auto-closes** a sibling
   (`state: CLOSED, mergedAt: null`) and the bump is still wanted, recreate it:
   branch off `main`, re-apply the one-line change (digest from
   `gh pr diff <old-pr>`), push, open a PR, merge via API.
@@ -385,7 +412,8 @@ are user data; see AGENTS.md).
 
 ## 9. Report
 
-Summarize: merged count, duplicates closed, fix-ups applied, verification
+First confirm the freeze is lifted
+(`gh pr list --state open --label stop-updating` is empty). Then summarize: merged count, duplicates closed, fix-ups applied, verification
 results, and the **held PRs with the evidence for each** (quoted changelog line
 / diff hunk, the file:line it affects, the recommended path). Include the
 ledger rows. For each RED/YELLOW PR leave the same summary as a PR comment
