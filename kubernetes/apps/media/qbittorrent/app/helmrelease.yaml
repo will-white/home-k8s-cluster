@@ -116,9 +116,10 @@ spec:
               # auth bypass on) and bind it to the tunnel. The down command
               # resets the port so qBittorrent re-binds after a reconnect
               # (qBittorrent bug; see gluetun wiki vpn-port-forwarding.md).
+              # {{ "{{PORT}}" }} escapes the placeholders from app-template's tpl pass.
               VPN_PORT_FORWARDING_UP_COMMAND: >-
                 /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data
-                "json={\"listen_port\":{{PORT}},\"current_network_interface\":\"{{VPN_INTERFACE}}\",\"random_port\":false,\"upnp\":false}"
+                "json={\"listen_port\":{{ "{{PORT}}" }},\"current_network_interface\":\"{{ "{{VPN_INTERFACE}}" }}\",\"random_port\":false,\"upnp\":false}"
                 http://127.0.0.1:80/api/v2/app/setPreferences'
               VPN_PORT_FORWARDING_DOWN_COMMAND: >-
                 /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data
