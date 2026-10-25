@@ -15,8 +15,6 @@
 #                    SDTV floor, Bluray/Remux-1080p cutoff.
 #                    Audio-language preference: Dual Audio > Japanese > Dub only.
 #                    See the "Anime" custom_formats section below for the scoring.
-#   Best Available - Legacy escape hatch (SDTV floor, Remux-2160p cutoff); the 4K
-#                    profile now covers the same range.
 #
 # Back-catalogue upgrades: Sonarr/Radarr only upgrade from RSS, so the
 # recyclarr-upgrade-search CronJob (weekly) re-searches a random sample of
@@ -42,7 +40,7 @@ sonarr:
     delete_old_custom_formats: true
 
     custom_formats:
-##################  HD / 4K / Best Available — shared  ##################
+##################  HD / 4K — shared  ##################
       # Junk blockers (TRaSH-default negative scores; reject bad releases but DO NOT
       # prevent legitimate lower-quality fallback grabs).
       - trash_ids:
@@ -56,7 +54,6 @@ sonarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
 
       # Prefer season packs over single-episode grabs (TRaSH default +10).
       - trash_ids:
@@ -64,9 +61,8 @@ sonarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
 
-##################  4K / Best Available — only  ##################
+##################  4K — only  ##################
       - trash_ids:
           # Comment out the next line if you and all of your users' setups are fully DV compatible
           - 9b27ab6498ec0f31a3353992e19434ca # DV (WEBDL)
@@ -76,7 +72,6 @@ sonarr:
           - 0c4b99df9206d2cfac3c05ab897dd62a # HDR10+ Boost
         assign_scores_to:
           - name: 4K
-          - name: Best Available
 
       # SDR (no WEBDL): keeps SDR WEB available as fallback for non-HDR clients,
       # while blocking bloated SDR Remux/Bluray files.
@@ -84,7 +79,6 @@ sonarr:
           - 83304f261cf516bb208c18c54c0adf97 # SDR (no WEBDL)
         assign_scores_to:
           - name: 4K
-          - name: Best Available
 
 ##################  Anime  ##################
       - trash_ids:
@@ -171,16 +165,17 @@ sonarr:
       # streaming tiebreakers) addressed to OUR profile names at the TRaSH default score
       # (no explicit `score:`). TRaSH's stock guide assigns these to its default profile
       # names (WEB-1080p / WEB-2160p / UHD Bluray + WEB / Remux-1080p - Anime), which we
-      # renamed to HD / 4K / Anime / Best Available.
-      # "Best Available" gets the UNION of the 1080p + 2160p positive tiers so it ranks the best
-      # release at ANY resolution — its whole purpose as the resolution-agnostic escape hatch.
+      # renamed to HD / 4K / Anime.
+      # "4K" gets the UNION of the 1080p + 2160p positive tiers: it is the Seerr default and
+      # falls back through 1080p down to SDTV, so it must rank the best release at ANY
+      # resolution. Quality still outranks CF score, so a 2160p release always beats 1080p.
       # Remux release-group tiers (TRaSH default scores)
       - trash_ids:
           - 9965a052eb87b0d10313b1cea89eb451 # Remux Tier 01
           - 8a1d0c3d7497e741736761a1da866a2e # Remux Tier 02
         assign_scores_to:
           - name: HD
-          - name: Best Available
+          - name: 4K
       # WEB release-group tiers (TRaSH default scores)
       - trash_ids:
           - e6258996055b9fbab7e9cb2f75819294 # WEB Tier 01
@@ -189,26 +184,22 @@ sonarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
       # HDR (generic boost) (TRaSH default scores)
       - trash_ids:
           - 505d871304820ba7106b693be6fe4a9e # HDR
         assign_scores_to:
           - name: 4K
-          - name: Best Available
       # Streaming resolution boost (TRaSH default scores)
       - trash_ids:
           - 218e93e5702f44a68ad9e3c6ba87d2f0 # HD Streaming Boost
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
       # Streaming resolution boost (TRaSH default scores)
       - trash_ids:
           - 43b3cf48cb385cd3eac608ee6bca7f09 # UHD Streaming Boost
         assign_scores_to:
           - name: 4K
-          - name: Best Available
       # Streaming service tags (tiebreakers) (TRaSH default scores)
       - trash_ids:
           - d660701077794679fd59e8bdf4ce3a29 # AMZN
@@ -231,7 +222,6 @@ sonarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
       # Repack/Proper (TRaSH default scores)
       - trash_ids:
           - eb3d5cc0a2be0db205fb823640db6a3c # Repack v2
@@ -240,7 +230,6 @@ sonarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
       # Unwanted (negative TRaSH defaults) (TRaSH default scores)
       - trash_ids:
           - fbcb31d8dabd2a319072b84fc0b7249c # Extras
@@ -250,14 +239,12 @@ sonarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
       # Unwanted (negative TRaSH defaults) (TRaSH default scores)
       - trash_ids:
           - 15a05bc7c1a36e2b57fd628f8977e2fc # AV1
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
           - name: Anime
       # Anime release-group tiers (TRaSH default scores)
       - trash_ids:
@@ -313,7 +300,7 @@ radarr:
     delete_old_custom_formats: true
 
     custom_formats:
-##################  HD / 4K / Best Available — shared  ##################
+##################  HD / 4K — shared  ##################
       # Audio (TRaSH default scores; positive/additive — boost preferred audio formats
       # without blocking releases that only have basic audio. Lossy formats keep low
       # positive scores so they remain valid fallback grabs.)
@@ -335,7 +322,6 @@ radarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
 
       # Movie versions — Remaster boost (additive).
       - trash_ids:
@@ -343,7 +329,6 @@ radarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
 
       # Junk blockers (TRaSH-default negative scores).
       - trash_ids:
@@ -359,16 +344,14 @@ radarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
 
-##################  4K / Best Available — only  ##################
+##################  4K — only  ##################
       # 4K-specific movie versions.
       - trash_ids:
           - eca37840c13c6ef2dd0262b141a5482f # 4K Remaster
           - 957d0f44b592285f26449575e8b1167e # Special Edition
         assign_scores_to:
           - name: 4K
-          - name: Best Available
 
       - trash_ids:
           # Comment out the next line if you and all of your users' setups are fully DV compatible
@@ -379,7 +362,6 @@ radarr:
           - caa37d0df9c348912df1fb1d88f9273a # HDR10+ Boost
         assign_scores_to:
           - name: 4K
-          - name: Best Available
 
       # SDR (no WEBDL): keeps SDR WEB available as fallback for non-HDR clients,
       # while blocking bloated SDR Remux/Bluray files.
@@ -387,7 +369,6 @@ radarr:
           - 25c12f78430a3a23413652cbd1d48d77 # SDR (no WEBDL)
         assign_scores_to:
           - name: 4K
-          - name: Best Available
 
 ##################  Anime  ##################
       - trash_ids:
@@ -473,9 +454,10 @@ radarr:
       # streaming tiebreakers) addressed to OUR profile names at the TRaSH default score
       # (no explicit `score:`). TRaSH's stock guide assigns these to its default profile
       # names (WEB-1080p / WEB-2160p / UHD Bluray + WEB / Remux-1080p - Anime), which we
-      # renamed to HD / 4K / Anime / Best Available.
-      # "Best Available" gets the UNION of the 1080p + 2160p positive tiers so it ranks the best
-      # release at ANY resolution — its whole purpose as the resolution-agnostic escape hatch.
+      # renamed to HD / 4K / Anime.
+      # "4K" gets the UNION of the 1080p + 2160p positive tiers: it is the Seerr default and
+      # falls back through 1080p down to SDTV, so it must rank the best release at ANY
+      # resolution. Quality still outranks CF score, so a 2160p release always beats 1080p.
       # Remux release-group tiers (TRaSH default scores)
       - trash_ids:
           - 3a3ff47579026e76d6504ebea39390de # Remux Tier 01
@@ -483,7 +465,7 @@ radarr:
           - 8baaf0b3142bf4d94c42a724f034e27a # Remux Tier 03
         assign_scores_to:
           - name: HD
-          - name: Best Available
+          - name: 4K
       # UHD Bluray release-group tiers (TRaSH default scores)
       - trash_ids:
           - 4d74ac4c4db0b64bff6ce0cffef99bf0 # UHD Bluray Tier 01
@@ -491,7 +473,6 @@ radarr:
           - e71939fae578037e7aed3ee219bbe7c1 # UHD Bluray Tier 03
         assign_scores_to:
           - name: 4K
-          - name: Best Available
       # WEB release-group tiers (TRaSH default scores)
       - trash_ids:
           - c20f169ef63c5f40c2def54abaf4438e # WEB Tier 01
@@ -500,13 +481,11 @@ radarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
       # HDR (generic boost) (TRaSH default scores)
       - trash_ids:
           - 493b6d1dbec3c3364c59d7607f7e3405 # HDR
         assign_scores_to:
           - name: 4K
-          - name: Best Available
       # Streaming service tags (tiebreakers) (TRaSH default scores)
       - trash_ids:
           - b3b3a6ac74ecbd56bcdbefa4799fb9df # AMZN
@@ -527,7 +506,6 @@ radarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
       # Repack/Proper (TRaSH default scores)
       - trash_ids:
           - e7718d7a3ce595f289bfee26adc178f5 # Repack/Proper
@@ -536,7 +514,6 @@ radarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
       # Unwanted (negative TRaSH defaults) (TRaSH default scores)
       - trash_ids:
           - b8cd450cbfa689c0259a01d9e29ba3d6 # 3D
@@ -548,14 +525,12 @@ radarr:
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
       # Unwanted (negative TRaSH defaults) (TRaSH default scores)
       - trash_ids:
           - cae4ca30163749b891686f95532519bd # AV1
         assign_scores_to:
           - name: HD
           - name: 4K
-          - name: Best Available
           - name: Anime
       # Anime release-group tiers (TRaSH default scores)
       - trash_ids:
