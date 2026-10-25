@@ -32,6 +32,7 @@ spec:
   dependsOn:
     - name: external-secrets-stores
   interval: 30m
+  retryInterval: 1m
   path: ./kubernetes/apps/rook-ceph/rook-ceph/cluster
   postBuild:
     substitute:
