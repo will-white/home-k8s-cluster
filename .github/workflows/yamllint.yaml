@@ -14,10 +14,16 @@ on:
     paths:
       - "kubernetes/**.yaml"
 
+# A Renovate rebase supersedes the previous run on the same PR; cancel it
+# instead of queueing both. Pushes to main always run to completion.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   yamllint:
     name: yamllint
-    runs-on: home-ops-runner
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - name: Install yamllint

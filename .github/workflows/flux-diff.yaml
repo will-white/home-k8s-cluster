@@ -14,8 +14,8 @@ concurrency:
 jobs:
   flux-diff:
     name: Flux Diff - ${{ matrix.resources }}
-    # docker:// container action — works on the dind-mode scale set
-    runs-on: home-ops-runner
+    # docker:// container action — needs a runner with Docker (hosted ubuntu has it)
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write

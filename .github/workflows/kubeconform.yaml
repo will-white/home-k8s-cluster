@@ -10,10 +10,16 @@ on:
 env:
   KUBERNETES_DIR: ./kubernetes
 
+# A Renovate rebase supersedes the previous run on the same PR; cancel it
+# instead of queueing both.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   kubeconform:
     name: Kubeconform
-    runs-on: home-ops-runner
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
