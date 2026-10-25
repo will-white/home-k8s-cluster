@@ -10,5 +10,12 @@ configMapGenerator:
     files:
       - recyclarr.yml=./resources/recyclarr.yml
       - settings.yml=./resources/settings.yml
+  - name: recyclarr-upgrade-search
+    files:
+      - upgrade-search.sh=./resources/upgrade-search.sh
+    options:
+      # bash ${VAR:-default} syntax; keep Flux postBuild envsubst off it.
+      annotations:
+        kustomize.toolkit.fluxcd.io/substitute: disabled
 generatorOptions:
   disableNameSuffixHash: true

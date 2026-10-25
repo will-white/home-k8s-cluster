@@ -5,12 +5,22 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/recyclarr/recyclarr/master/schemas/config-schema.json
 #
 # Profile naming convention (must match the profile names in Sonarr/Radarr UI):
-#   HD             - Default. WEB 720p floor, Remux-1080p cutoff. End-user friendly.
-#   4K             - Opt-in. WEB 1080p floor, Bluray-2160p cutoff. For 4K TVs.
-#   Anime          - Auto-applied via Seerr rule. WEB 720p floor, Remux-1080p cutoff.
+#   4K             - Seerr default (TV + movies). SDTV floor, 2160p cutoff (Sonarr
+#                    WEB 2160p, Radarr Remux-2160p). Grabs the best release that
+#                    exists and upgrades later, so requesters never pick a quality:
+#                    a DVD-only show gets the DVD, a modern film gets 4K.
+#   HD             - Opt-in. WEB 720p floor, Remux-1080p cutoff. For 1080p-only viewers.
+#   Anime          - Auto-applied by Seerr: Sonarr anime profile for TV, and a Seerr
+#                    override rule (TMDB keyword 210024 "anime") for Radarr movies.
+#                    SDTV floor, Bluray/Remux-1080p cutoff.
 #                    Audio-language preference: Dual Audio > Japanese > Dub only.
 #                    See the "Anime" custom_formats section below for the scoring.
-#   Best Available - Escape hatch for obscure films. SDTV floor, Remux-2160p cutoff.
+#   Best Available - Legacy escape hatch (SDTV floor, Remux-2160p cutoff); the 4K
+#                    profile now covers the same range.
+#
+# Back-catalogue upgrades: Sonarr/Radarr only upgrade from RSS, so the
+# recyclarr-upgrade-search CronJob (weekly) re-searches a random sample of
+# cutoff-unmet / missing items. See resources/upgrade-search.sh.
 #
 # Recyclarr only manages custom format definitions and per-profile CF scores.
 # Profile structure (qualities allowed, cutoff, upgrade settings) and quality

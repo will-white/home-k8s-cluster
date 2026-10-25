@@ -254,6 +254,31 @@ are sparse, drop the threshold to the default to avoid empty results.
 
 ---
 
+## 5a. UI-only settings this stack depends on
+
+These are set in the app UIs (or their APIs), not in Git. Re-apply them if an
+app's database is ever rebuilt.
+
+| App | Setting | Value | Why |
+|---|---|---|---|
+| Seerr | Default Sonarr / Radarr profile | **4K** | Covers SDTV → 2160p, so requesters don't need to know what exists |
+| Seerr | Sonarr anime profile / series type | **Anime** / `anime` | Anime TV uses the anime CFs and absolute numbering |
+| Seerr | Override rule (Settings → Services) | Radarr, keyword `210024` (anime) → profile **Anime** | Radarr has no anime-profile setting in Seerr; without this, anime films land on 4K |
+| Sonarr / Radarr | 4K profile qualities | SDTV, DVD, 480p, 720p allowed **below** 1080p/2160p | Pre-HD shows only exist at SD; a 720p/1080p floor leaves them missing forever |
+| Sonarr / Radarr | Recycle bin | `/media/.recyclebin`, 7-day cleanup | Upgrades delete the old file; this makes a bad import recoverable |
+| Sonarr | Release profile "Block foreign dubs Sonarr cannot parse" | must not contain IndoCaps / Indonesian Dub | Foreign dubs the language parser misses |
+
+Back-catalogue upgrade searches run from Git: the `recyclarr-upgrade-search`
+CronJob (Sundays 03:00) searches 20 random cutoff-unmet/missing seasons in
+Sonarr and 25 movies in Radarr. Raise `SONARR_MAX_SEASONS` /
+`RADARR_MAX_MOVIES` in [helmrelease.yaml](recyclarr/app/helmrelease.yaml) to
+cycle faster. Run it now with:
+```sh
+kubectl -n media create job --from=cronjob/recyclarr-upgrade-search upgrade-search-manual-$(date +%s)
+```
+
+---
+
 ## 6. Periodic verification
 
 Run after any major change above:
