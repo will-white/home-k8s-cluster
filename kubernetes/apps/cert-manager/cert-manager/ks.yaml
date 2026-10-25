@@ -16,6 +16,7 @@ spec:
     name: home-kubernetes
   wait: true
   interval: 30m
+  retryInterval: 1m
   timeout: 5m
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -37,6 +38,7 @@ spec:
     name: home-kubernetes
   wait: true
   interval: 30m
+  retryInterval: 1m
   timeout: 5m
 ---
 # The ACME issuer lives in its own Kustomization AFTER external-secrets-stores
