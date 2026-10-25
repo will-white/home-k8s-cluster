@@ -339,7 +339,11 @@ class Evidence:
             cols = [c.strip() for c in line.strip("|").split("|")]
             if len(cols) < 3:
                 continue
-            name_col, update, change = cols[0], cols[1], cols[2]
+            # helm PRs carry an extra Type column (Package | Type | Update | Change): locate Change by its arrow
+            ci = next(i for i, c in enumerate(cols) if "→" in c)
+            if ci < 2:
+                continue
+            name_col, update, change = cols[0], cols[ci - 1], cols[ci]
             name = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", name_col)
             name = re.sub(r"\s*\(.*?\)\s*$", "", name).strip()
             links = re.findall(r"\((https?://[^)]+)\)", name_col)
@@ -548,17 +552,17 @@ class Evidence:
             cands.sort(key=lambda r: (not r["tag_name"].startswith(prefer), "chart" not in r["tag_name"]))
         newtag = cands[0]["tag_name"]
         prefix = newtag[: newtag.rfind(newc)] if newc in newtag else ""
+        # filter by version, not position: repos that patch several branches in parallel
+        # (talos 1.13.x next to 1.14.x) list an old-branch patch between new-range releases,
+        # and stopping at the first tag <= cur dropped v1.14.0 from a 1.13 -> 1.14 range
         out, hit_cur = [], False
         for r in rels:
             t = r.get("tag_name", "")
             if not t.startswith(prefix) or r.get("prerelease") or r.get("draft"):
                 continue
-            if core_version(t[len(prefix):]) == curc:
+            if core_version(t[len(prefix):]) == curc or (vtuple(t[len(prefix):]) and vtuple(t[len(prefix):]) <= vtuple(curc)):
                 hit_cur = True
-                break
-            if vtuple(t[len(prefix):]) and vtuple(t[len(prefix):]) <= vtuple(curc):
-                hit_cur = True
-                break
+                continue
             if vtuple(t[len(prefix):]) > vtuple(newc):
                 continue
             out.append(r)
