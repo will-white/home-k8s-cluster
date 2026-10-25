@@ -167,6 +167,19 @@ spec:
           rgw_sigv4_insecure: "true"
         mgr:
           mgr/rook/log_level: info
+        mon:
+          # The mon stores live in /var/lib/rook on Talos EPHEMERAL, i.e. on
+          # each node's Kingston A400 SATA SSD, which shows 100-130ms write
+          # latency under load. A peon that stalls on an fsync misses the
+          # leader's lease and calls an election ("lease_timeout -- calling
+          # new election"): on 2026-10-25 mon.f ran 87 elections in 3h, and
+          # mon.k / mon.q dropped out of quorum for 6-10s roughly every minute.
+          #
+          # Double the lease (default 5s) so a slow commit no longer ends
+          # quorum. TRADEOFF: losing the leader now takes ~10s to detect
+          # instead of ~5s. The ack timeout (2x) and renew interval (0.6x)
+          # scale with mon_lease, so they move with it.
+          mon_lease: "10"
         osd:
           # BLUESTORE_SLOW_OP_ALERT ships hair-trigger defaults: a SINGLE op
           # over bluestore_log_op_age (5s) latches HEALTH_WARN for a full 24h
