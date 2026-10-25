@@ -10,6 +10,7 @@
 - { name: "renovate/container",      color: "027fa0" }
 - { name: "renovate/github-action",  color: "027fa0" }
 - { name: "renovate/github-release", color: "027fa0" }
+- { name: "renovate/grafana-dashboard", color: "027fa0" }
 - { name: "renovate/helm",           color: "027fa0" }
 # Semantic Type
 - { name: "type/patch",              color: "ffec19" }
@@ -18,6 +19,7 @@
 - { name: "type/break",              color: "f6412d" }
 # Uncategorized
 - { name: "hold/upstream",           color: "ee0701" }
+- { name: "enhancement",             color: "a2eeef" }
 # Renovate's default stopUpdatingLabel: while set, Renovate won't rebase or
 # update the PR. merge-renovate-prs puts it on every open Renovate PR for the
 # length of a merge wave (see the skill, §8).
