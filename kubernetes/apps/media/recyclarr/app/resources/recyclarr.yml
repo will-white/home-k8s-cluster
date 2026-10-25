@@ -60,12 +60,24 @@ sonarr:
           - 82d40da2bc6923f41e14394075dd4b03 # No-RlsGroup
           - e1a997ddb54e3ecbfe06341ad323c458 # Obfuscated
           - 06d66ab109d4d2eddb2794d21526d140 # Retags
-          - 1b3994c551cbb92a2c781af061f4ab44 # Scene
           - 9c11cd3f07101cdba90a2d81cf0e56b4 # LQ (low-quality release groups)
           - 85c61753df5da1fb2aab6f2a47426b09 # BR-DISK (raw Blu-ray disc dumps)
         assign_scores_to:
           - name: HD
           - name: 4K
+      # Scene: score 0 on HD/4K (not dropped from the list: without
+      # reset_unmatched_scores Recyclarr would leave the old -10000 in place).
+      # TRaSH's Scene CF is an opt-in for people who avoid scene releases; its
+      # standard profiles don't use it. Here it banned every plain `WEB` 1080p
+      # release (CAKES, etc.), often the best-seeded x264 option. P2P groups in
+      # the WEB tiers (+1600..1700) still outrank them.
+      - trash_ids:
+          - 1b3994c551cbb92a2c781af061f4ab44 # Scene
+        assign_scores_to:
+          - name: HD
+            score: 0
+          - name: 4K
+            score: 0
 
       # Prefer season packs over single-episode grabs (TRaSH default +10).
       - trash_ids:
@@ -374,12 +386,24 @@ radarr:
           - ae9b7c9ebde1f3bd336a8cbd1ec4c5e5 # No-RlsGroup
           - 7357cf5161efbf8c4d5d0c30b4815ee2 # Obfuscated
           - 5c44f52a8714fdd79bb4d98e2673be1f # Retags
-          - f537cf427b64c38c8e36298f657e4828 # Scene
           - 90a6f9a284dff5103f6346090e6280c8 # LQ
           - ed38b889b31be83fda192888e2286d83 # BR-DISK
         assign_scores_to:
           - name: HD
           - name: 4K
+      # Scene: score 0 on HD/4K (not dropped from the list: without
+      # reset_unmatched_scores Recyclarr would leave the old -10000 in place).
+      # TRaSH's Scene CF is an opt-in for people who avoid scene releases; its
+      # standard profiles don't use it. Here it banned every scene release, often
+      # the best-seeded x264 option. P2P groups in the Bluray/WEB tiers
+      # (+1600..1800) still outrank them.
+      - trash_ids:
+          - f537cf427b64c38c8e36298f657e4828 # Scene
+        assign_scores_to:
+          - name: HD
+            score: 0
+          - name: 4K
+            score: 0
 
 ##################  4K — only  ##################
       # 4K-specific movie versions.
