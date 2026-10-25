@@ -127,6 +127,9 @@ spec:
               GITSYNC_REF: master
               GITSYNC_PERIOD: 24h
               GITSYNC_ROOT: /add-ons
+              # git-sync >=4.8.0 no longer sets safe.directory=* (kubernetes/git-sync#993);
+              # the add-ons emptyDir is root-owned (fsGroup only), so trust it explicitly.
+              GITSYNC_GIT_CONFIG: safe.directory:/add-ons
             resources:
               requests:
                 cpu: 10m
