@@ -18,3 +18,7 @@
 - { name: "type/break",              color: "f6412d" }
 # Uncategorized
 - { name: "hold/upstream",           color: "ee0701" }
+# Renovate's default stopUpdatingLabel: while set, Renovate won't rebase or
+# update the PR. merge-renovate-prs puts it on every open Renovate PR for the
+# length of a merge wave (see the skill, §8).
+- { name: "stop-updating",           color: "cccccc" }
