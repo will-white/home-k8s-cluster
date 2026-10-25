@@ -27,7 +27,11 @@ SIGNAL_RE = re.compile(
     # external-dns 0.22.0: "Action required before upgrade … default annotation prefix is now … with
     # no fallback … can delete all your DNS records" matched none of the above
     r"action required|no fallback|\bdelet\w* (?:all|every|existing|your)|"
-    r"default [\w-]+(?: [\w-]+)? (?:is now|changed|now)|:rotating_light:|🚨",
+    r"default [\w-]+(?: [\w-]+)? (?:is now|changed|now)|:rotating_light:|🚨|"
+    # git-sync 4.8.0: "Don't set safe.dir=* in main app" crashlooped bazarr's sidecar on a
+    # root-owned emptyDir; imperative "don't/stop setting X" and ownership/user changes
+    r"\b(?:don'?t|do not|stop(?:s|ped)?|no longer) (?:set|sets|setting|run|runs|running)\b|"
+    r"safe\.dir|ownership|\bfsGroup|\brun(?:s|ning)? as (?:non-?)?root|\buid\b",
     re.I,
 )
 IMMUTABLE_RE = re.compile(
