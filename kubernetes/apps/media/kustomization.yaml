@@ -5,6 +5,7 @@ resources:
   - ./namespace.yaml
   - ./autobrr/ks.yaml
   - ./bazarr/ks.yaml
+  - ./cleanuparr/ks.yaml
   - ./flaresolverr/ks.yaml
   - ./kavita/ks.yaml
   - ./komf/ks.yaml

@@ -1,0 +1,14 @@
+---
+# /config holds only DataProtection keys, cleanuparr.json and logs; all
+# settings and strike state live in Postgres (CNPG, backed up there), so this
+# volume is not volsync-backed.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cleanuparr
+spec:
+  accessModes: ["ReadWriteMany"]
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ceph-filesystem
