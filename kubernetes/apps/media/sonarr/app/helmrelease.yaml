@@ -55,6 +55,10 @@ spec:
               SONARR__LOG__DBENABLED: "False"
               SONARR__LOG__LEVEL: info
               SONARR__SERVER__PORT: &port 80
+              # Host-header allowlist (DNS-rebinding guard; auth is disabled for
+              # local addresses). Every in-cluster client uses one of these
+              # names; localhost/127.0.0.1 are always allowed by Sonarr itself.
+              SONARR__SERVER__ALLOWEDHOSTS: sonarr,sonarr.media,sonarr.media.svc.cluster.local,sonarr.${SECRET_DOMAIN}
               SONARR__UPDATE__BRANCH: main
               TZ: ${TIMEZONE}
             envFrom: *envFrom
@@ -66,6 +70,10 @@ spec:
                   httpGet:
                     path: /ping
                     port: *port
+                    # kubelet sends Host: <pod IP>, which the allowlist rejects.
+                    httpHeaders:
+                      - name: Host
+                        value: localhost
                   initialDelaySeconds: 0
                   periodSeconds: 10
                   timeoutSeconds: 1
@@ -83,6 +91,10 @@ spec:
                   httpGet:
                     path: /ping
                     port: *port
+                    # kubelet sends Host: <pod IP>, which the allowlist rejects.
+                    httpHeaders:
+                      - name: Host
+                        value: localhost
                   initialDelaySeconds: 5
                   periodSeconds: 10
                   timeoutSeconds: 5
