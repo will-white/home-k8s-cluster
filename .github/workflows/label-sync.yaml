@@ -12,6 +12,11 @@ jobs:
   label-sync:
     name: Label Sync
     runs-on: ubuntu-latest
+    # The repo's default GITHUB_TOKEN is read-only; creating, editing and
+    # deleting labels is an issues write.
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
