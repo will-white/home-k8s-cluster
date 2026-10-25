@@ -150,27 +150,33 @@ release.
 > Why: post-grab behavior decides whether a torrent seeds, gets removed, or
 > wedges queue. Wrong settings here can get you banned from private trackers.
 
-**Per-category settings** in qBittorrent (Tools → Options → Downloads →
-"Category-specific paths"):
-- Categories `tv-sonarr`, `radarr`, `prowlarr` should each have their own
-  save path matching the *arr download folder.
-- `Pre-allocate disk space` enabled for full-disk filesystems (CephFS) to
-  avoid fragmentation; disabled for sparse storage.
+**Categories**: `sonarr`, `radarr` (set by each *arr's download client) and
+`prowlarr` (manual grabs from Prowlarr). All save under `/Downloads/<category>`.
 
-**Seed goals** — required for private trackers, harmless for public:
-- Sonarr → Settings → Download Clients → qBittorrent → Completed Download
-  Handling: **enabled**, with seed ratio **2.0** and seed time **14 days**
-  (or whatever your most-restrictive tracker requires).
-- Radarr: same.
-- For per-tracker overrides, use **Indexer-specific seed limits** in Sonarr
-  Settings → Indexers → each indexer.
+**Seeding policy — seed indefinitely** (owner preference, set 2026-10-25):
+- Tools → Options → BitTorrent → Seeding Limits: ratio, seeding time and
+  inactive seeding time limits all **off**. Nothing is removed automatically,
+  so Sonarr/Radarr "Remove Completed" never fires; that is intended.
+- Queueing: **300** active uploads / **350** active torrents (was 50/100,
+  which left ~3,000 completed torrents queued at ratio 0).
+- Manual imports from the `prowlarr` category are **copies**, not hardlinks,
+  on purpose: library files stay independent of the torrents, so torrents can
+  be pruned later (e.g. once a show is replaced by a season pack).
 
-**Removal**:
-- Sonarr/Radarr Settings → Download Clients → enable
-  **Remove Completed** + **Remove Failed**.
-- Set qBittorrent "When ratio reaches" → **Remove torrent and files** ONLY
-  if you trust seed goals above. Otherwise → **Pause torrent** so you can
-  inspect.
+**Connectability**: PIA port forwarding via gluetun (CA Vancouver; PIA US
+regions have no PF). gluetun pushes the forwarded port into qBittorrent and
+binds it to `tun0` — see [helmrelease.yaml](qbittorrent/app/helmrelease.yaml).
+
+**Upload limit**: managed by the `upload-throttle` sidecar, not the WebUI. It
+polls Plex every 20s; while any **remote** (WAN) stream is active it holds the
+global upload limit at `UP_LIMIT_STREAMING` (200 KiB/s), otherwise
+`UP_LIMIT_IDLE` (1 MiB/s). Router QoS can't do this: all torrent traffic is
+inside one VPN tunnel. Tune the two env values in the HelmRelease; a value set
+in the WebUI is overwritten within 20s.
+
+**Stalled downloads**: Sonarr/Radarr never give up on a dead torrent by
+themselves — see Cleanuparr (queue cleaner) for strike-based removal +
+blocklist + re-search.
 
 ---
 
