@@ -40,6 +40,10 @@ spec:
             envFrom: &envFrom
               - secretRef:
                   name: cleanuparr-secret
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: {drop: ["ALL"]}
             resources:
               requests:
                 cpu: 10m
