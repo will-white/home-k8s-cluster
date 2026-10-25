@@ -105,11 +105,26 @@ spec:
               # OpenVPN uses the same OPENVPN_USER/OPENVPN_PASSWORD account creds.
               VPN_TYPE: openvpn
               OPENVPN_PROTOCOL: udp
-              # Change region as desired. NOTE: PIA US regions do NOT support port
-              # forwarding — to enable it below, switch to a PF-capable region
-              # (e.g. "CA Toronto", "Netherlands").
-              SERVER_REGIONS: "US Denver"
-              VPN_PORT_FORWARDING: "off"
+              # PIA US regions do NOT support port forwarding, and without a
+              # forwarded port peers cannot connect in, so seeding barely works.
+              # CA Vancouver is the closest PF-capable region to Denver (others:
+              # CA Toronto, CA Montreal, CA Ontario, Mexico).
+              SERVER_REGIONS: "CA Vancouver"
+              PORT_FORWARD_ONLY: "true"
+              VPN_PORT_FORWARDING: "on"
+              # Push the forwarded port to qBittorrent (WebUI on :80, localhost
+              # auth bypass on) and bind it to the tunnel. The down command
+              # resets the port so qBittorrent re-binds after a reconnect
+              # (qBittorrent bug; see gluetun wiki vpn-port-forwarding.md).
+              # {{ "{{PORT}}" }} escapes the placeholders from app-template's tpl pass.
+              VPN_PORT_FORWARDING_UP_COMMAND: >-
+                /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data
+                "json={\"listen_port\":{{ "{{PORT}}" }},\"current_network_interface\":\"{{ "{{VPN_INTERFACE}}" }}\",\"random_port\":false,\"upnp\":false}"
+                http://127.0.0.1:80/api/v2/app/setPreferences'
+              VPN_PORT_FORWARDING_DOWN_COMMAND: >-
+                /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data
+                "json={\"listen_port\":0,\"current_network_interface\":\"lo\"}"
+                http://127.0.0.1:80/api/v2/app/setPreferences'
               # Open the WebUI (80) and metrics (9707) ports through the kill-switch
               # firewall so the Service/probes can still reach the pod.
               FIREWALL_INPUT_PORTS: "80,9707"
