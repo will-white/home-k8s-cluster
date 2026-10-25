@@ -16,10 +16,16 @@ on:
 env:
   KUBERNETES_DIR: ./kubernetes
 
+# A Renovate rebase supersedes the previous run on the same PR; cancel it
+# instead of queueing both. Pushes to main always run to completion.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   validate-manifests:
     name: Validate Kubernetes Manifests
-    runs-on: home-ops-runner
+    runs-on: ubuntu-latest
     permissions:
       contents: read  # Only need to read repository contents
     steps:
