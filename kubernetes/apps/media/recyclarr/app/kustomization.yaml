@@ -10,5 +10,8 @@ configMapGenerator:
     files:
       - recyclarr.yml=./resources/recyclarr.yml
       - settings.yml=./resources/settings.yml
+  - name: recyclarr-upgrade-search
+    files:
+      - upgrade-search.sh=./resources/upgrade-search.sh
 generatorOptions:
   disableNameSuffixHash: true

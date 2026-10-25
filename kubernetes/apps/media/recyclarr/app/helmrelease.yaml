@@ -56,6 +56,42 @@ spec:
                 memory: 128Mi
         pod:
           restartPolicy: Never
+      # Weekly back-catalogue upgrade search (see resources/upgrade-search.sh).
+      # Sonarr/Radarr only upgrade from RSS; this re-searches a random sample
+      # of cutoff-unmet / missing items so old files reach the profile cutoff.
+      upgrade-search:
+        type: cronjob
+        cronjob:
+          schedule: 0 3 * * 0
+          backoffLimit: 0
+          concurrencyPolicy: Forbid
+          successfulJobsHistory: 1
+          failedJobsHistory: 1
+          ttlSecondsAfterFinished: 86400
+        containers:
+          app:
+            # alpine/k8s bundles bash + curl + jq + shuf.
+            image:
+              repository: docker.io/alpine/k8s
+              tag: 1.37.1@sha256:712dc5385d1c1a3f83b747fa9e40f64d433a97f72ff42f9755ff7dd1f62846e4
+            command: ["/bin/bash", "/scripts/upgrade-search.sh"]
+            env:
+              SONARR_MAX_SEASONS: "20"
+              RADARR_MAX_MOVIES: "25"
+            envFrom:
+              - secretRef:
+                  name: recyclarr-secret
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: {drop: ["ALL"]}
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 64Mi
+        pod:
+          restartPolicy: Never
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -67,19 +103,37 @@ spec:
     persistence:
       config:
         existingClaim: *app
+        advancedMounts:
+          recyclarr:
+            app:
+              - path: /config
       config-file:
         type: configMap
         name: recyclarr-configmap
-        globalMounts:
-          - path: /config/recyclarr.yml
-            subPath: recyclarr.yml
-            readOnly: true
-          - path: /config/settings.yml
-            subPath: settings.yml
-            readOnly: true
+        advancedMounts:
+          recyclarr:
+            app:
+              - path: /config/recyclarr.yml
+                subPath: recyclarr.yml
+                readOnly: true
+              - path: /config/settings.yml
+                subPath: settings.yml
+                readOnly: true
       config-logs:
         type: emptyDir
-        globalMounts:
-          - path: /config/logs
+        advancedMounts:
+          recyclarr:
+            app:
+              - path: /config/logs
+      upgrade-search-script:
+        type: configMap
+        name: recyclarr-upgrade-search
+        defaultMode: 0555
+        advancedMounts:
+          upgrade-search:
+            app:
+              - path: /scripts/upgrade-search.sh
+                subPath: upgrade-search.sh
+                readOnly: true
   driftDetection:
     mode: enabled
