@@ -39,6 +39,13 @@ spec:
     gateway:
       replicas: 0
     loki:
+      # The chart's values.yaml hard-codes loki.image.tag (3.6.11 as of chart 7.5.0),
+      # which overrides its appVersion, so chart bumps never moved the image. Pin it here
+      # so Renovate tracks the app itself.
+      image:
+        # renovate: datasource=docker
+        repository: docker.io/grafana/loki
+        tag: 3.6.16@sha256:79f3fbf2a3eca97dd735e2aa0871a2fc15365a81c68dea67f639b092c301f454
       analytics:
         reporting_enabled: false
       auth_enabled: false
