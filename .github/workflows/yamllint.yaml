@@ -27,7 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install yamllint
-        # apt, not pipx — the ARC runner image has no python toolchain
+        # apt, not pipx: works on hosted runners and on the in-cluster ARC image,
+        # which has no python toolchain
         run: sudo apt-get update -qq && sudo apt-get install -y -qq yamllint
       - name: Lint
         run: yamllint -f github kubernetes/ .taskfiles/ Taskfile.yaml

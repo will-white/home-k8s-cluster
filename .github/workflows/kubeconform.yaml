@@ -24,9 +24,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # Cache installed tools to speed up workflow. Tools live in ~/.local/bin
-      # (not /usr/local/bin): on the ARC runner image that path is root-owned,
-      # so a cache restore there fails. Key bumped to v3 to force one cold
+      # Cache installed tools to speed up workflow. Tools live in ~/.local/bin,
+      # which is user-writable on any runner (/usr/local/bin is root-owned on the
+      # in-cluster ARC image, where a cache restore there fails). Key bumped to v3 to force one cold
       # install that exercises the hardened download path below.
       - name: Cache Tools
         id: cache-tools

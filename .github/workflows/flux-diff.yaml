@@ -54,11 +54,11 @@ jobs:
         id: diff
         run: |
           cat diff.patch
-          
+
           # Check diff size and truncate if too large to avoid ARG_MAX issues
           DIFF_SIZE=$(wc -c < diff.patch)
           MAX_SIZE=50000  # Safe limit to avoid argument list too long errors
-          
+
           if [ "$DIFF_SIZE" -gt "$MAX_SIZE" ]; then
             echo "Diff is too large ($DIFF_SIZE bytes), truncating..."
             echo "diff<<EOF" >> $GITHUB_OUTPUT
