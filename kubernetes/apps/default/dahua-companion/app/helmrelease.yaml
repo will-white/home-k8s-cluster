@@ -30,10 +30,15 @@ spec:
           app:
             image:
               repository: ghcr.io/will-white/dahua-companion
-              tag: v0.2.0@sha256:e382d9f0cf50137cdcbbaf79ecbbcd30e7f0e909963705a65f189ee16b579654
+              tag: v0.6.1@sha256:7882d343d8f4a5ad04156fa2f67df9f41b8358b839b1c2a6f469650dfb7677ec
             env:
-              MQTT_BROKER_URL: emqx-listeners.database.svc.cluster.local:1883
+              MQTT_BROKER_URL: tcp://emqx-listeners.database.svc.cluster.local:1883
               MQTT_CLIENT_ID: dahua-companion
+              # Home Assistant auto-creates the doorbell device (ring + person
+              # event entities, "Last ring"/"Last person" image entities).
+              MQTT_DISCOVERY_PREFIX: homeassistant
+              MQTT_PAYLOAD_FORMAT: json
+              SNAPSHOT: press,human
             envFrom:
               - secretRef:
                   name: dahua-companion-secret
@@ -47,7 +52,7 @@ spec:
                 custom: true
                 spec:
                   tcpSocket:
-                    port: 8080
+                    port: &port 8080
                   initialDelaySeconds: 10
                   timeoutSeconds: 5
                   periodSeconds: 30
@@ -58,7 +63,7 @@ spec:
                 spec:
                   httpGet:
                     path: /health
-                    port: 8080
+                    port: *port
                   initialDelaySeconds: 10
                   # /health bounds its camera probe at 5s; stay above that so
                   # kubelet does not give up at the same moment the probe does.
@@ -86,5 +91,20 @@ spec:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile: {type: RuntimeDefault}
+    service:
+      app:
+        controller: dahua-companion
+        ports:
+          http:
+            port: *port
+    serviceMonitor:
+      app:
+        serviceName: dahua-companion
+        endpoints:
+          - port: http
+            scheme: http
+            path: /metrics
+            interval: 1m
+            scrapeTimeout: 10s
   driftDetection:
     mode: enabled
