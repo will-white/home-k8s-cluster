@@ -172,6 +172,17 @@ sonarr:
         assign_scores_to:
           - name: Anime
 
+      # ...and the inverse case: Japanese audio is present but the only translation
+      # is French / Brazilian Portuguese / Chinese (KAF MULTi, WF PT-BR, LinRip,
+      # Tsundere-Raws). These are Bluray, so without a block Sonarr/Radarr prefer them
+      # over an English dual-audio WEB-DL on quality alone. Local CF, defined in
+      # resources/custom-formats/ (local resource provider in settings.yml).
+      - trash_ids:
+          - e20cd6caeb1b61f8e906837f694614c7 # Anime Foreign Subs
+        assign_scores_to:
+          - name: Anime
+            score: -10000
+
       # Junk blockers for Anime profile.
       - trash_ids:
           - 32b367365729d530ca1c124a0b180c64 # Bad Dual Groups
@@ -495,6 +506,17 @@ radarr:
           - 9a8f58fae5df94783c214c0ed63f589c # Not German, Japanese, Korean, Chinese or English
         assign_scores_to:
           - name: Anime
+
+      # ...and the inverse case: Japanese audio is present but the only translation
+      # is French / Brazilian Portuguese / Chinese (KAF MULTi, WF PT-BR, LinRip,
+      # Tsundere-Raws). These are Bluray, so without a block Sonarr/Radarr prefer them
+      # over an English dual-audio WEB-DL on quality alone. Local CF, defined in
+      # resources/custom-formats/ (local resource provider in settings.yml).
+      - trash_ids:
+          - 5f688f983aa9909aba928095beaf53cc # Anime Foreign Subs
+        assign_scores_to:
+          - name: Anime
+            score: -10000
 
       # Junk blockers for Anime profile.
       - trash_ids:

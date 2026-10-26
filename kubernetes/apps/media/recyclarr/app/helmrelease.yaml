@@ -119,6 +119,22 @@ spec:
               - path: /config/settings.yml
                 subPath: settings.yml
                 readOnly: true
+      custom-formats-sonarr:
+        type: configMap
+        name: recyclarr-custom-formats-sonarr
+        advancedMounts:
+          recyclarr:
+            app:
+              - path: /config/custom-formats/sonarr
+                readOnly: true
+      custom-formats-radarr:
+        type: configMap
+        name: recyclarr-custom-formats-radarr
+        advancedMounts:
+          recyclarr:
+            app:
+              - path: /config/custom-formats/radarr
+                readOnly: true
       config-logs:
         type: emptyDir
         advancedMounts:
