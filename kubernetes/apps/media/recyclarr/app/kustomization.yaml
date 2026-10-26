@@ -10,6 +10,17 @@ configMapGenerator:
     files:
       - recyclarr.yml=./resources/recyclarr.yml
       - settings.yml=./resources/settings.yml
+  - name: recyclarr-custom-formats-sonarr
+    files:
+      - anime-foreign-subs.json=./resources/custom-formats/sonarr/anime-foreign-subs.json
+    options: &noSubstitute
+      # CF regexes contain `$`; keep Flux postBuild envsubst off them.
+      annotations:
+        kustomize.toolkit.fluxcd.io/substitute: disabled
+  - name: recyclarr-custom-formats-radarr
+    files:
+      - anime-foreign-subs.json=./resources/custom-formats/radarr/anime-foreign-subs.json
+    options: *noSubstitute
   - name: recyclarr-upgrade-search
     files:
       - upgrade-search.sh=./resources/upgrade-search.sh

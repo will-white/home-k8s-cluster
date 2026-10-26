@@ -1,7 +1,16 @@
 # yaml-language-server: $schema=https://schemas.recyclarr.dev/latest/settings-schema.json
 ---
-# No resource_providers override: this config uses no `include:` templates
+# No config-templates override: this config uses no `include:` templates
 # (upstream recyclarr/config-templates deleted its includes registry in the v8
-# architecture, 2026-08-07), so the default providers are fine. CF definitions
-# sync directly from the TRaSH guides via trash_ids in recyclarr.yml.
-{}
+# architecture, 2026-08-07). CF definitions sync from the TRaSH guides via
+# trash_ids in recyclarr.yml, plus the local custom formats below (flat dirs
+# of TRaSH-format CF JSON, mounted from resources/custom-formats/).
+resource_providers:
+  - name: local-sonarr-cfs
+    type: custom-formats
+    service: sonarr
+    path: /config/custom-formats/sonarr
+  - name: local-radarr-cfs
+    type: custom-formats
+    service: radarr
+    path: /config/custom-formats/radarr

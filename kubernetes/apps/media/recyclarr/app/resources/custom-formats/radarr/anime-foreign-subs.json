@@ -1,0 +1,53 @@
+{
+  "trash_id": "5f688f983aa9909aba928095beaf53cc",
+  "trash_description": "Local: anime releases whose only translation is not English (French MULTi, PT-BR, Chinese). Japanese audio is present, so the TRaSH \"Not German, Japanese, Korean, Chinese or English\" CF does not fire.",
+  "name": "Anime Foreign Subs",
+  "includeCustomFormatWhenRenaming": false,
+  "specifications": [
+    {
+      "name": "KAF (French MULTi)",
+      "implementation": "ReleaseGroupSpecification",
+      "negate": false,
+      "required": false,
+      "fields": {
+        "value": "^(KAF)$"
+      }
+    },
+    {
+      "name": "WF (PT-BR)",
+      "implementation": "ReleaseGroupSpecification",
+      "negate": false,
+      "required": false,
+      "fields": {
+        "value": "^(WF)$"
+      }
+    },
+    {
+      "name": "LinRip (Chinese)",
+      "implementation": "ReleaseGroupSpecification",
+      "negate": false,
+      "required": false,
+      "fields": {
+        "value": "^(LinRip)$"
+      }
+    },
+    {
+      "name": "Tsundere-Raws (French)",
+      "implementation": "ReleaseGroupSpecification",
+      "negate": false,
+      "required": false,
+      "fields": {
+        "value": "^(Tsundere[ ._-]?Raws)$"
+      }
+    },
+    {
+      "name": "Foreign sub/dub markers",
+      "implementation": "ReleaseTitleSpecification",
+      "negate": false,
+      "required": false,
+      "fields": {
+        "value": "\\b(VOSTFR|SUBFRENCH|TRUEFRENCH|PT[ ._-]?BR|LEGENDADO|DUBLADO)\\b"
+      }
+    }
+  ]
+}
