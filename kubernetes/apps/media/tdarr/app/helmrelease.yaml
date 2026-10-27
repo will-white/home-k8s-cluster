@@ -1,0 +1,148 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app tdarr
+spec:
+  interval: 30m
+  maxHistory: 2
+  chartRef:
+    kind: OCIRepository
+    name: tdarr
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+  values:
+    controllers:
+      tdarr:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/haveagitgat/tdarr
+              # Server and nodes must run the same Tdarr version or the node is
+              # refused. The only node is the off-cluster one on plex.internal
+              # (P1000 NVENC), pinned to 3.01.00 by hand; renovate.json5 gates
+              # this image so both get bumped together.
+              tag: 3.01.00@sha256:5b3b8d4e54f41738d12ff71705cf8eb8e90fcbcc05209c331853aef119879992
+            env:
+              TZ: ${TIMEZONE}
+              PUID: "1000"
+              PGID: "1000"
+              UMASK_SET: "002"
+              serverIP: 0.0.0.0
+              serverPort: &serverPort 8266
+              webUIPort: &port 8265
+              # No transcoding in the cluster: the nodes' i5-6500T iGPUs cannot
+              # encode 10-bit HEVC. All work goes to the plex.internal node.
+              internalNode: "false"
+              inContainer: "true"
+              auth: "false"
+              openBrowser: "false"
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/v2/status
+                    port: *port
+                  initialDelaySeconds: 0
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/v2/status
+                    port: *port
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 30
+            # The image starts as root (s6) and drops to PUID/PGID, so no
+            # runAsNonRoot / readOnlyRootFilesystem here (same as manyfold).
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                memory: 2Gi
+    service:
+      app:
+        # Two services, so app-template would suffix both; keep the plain
+        # name for gatus and homepage (tdarr.media:8265).
+        forceRename: *app
+        controller: tdarr
+        ports:
+          http:
+            port: *port
+      server:
+        controller: tdarr
+        type: LoadBalancer
+        annotations:
+          lbipam.cilium.io/ips: ${TDARR_LB}
+          external-dns.alpha.kubernetes.io/hostname: tdarr-server.${SECRET_DOMAIN}
+        ports:
+          server:
+            port: *serverPort
+    ingress:
+      app:
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/group: Downloads
+          gethomepage.dev/name: Tdarr
+          gethomepage.dev/icon: tdarr.png
+          gethomepage.dev/description: Transcode Automation
+          gethomepage.dev/widget.type: tdarr
+          gethomepage.dev/widget.url: http://tdarr.media:8265
+        className: internal
+        hosts:
+          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+    persistence:
+      config:
+        existingClaim: *app
+        globalMounts:
+          - path: /app/server
+            subPath: server
+          - path: /app/configs
+            subPath: configs
+      logs:
+        type: emptyDir
+        globalMounts:
+          - path: /app/logs
+      # Libraries' transcode cache. Nodes encode into their own local /temp
+      # (NVMe on plex.internal); the server only needs the path to exist.
+      cache:
+        type: emptyDir
+        globalMounts:
+          - path: /temp
+      # Library files are hardlinks of seeding torrents under /media/Downloads.
+      # Only use plugins/flows that write a new file; never in-place editors
+      # (mkvpropedit etc.), which would corrupt the torrent's copy.
+      media:
+        type: nfs
+        server: ${NAS_IP}
+        path: /mnt/main/media
+        globalMounts:
+          - path: /media
+  driftDetection:
+    mode: enabled

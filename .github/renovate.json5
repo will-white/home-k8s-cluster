@@ -310,6 +310,22 @@
     },
     {
       description: [
+        // Tdarr server and nodes must run the same version or nodes are
+        // refused. The only node is off-cluster on plex.internal and is updated
+        // by hand, so approve a server bump only together with that node.
+        'tdarr: manual approval (server and plex.internal node versions must match)',
+      ],
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        '/haveagitgat/tdarr/',
+      ],
+      automerge: false,
+      dependencyDashboardApproval: true,
+    },
+    {
+      description: [
         // emqx-operator 2.3.0+ polls the Enterprise-only endpoint
         // /api/v5/load_rebalance/global_status, which 404s on OSS EMQX 5.8.9
         // (the last open-source release). The reconcile then aborts before the
