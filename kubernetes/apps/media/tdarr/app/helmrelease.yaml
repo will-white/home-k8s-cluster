@@ -81,6 +81,27 @@ spec:
                 memory: 512Mi
               limits:
                 memory: 2Gi
+          exporter:
+            image:
+              repository: docker.io/homeylab/tdarr-exporter
+              tag: 3.1.0@sha256:c72fd0ecf4aa5207d4f609d09fbb6470bac9e4dc5d9524303cd7169f5751bf62
+            env:
+              TDARR_URL: http://localhost:8265
+              PROMETHEUS_PORT: &metricsPort 9090
+              INSTANCE_NAME: tdarr
+            securityContext:
+              runAsUser: 65534
+              runAsGroup: 65534
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: {drop: ["ALL"]}
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 128Mi
     service:
       app:
         # Two services, so app-template would suffix both; keep the plain
@@ -90,6 +111,8 @@ spec:
         ports:
           http:
             port: *port
+          metrics:
+            port: *metricsPort
       server:
         controller: tdarr
         type: LoadBalancer
@@ -102,6 +125,15 @@ spec:
         ports:
           server:
             port: *serverPort
+    serviceMonitor:
+      app:
+        serviceName: tdarr
+        endpoints:
+          - port: metrics
+            scheme: http
+            path: /metrics
+            interval: 1m
+            scrapeTimeout: 30s
     ingress:
       app:
         annotations:

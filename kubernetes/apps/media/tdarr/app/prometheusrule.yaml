@@ -1,0 +1,43 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tdarr-rules
+spec:
+  groups:
+    - name: tdarr.rules
+      rules:
+        - alert: TdarrDown
+          annotations:
+            summary: tdarr-exporter cannot reach the Tdarr server.
+          expr: tdarr_up == 0
+          for: 15m
+          labels:
+            severity: warning
+        - alert: TdarrNodeMissing
+          annotations:
+            summary: No Tdarr node is connected; transcodes cannot run.
+            description: >-
+              The only node is off-cluster on plex.internal (Quadro P1000). Check
+              the tdarr_node container there and that tdarr.internal still
+              resolves to TDARR_LB.
+          expr: absent(tdarr_node_info)
+          for: 30m
+          labels:
+            severity: warning
+        # Upstream example (homeylab/tdarr-exporter examples/alerts.yaml).
+        - alert: TdarrTranscodeFailed
+          annotations:
+            summary: A Tdarr transcode failed.
+            description: >-
+              One or more transcodes in library {{ $labels.library_name }}
+              failed. The flow keeps the original file on failure; see the job
+              report in the Tdarr UI.
+          expr: >-
+            tdarr_library_transcodes{status="error"}
+            * on (library_id, tdarr_instance) group_left(library_name)
+            tdarr_library_info > 0
+          for: 5m
+          labels:
+            severity: warning

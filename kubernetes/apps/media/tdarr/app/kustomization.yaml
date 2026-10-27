@@ -5,4 +5,21 @@ resources:
   - ../../../../templates/volsync
   - ./ocirepository.yaml
   - ./helmrelease.yaml
+  - ./prometheusrule.yaml
   - ../../../../templates/gatus/guarded
+configMapGenerator:
+  # Upstream dashboard (grafana.com 20388, homeylab/tdarr-exporter v3.1.0
+  # examples/dashboard.json) with the DS_PROMETHEUS input mapped to its own
+  # datasource variable.
+  - name: tdarr-dashboard
+    files:
+      - tdarr.json=./resources/tdarr-dashboard.json
+    options:
+      labels:
+        grafana_dashboard: "true"
+      annotations:
+        grafana_folder: Media
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: disabled
