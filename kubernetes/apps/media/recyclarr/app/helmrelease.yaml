@@ -24,6 +24,12 @@ spec:
   values:
     controllers:
       recyclarr:
+        # Reloader starts a sync Job from this CronJob as soon as a mounted
+        # ConfigMap changes. Content-only edits are safe. A PR that ALSO adds
+        # mounts here races: Flux applies the ConfigMaps first, so the Job
+        # runs from the old spec without the new files ("Invalid trash_id",
+        # seen with #1560). After such a PR, run one Job by hand once the
+        # HelmRelease is Ready, or let the 00:00 run fix it.
         annotations:
           reloader.stakater.com/auto: "true"
         type: cronjob
