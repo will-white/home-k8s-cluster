@@ -47,8 +47,13 @@ spec:
               # encode 10-bit HEVC. All work goes to the plex.internal node.
               internalNode: "false"
               inContainer: "true"
-              auth: "false"
+              # Auth on: nodes and API clients must send a Tdarr API key.
+              # authSecretKey + seededApiKey come from tdarr-secret.
+              auth: "true"
               openBrowser: "false"
+            envFrom:
+              - secretRef:
+                  name: tdarr-secret
             probes:
               liveness: &probes
                 enabled: true
@@ -89,6 +94,11 @@ spec:
               TDARR_URL: http://localhost:8265
               PROMETHEUS_PORT: &metricsPort 9090
               INSTANCE_NAME: tdarr
+              TDARR_API_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: tdarr-secret
+                    key: TDARR_API_KEY
             securityContext:
               runAsUser: 65534
               runAsGroup: 65534
