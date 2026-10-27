@@ -93,10 +93,16 @@ spec:
           limits:
             memory: 256Mi
     registry: txt
+    # No `service` source: --ingress-class does not filter Services, and with
+    # --force-default-targets this instance rewrote every annotated
+    # LoadBalancer Service to the external ingress IP. On a NEW name it raced
+    # adguard-dns-internal and AdGuard answered with the wrong IP (tdarr-server
+    # -> .48, #1563); the two then deleted/re-added each other's rule every
+    # minute. All Service records are owned by adguard-dns-internal
+    # (owner=default), which keeps the `service` source.
     sources:
       - ingress
       - gateway-httproute
-      - service
     triggerLoopOnEvent: true
     txtOwnerId: external
     txtPrefix: k8s-ext.
