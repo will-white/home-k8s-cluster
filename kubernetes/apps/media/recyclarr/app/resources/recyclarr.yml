@@ -183,6 +183,18 @@ sonarr:
           - name: Anime
             score: -10000
 
+      # Hi10P (10-bit H.264): no GPU can decode it, so every Plex transcode of it
+      # runs on the CPU (Tdarr converts what can't be replaced). -1500 sits between
+      # the widest group-tier spread (+1400) and the 3000 language spacing: any
+      # non-Hi10P release of the same language outranks a Hi10P one, but a Hi10P
+      # dual-audio release still beats a Japanese-only one. Local CF, defined in
+      # resources/custom-formats/sonarr/anime-hi10p.json.
+      - trash_ids:
+          - 25adb04ee5324e3db16af02badfa5128 # Anime Hi10P
+        assign_scores_to:
+          - name: Anime
+            score: -1500
+
       # Junk blockers for Anime profile.
       - trash_ids:
           - 32b367365729d530ca1c124a0b180c64 # Bad Dual Groups
