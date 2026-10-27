@@ -75,3 +75,21 @@ spec:
       replacement: lab-node-opnsense
     - targetLabel: instance
       replacement: opnsense
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: lab-node-pve
+  namespace: observability
+spec:
+  staticConfigs:
+    - targets:
+        - pve.internal:9100
+  metricsPath: /metrics
+  scrapeInterval: 30s
+  relabelings:
+    - targetLabel: job
+      replacement: lab-node-pve
+    - targetLabel: instance
+      replacement: pve
