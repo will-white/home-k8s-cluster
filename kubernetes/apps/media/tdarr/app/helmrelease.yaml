@@ -93,9 +93,12 @@ spec:
       server:
         controller: tdarr
         type: LoadBalancer
+        # No external-dns hostname here: both adguard-dns-internal and
+        # adguard-dns-external watch Services, and on a new name the external
+        # one (forced to the external ingress IP) won the race. Nodes reach
+        # this as tdarr.internal (OPNsense host override -> TDARR_LB).
         annotations:
           lbipam.cilium.io/ips: ${TDARR_LB}
-          external-dns.alpha.kubernetes.io/hostname: tdarr-server.${SECRET_DOMAIN}
         ports:
           server:
             port: *serverPort
