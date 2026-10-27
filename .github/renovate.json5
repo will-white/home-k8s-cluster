@@ -384,6 +384,22 @@
     },
     {
       description: [
+        // Radarr 7.0.0.10815 (2026-10-25) is a GitHub pre-release from the
+        // develop branch (.NET 10 bump); the home-operations image tracks it
+        // (#1554). Same policy as Sonarr v5: hold on v6 until v7 is a stable
+        // release, then drop this rule and take it with a fresh CNPG backup.
+        'radarr: hold <7 until v7 is a stable release',
+      ],
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/home-operations/radarr',
+      ],
+      allowedVersions: '<7',
+    },
+    {
+      description: [
         // Renovate embeds release notes only when it can resolve a source repo
         // whose tags match the new version. The packages below either ship no
         // org.opencontainers.image.source label or point it at a repo without
