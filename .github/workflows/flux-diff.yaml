@@ -92,12 +92,14 @@ jobs:
             if [ "$SIZE" -gt "$MAX_SIZE" ]; then
               echo "⚠️ **Diff truncated** ($SIZE bytes). Full diff: artifact \`flux-diff\` on $RUN_URL"
               echo ""
-              head -c "$MAX_SIZE" diff.md
-              echo ""
-              echo "... (truncated)"
-            else
-              cat diff.md
             fi
+            echo '```diff'
+            head -c "$MAX_SIZE" diff.md
+            echo ""
+            if [ "$SIZE" -gt "$MAX_SIZE" ]; then
+              echo "... (truncated)"
+            fi
+            echo '```'
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
