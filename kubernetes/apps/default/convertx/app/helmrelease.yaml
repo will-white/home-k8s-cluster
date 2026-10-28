@@ -66,22 +66,26 @@ spec:
         ports:
           http:
             port: 3000
-    ingress:
+    route:
       app:
-        className: internal
         annotations:
           gethomepage.dev/enabled: "true"
           gethomepage.dev/icon: mdi-file-swap
           gethomepage.dev/name: ConvertX
           gethomepage.dev/group: Tools
           gethomepage.dev/description: Media File Converter
-        hosts:
-          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     persistence:
       data:
         existingClaim: *app

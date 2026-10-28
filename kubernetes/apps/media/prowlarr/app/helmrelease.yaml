@@ -134,7 +134,7 @@ spec:
             port: *port
           metrics:
             port: *metricsPort
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
@@ -145,14 +145,18 @@ spec:
           gethomepage.dev/widget.type: prowlarr
           gethomepage.dev/widget.url: http://prowlarr.media
           gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_PROWLARR_API_KEY}}` }}"
-        className: internal
-        hosts:
-          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     serviceMonitor:
       app:
         serviceName: prowlarr

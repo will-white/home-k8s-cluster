@@ -134,7 +134,7 @@ spec:
             path: /metrics
             interval: 1m
             scrapeTimeout: 30s
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
@@ -144,14 +144,18 @@ spec:
           gethomepage.dev/description: Transcode Automation
           gethomepage.dev/widget.type: tdarr
           gethomepage.dev/widget.url: http://tdarr.media:8265
-        className: internal
-        hosts:
-          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     persistence:
       config:
         existingClaim: *app

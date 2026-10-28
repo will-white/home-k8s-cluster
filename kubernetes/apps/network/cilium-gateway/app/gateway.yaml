@@ -4,7 +4,9 @@ kind: Gateway
 metadata:
   name: internal
   annotations:
-    # NOTE: Using temporary IP during migration. Switch to 192.168.5.46 after ingress-nginx removal.
+    # 192.168.5.46 was ingress-nginx-internal's address; it is free to reclaim
+    # in a follow-up now that ingress-nginx is gone (swap here and in
+    # infrastructure.annotations below, then let external-dns re-point AdGuard).
     lbipam.cilium.io/ips: "192.168.5.49"
 spec:
   gatewayClassName: cilium
@@ -35,8 +37,12 @@ kind: Gateway
 metadata:
   name: external
   annotations:
-    # NOTE: Using temporary IP during migration. Switch to 192.168.5.48 after ingress-nginx removal.
+    # 192.168.5.48 was ingress-nginx-external's address; free to reclaim in a
+    # follow-up (also update --default-targets in adguard-dns-external).
     lbipam.cilium.io/ips: "192.168.5.44"
+    # external-dns reads the target from the Gateway, not from HTTPRoutes:
+    # every route attached here gets a Cloudflare CNAME to the tunnel.
+    external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
 spec:
   gatewayClassName: cilium
   listeners:

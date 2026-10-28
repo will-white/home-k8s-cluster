@@ -213,24 +213,6 @@ spec:
           # renovate: depName="External-dns"
           gnetId: 15038
           revision: 3
-        nginx:
-          datasource: Prometheus
-          url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/grafana/dashboards/nginx.json
-        nginx-ingress:
-          datasource: Prometheus
-          # renovate: depName="NGINX Ingress controller"
-          gnetId: 14314
-          revision: 2
-        nginx-ingress-loki:
-          datasource:
-            - name: DS_LOKI
-              value: Loki
-          # renovate: depName="NGINX / LOKI Ingress Controller"
-          gnetId: 12559
-          revision: 14
-        nginx-request-handling-performance:
-          datasource: Prometheus
-          url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/grafana/dashboards/request-handling-performance.json
       external:
         adguard-home:
           datasource:
@@ -441,21 +423,25 @@ spec:
       dataproxy:
         timeout: 300
         keep_alive_seconds: 300
-    ingress:
-      annotations:
-        gethomepage.dev/description: Monitoring Dashboards
-        gethomepage.dev/enabled: 'true'
-        gethomepage.dev/group: Cluster & Observability
-        gethomepage.dev/icon: grafana.png
-        gethomepage.dev/name: Grafana
-        gethomepage.dev/widget.type: grafana
-        gethomepage.dev/widget.url: http://grafana.observability
-        gethomepage.dev/widget.username: "{{ `{{HOMEPAGE_VAR_GRAFANA_USERNAME}}` }}"
-        gethomepage.dev/widget.password: "{{ `{{HOMEPAGE_VAR_GRAFANA_PASSWORD}}` }}"
-      enabled: true
-      hosts:
-        - "{{ .Release.Name }}.${SECRET_DOMAIN}"
-      ingressClassName: internal
+    route:
+      main:
+        enabled: true
+        annotations:
+          gethomepage.dev/description: Monitoring Dashboards
+          gethomepage.dev/enabled: 'true'
+          gethomepage.dev/group: Cluster & Observability
+          gethomepage.dev/icon: grafana.png
+          gethomepage.dev/name: Grafana
+          gethomepage.dev/widget.type: grafana
+          gethomepage.dev/widget.url: http://grafana.observability
+          gethomepage.dev/widget.username: "{{ `{{HOMEPAGE_VAR_GRAFANA_USERNAME}}` }}"
+          gethomepage.dev/widget.password: "{{ `{{HOMEPAGE_VAR_GRAFANA_PASSWORD}}` }}"
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
     persistence:
       enabled: false
     plugins:

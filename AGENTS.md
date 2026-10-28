@@ -48,7 +48,7 @@ You are responsible for maintaining a Home Kubernetes cluster running on Talos L
 - **Secrets Management:** SOPS (with Age encryption)
 - **Task Runner:** Task (Go-Task)
 - **Validation:** Kubeconform, Yamllint, Kustomize
-- **Networking:** Cilium, Cert-Manager, External-DNS, Ingress-Nginx
+- **Networking:** Cilium (Gateway API), Cert-Manager, External-DNS
 - **Storage:** Rook-CEPH, OpenEBS
 
 ## Specialist Agents

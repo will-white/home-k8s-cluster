@@ -31,11 +31,11 @@ spec:
           expr: |
             (
               sum by (namespace, endpointslice) (
-                kube_endpointslice_endpoints{endpointslice=~"(emqx-listeners|postgres16-rw|dragonfly|ingress-nginx-internal-controller|ingress-nginx-external-controller)-.*", ready="true"}
+                kube_endpointslice_endpoints{endpointslice=~"(emqx-listeners|postgres16-rw|dragonfly)-.*", ready="true"}
               )
               or
               sum by (namespace, endpointslice) (
-                kube_endpointslice_endpoints{endpointslice=~"(emqx-listeners|postgres16-rw|dragonfly|ingress-nginx-internal-controller|ingress-nginx-external-controller)-.*"}
+                kube_endpointslice_endpoints{endpointslice=~"(emqx-listeners|postgres16-rw|dragonfly)-.*"}
               ) * 0
             ) == 0
           for: 10m

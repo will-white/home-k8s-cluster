@@ -1,0 +1,48 @@
+---
+# The rook-ceph-cluster chart only renders Ingress objects for the dashboard
+# and the RGW, so both routes live here instead of in the HelmRelease values.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: rook-ceph-dashboard
+  annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/description: Manage Rook-Ceph
+    gethomepage.dev/group: Storage & Infrastructure
+    gethomepage.dev/icon: rook.png
+    gethomepage.dev/name: Rook/Ceph
+    gethomepage.dev/pod-selector: mgr=a
+spec:
+  parentRefs:
+    - name: internal
+      namespace: network
+      sectionName: https
+  hostnames:
+    - rook.${SECRET_DOMAIN}
+  rules:
+    - backendRefs:
+        # dashboard.ssl is false, so the mgr serves plain HTTP on 7000.
+        - name: rook-ceph-mgr-dashboard
+          port: 7000
+      timeouts:
+        request: 0s
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: ceph-objectstore
+spec:
+  parentRefs:
+    - name: internal
+      namespace: network
+      sectionName: https
+  hostnames:
+    - rgw.${SECRET_DOMAIN}
+  rules:
+    - backendRefs:
+        - name: rook-ceph-rgw-ceph-objectstore
+          port: 80
+      # Multi-GB object transfers; nginx had proxy-body-size 0 and request
+      # buffering off. Envoy streams bodies and 0s disables the route timeout.
+      timeouts:
+        request: 0s

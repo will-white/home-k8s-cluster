@@ -104,7 +104,7 @@ spec:
         runAsUser: 1000
         seccompProfile:
           type: RuntimeDefault
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/enabled: 'true'
@@ -112,14 +112,18 @@ spec:
           gethomepage.dev/icon: matter.png
           gethomepage.dev/name: Matter
           gethomepage.dev/description: Matter controller
-        className: internal
-        hosts:
-          - host: matter.${SECRET_DOMAIN}
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - matter.${SECRET_DOMAIN}
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     persistence:
       data:
         existingClaim: matter-server

@@ -32,7 +32,9 @@ spec:
     domainFilters: ["${SECRET_DOMAIN}"]
     env: [] # Clear any existing env vars from previous Cloudflare config
     extraArgs:
-      - --ingress-class=internal
+      # Routes on the internal Gateway resolve to its LB address (Gateway status).
+      - --gateway-name=internal
+      - --gateway-namespace=network
       - --managed-record-types=A
       - --managed-record-types=AAAA
       - --managed-record-types=TXT
@@ -157,7 +159,6 @@ spec:
             memory: 256Mi
     registry: txt
     sources:
-      - ingress
       - gateway-httproute
       - service
     triggerLoopOnEvent: true

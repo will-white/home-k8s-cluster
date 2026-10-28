@@ -115,7 +115,7 @@ spec:
             port: *port
           metrics:
             port: 5001
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
@@ -123,15 +123,18 @@ spec:
           gethomepage.dev/description: NVR with realtime local object detection for IP cameras
           gethomepage.dev/group: Smart Home
           gethomepage.dev/icon: frigate.png
-        className: internal
-        enabled: true
-        hosts:
-          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     serviceMonitor:
       app:
         serviceName: frigate

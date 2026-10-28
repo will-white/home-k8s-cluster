@@ -357,16 +357,7 @@ spec:
           reclaimPolicy: Delete
           volumeBindingMode: Immediate
     cephObjectStores:
-      - ingress:
-          annotations:
-            nginx.ingress.kubernetes.io/proxy-body-size: "0"
-            nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
-          enabled: true
-          host:
-            name: rgw.${SECRET_DOMAIN}
-            path: /
-          ingressClassName: internal
-        name: ceph-objectstore
+      - name: ceph-objectstore
         spec:
           dataPool:
             erasureCoded:
@@ -406,19 +397,6 @@ spec:
       bdev_enable_discard = true
       bdev_async_discard = true
       osd_class_update_on_start = false
-    ingress:
-      dashboard:
-        annotations:
-          gethomepage.dev/enabled: "true"
-          gethomepage.dev/description: Manage Rook-Ceph
-          gethomepage.dev/group: Storage & Infrastructure
-          gethomepage.dev/icon: rook.png
-          gethomepage.dev/name: Rook/Ceph
-          gethomepage.dev/pod-selector: mgr=a
-        host:
-          name: rook.${SECRET_DOMAIN}
-          path: /
-        ingressClassName: internal
     monitoring:
       createPrometheusRules: true
       # Rook's own ServiceMonitors are replaced by ./servicemonitors.yaml,

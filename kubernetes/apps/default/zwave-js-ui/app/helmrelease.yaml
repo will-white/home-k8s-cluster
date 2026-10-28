@@ -125,7 +125,7 @@ spec:
         runAsUser: 1000
         seccompProfile:
           type: RuntimeDefault
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/enabled: 'true'
@@ -133,14 +133,18 @@ spec:
           gethomepage.dev/icon: zwavejs2mqtt.png
           gethomepage.dev/name: Z-Wave
           gethomepage.dev/description: Z-Wave controller
-        className: internal
-        hosts:
-          - host: zwave.${SECRET_DOMAIN}
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - zwave.${SECRET_DOMAIN}
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     persistence:
       config:
         existingClaim: zwave-js-ui

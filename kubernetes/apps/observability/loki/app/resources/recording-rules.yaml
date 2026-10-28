@@ -12,9 +12,11 @@ groups:
       - record: loki:namespace_log_bytes:5m
         expr: |
           sum by (namespace) (bytes_over_time({namespace=~".+"} [5m]))
+      # Cilium Gateway access logs (network/cilium-gateway/app/gatewayclass.yaml)
+      # are written by the cilium-envoy pods; `gateway` is "namespace/name".
       - record: loki:ingress_5xx:5m
         expr: |
-          sum by (app) (count_over_time({app=~"ingress-nginx.*"} | json | status >= 500 [5m]))
+          sum by (gateway) (count_over_time({namespace="kube-system", app="cilium-envoy"} | json | __error__="" | response_code >= 500 [5m]))
       - record: loki:ingress_requests:5m
         expr: |
-          sum by (app) (count_over_time({app=~"ingress-nginx.*"} [5m]))
+          sum by (gateway) (count_over_time({namespace="kube-system", app="cilium-envoy"} | json | __error__="" | response_code > 0 [5m]))

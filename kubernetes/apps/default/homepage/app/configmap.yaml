@@ -18,9 +18,10 @@ data:
   docker.yaml: ""
   kubernetes.yaml: |
     mode: cluster
+    gateway: true
   services.yaml: |
-    # Services are auto-discovered via gethomepage.dev annotations on ingresses/services
-    # Only services without K8s ingress need to be defined here
+    # Services are auto-discovered via gethomepage.dev annotations on HTTPRoutes
+    # Only services without an HTTPRoute need to be defined here
     - Calendar:
         - Agenda:
             widget:
@@ -35,6 +36,18 @@ data:
                   service_group: Downloads
                   service_name: Radarr
     - Network:
+        # UniFi only serves HTTPS with a self-signed cert, which Gateway API
+        # cannot proxy without a BackendTLSPolicy + trusted cert. Reach it on
+        # its own LoadBalancer Service until that lands.
+        - UniFi:
+            href: https://unifi-mgmt.${SECRET_DOMAIN}:8443
+            icon: unifi.png
+            description: Unifi Dashboard
+            widget:
+              type: unifi
+              url: https://unifi.default:8443
+              username: {{HOMEPAGE_VAR_UNIFI_USERNAME}}
+              password: {{HOMEPAGE_VAR_UNIFI_PASSWORD}}
         - Cloudflared:
             href: https://dash.cloudflare.com/
             icon: cloudflare-zero-trust.png

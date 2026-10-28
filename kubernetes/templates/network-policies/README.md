@@ -10,7 +10,8 @@ The pattern is layered — apply only what you need, in this order:
 1. **`default-deny/`** — denies all ingress and egress in the target namespace.
 2. **`allow-dns/`** — egress to `kube-system` CoreDNS on UDP/TCP 53.
 3. **`allow-kube-apiserver/`** — egress to the Kubernetes API server.
-4. **`allow-from-ingress/`** — ingress from `ingress-nginx` controllers.
+4. **`allow-from-ingress/`** — ingress from the Cilium Gateway (Envoy, reserved
+   `ingress` entity; this one is a `CiliumNetworkPolicy`).
 5. **`allow-from-monitoring/`** — ingress from Prometheus / kube-state-metrics
    for `ServiceMonitor` scrapes (port-agnostic; rely on selectors).
 

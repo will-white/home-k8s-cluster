@@ -121,7 +121,7 @@ spec:
             path: /metrics
             interval: 1m
             scrapeTimeout: 10s
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
@@ -131,15 +131,18 @@ spec:
           gethomepage.dev/description: DNS Status Page
           gethomepage.dev/widget.type: gatus
           gethomepage.dev/widget.url: http://gatus.observability
-          external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
-        className: external
-        hosts:
-          - host: status.${SECRET_DOMAIN}
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - status.${SECRET_DOMAIN}
+        parentRefs:
+          - name: external
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     serviceAccount:
       # Renders as "gatus" (single SA named after the release), matching the
       # ClusterRoleBinding subject in rbac.yaml.

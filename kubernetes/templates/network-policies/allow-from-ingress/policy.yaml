@@ -1,20 +1,15 @@
 ---
-# Allow ingress from the ingress-nginx controllers (internal + external)
-# in the network namespace.
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
+# Allow ingress from the Cilium Gateway API data path. Gateway traffic is
+# proxied by the cilium-envoy DaemonSet (host network, kube-system) and reaches
+# backend pods with Cilium's reserved `ingress` identity, which a plain
+# NetworkPolicy cannot select -- hence a CiliumNetworkPolicy. KNP and CNP allow
+# rules are unioned, so the default-deny KNP in each namespace still applies.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
 metadata:
   name: allow-from-ingress
 spec:
-  podSelector: {}
-  policyTypes:
-    - Ingress
+  endpointSelector: {}
   ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: network
-          podSelector:
-            matchLabels:
-              app.kubernetes.io/name: ingress-nginx
-              app.kubernetes.io/component: controller
+    - fromEntities:
+        - ingress

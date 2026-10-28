@@ -77,7 +77,7 @@ spec:
           webrtc-udp:
             port: 8555
             protocol: UDP
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/description: Ultimate camera streaming application
@@ -85,14 +85,18 @@ spec:
           gethomepage.dev/group: Smart Home
           gethomepage.dev/icon: go2rtc
           gethomepage.dev/name: go2rtc
-        className: internal
-        hosts:
-          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     persistence:
       config:
         type: secret

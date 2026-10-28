@@ -1,0 +1,36 @@
+---
+# Replaces the ingress-nginx access-log alerts. Envoy access logs come from
+# the CiliumGatewayClassConfig in ../gatewayclass.yaml and are tailed from the
+# cilium-envoy pods in kube-system.
+groups:
+  - name: cilium-gateway
+    rules:
+      - alert: GatewayHighServerErrors
+        expr: |
+          sum by (gateway) (count_over_time({namespace="kube-system", app="cilium-envoy"} | json | __error__="" | response_code >= 500 [5m])) > 10
+        for: 5m
+        labels:
+          severity: critical
+          category: logs
+        annotations:
+          gateway: "{{ $labels.gateway }}"
+          summary: "Gateway {{ $labels.gateway }} is returning elevated 5xx errors"
+      # flux-webhook only routes /hook/, so the Gatus check on / asserts a 404
+      # as its healthy condition. Those are expected and must not count here.
+      - alert: GatewayHighClientErrors
+        expr: |
+          sum by (gateway) (
+            count_over_time(
+              {namespace="kube-system", app="cilium-envoy"}
+                | json | __error__=""
+                | response_code >= 400, response_code < 500, authority != `flux-webhook.${SECRET_DOMAIN}`
+              [5m]
+            )
+          ) > 50
+        for: 10m
+        labels:
+          severity: warning
+          category: logs
+        annotations:
+          gateway: "{{ $labels.gateway }}"
+          summary: "Gateway {{ $labels.gateway }} is returning elevated 4xx errors"

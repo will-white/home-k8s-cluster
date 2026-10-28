@@ -38,17 +38,20 @@ spec:
             name: cloudflare-dns-secret
             key: api-token
     extraArgs:
-      - --ingress-class=external
+      # Only routes attached to the external Gateway get public records; the
+      # CNAME target comes from the Gateway's external-dns target annotation.
+      - --gateway-name=external
+      - --gateway-namespace=network
       - --cloudflare-proxied
       - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
       - --crd-source-kind=DNSEndpoint
       # external-dns 0.22 switched the default annotation prefix to
       # external-dns.kubernetes.io/ with no fallback; every ingress here uses
-      # the alpha prefix. Without this, 0.22 ignores target annotations and
+      # the alpha prefix (now on the external Gateway). Without this, 0.22 ignores target annotations and
       # deletes records (tunnel CNAMEs were lost once, see #1381/#1402).
       - --annotation-prefix=external-dns.alpha.kubernetes.io/
     policy: sync
-    sources: ["crd", "ingress"]
+    sources: ["crd", "gateway-httproute"]
     txtPrefix: k8s.
     txtOwnerId: default
     domainFilters: ["${SECRET_DOMAIN}"]
