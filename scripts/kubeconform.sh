@@ -8,6 +8,9 @@ KUBERNETES_DIR=$1
 
 kustomize_args=("--load-restrictor=LoadRestrictionsNone")
 kustomize_config="kustomization.yaml"
+# Skipped kinds carry Flux substitution placeholders (${APP}, ${SECRET_DOMAIN})
+# in fields whose schema has a strict pattern (hostnames, cron schedules), so
+# they only validate post-substitution; `flate test` covers those.
 kubeconform_args=(
     "-strict"
     "-ignore-missing-schemas"
@@ -17,6 +20,9 @@ kubeconform_args=(
     "default"
     "-schema-location"
     "https://kubernetes-schemas.pages.dev/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+    # Fallback for CRDs the first catalog lacks (Cilium, Gateway API, ...).
+    "-schema-location"
+    "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
     "-verbose"
 )
 

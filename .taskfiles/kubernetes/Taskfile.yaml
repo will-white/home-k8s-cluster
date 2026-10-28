@@ -4,6 +4,7 @@ version: '3'
 
 vars:
   KUBECONFORM_SCRIPT: "{{.SCRIPTS_DIR}}/kubeconform.sh"
+  RULES_LINT_SCRIPT: "{{.SCRIPTS_DIR}}/rules-lint.sh"
 
 tasks:
 
@@ -37,6 +38,13 @@ tasks:
     preconditions:
       - test -f {{.KUBECONFORM_SCRIPT}}
       - which kubeconform
+
+  rules-lint:
+    desc: Lint PrometheusRule (promtool), Loki rules (lokitool) and the Alloy config
+    cmd: bash {{.RULES_LINT_SCRIPT}} {{.KUBERNETES_DIR}}
+    preconditions:
+      - test -f {{.RULES_LINT_SCRIPT}}
+      - which promtool lokitool yq
 
   resources:
     desc: Gather common resources in your cluster, useful when asking for support

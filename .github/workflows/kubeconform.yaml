@@ -12,6 +12,9 @@ env:
 
 # A Renovate rebase supersedes the previous run on the same PR; cancel it
 # instead of queueing both.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
   cancel-in-progress: true

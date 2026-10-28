@@ -1,0 +1,85 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+# Offline lint of alerting/recording rules: PromQL via promtool, LogQL via
+# lokitool, and the Alloy log pipeline via `alloy validate`. Kubeconform only
+# checks the CRD shape; a typo inside `expr:` otherwise reaches the cluster
+# and the alert silently never fires.
+name: "Rules Lint"
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "kubernetes/**/prometheusrule*.yaml"
+      - "kubernetes/**/prometheusrules/**"
+      - "kubernetes/**/lokirule.yaml"
+      - "kubernetes/apps/observability/alloy/**"
+      - "scripts/rules-lint.sh"
+      - ".github/workflows/rules-lint.yaml"
+  push:
+    branches: ["main"]
+    paths:
+      - "kubernetes/**/prometheusrule*.yaml"
+      - "kubernetes/**/prometheusrules/**"
+      - "kubernetes/**/lokirule.yaml"
+      - "kubernetes/apps/observability/alloy/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  rules-lint:
+    name: Rules Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Cache Tools
+        id: cache-tools
+        uses: actions/cache@v6
+        with:
+          path: ~/.local/bin
+          key: rules-lint-tools-${{ runner.os }}-v1-${{ hashFiles('.github/workflows/rules-lint.yaml') }}
+
+      - name: Add tool dir to PATH
+        run: mkdir -p "$HOME/.local/bin" && echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install Tools
+        if: steps.cache-tools.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          fetch() {
+            curl -sSfL --retry 5 --retry-delay 3 --retry-all-errors -o "$2" "$1"
+          }
+
+          # renovate: datasource=github-releases depName=prometheus/prometheus
+          PROMETHEUS_VERSION="v3.9.1"
+          fetch "https://github.com/prometheus/prometheus/releases/download/${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION#v}.linux-amd64.tar.gz" prometheus.tgz
+          tar xzf prometheus.tgz --strip-components=1 "prometheus-${PROMETHEUS_VERSION#v}.linux-amd64/promtool"
+          mv promtool "$HOME/.local/bin/"
+
+          # renovate: datasource=github-releases depName=grafana/loki
+          LOKI_VERSION="v3.7.9"
+          fetch "https://github.com/grafana/loki/releases/download/${LOKI_VERSION}/lokitool-linux-amd64.zip" lokitool.zip
+          unzip -q lokitool.zip && mv lokitool-linux-amd64 "$HOME/.local/bin/lokitool"
+
+          # renovate: datasource=github-releases depName=grafana/alloy
+          ALLOY_VERSION="v1.21.2"
+          fetch "https://github.com/grafana/alloy/releases/download/${ALLOY_VERSION}/alloy-linux-amd64.zip" alloy.zip
+          unzip -q alloy.zip && mv alloy-linux-amd64 "$HOME/.local/bin/alloy"
+
+          chmod +x "$HOME"/.local/bin/*
+
+      - name: Verify Tools
+        run: |
+          promtool --version
+          lokitool rules --help >/dev/null
+          alloy --version
+
+      - name: Lint rules
+        run: bash ./scripts/rules-lint.sh kubernetes

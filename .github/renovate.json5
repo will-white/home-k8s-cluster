@@ -7,6 +7,8 @@
     ':dependencyDashboard',
     ':semanticCommits',
     ':automergeBranch',
+    // uses: owner/action@v7 -> owner/action@<sha> # v7; Renovate keeps both in sync.
+    'helpers:pinGitHubActionDigests',
   ],
   dependencyDashboard: true,
   dependencyDashboardTitle: 'Renovate Dashboard 🤖',

@@ -15,6 +15,7 @@ Task runner is **Go-Task** (`Taskfile.yaml` + `.taskfiles/`). `KUBECONFIG` and `
 ```bash
 task                              # list all tasks
 task kubernetes:kubeconform       # validate ALL manifests — run before proposing any change
+task kubernetes:rules-lint        # promtool / lokitool / alloy validate on alert rules and the log pipeline
 task kubernetes:resources         # dump nodes/ks/hr/pods/etc. cluster-wide (support snapshot)
 task kubernetes:apply-ks PATH=media/sonarr   # server-side apply one app's Flux Kustomization
 task kubernetes:reconcile         # force Flux to pull + reconcile from Git (owner standing-approval; monitor after)
