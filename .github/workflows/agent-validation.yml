@@ -13,6 +13,9 @@ on:
   push:
     branches: ["main"]
 
+permissions:
+  contents: read
+
 env:
   KUBERNETES_DIR: ./kubernetes
 
@@ -179,6 +182,7 @@ jobs:
                   -skip "Secret,ExternalSecret,ReplicationSource,ReplicationDestination,HTTPRoute" \
                   -schema-location default \
                   -schema-location 'https://kubernetes-schemas.pages.dev/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
                   -verbose "$TEMP_MANIFEST" 2>&1 | tee "$OUTPUT_FILE"; then
                 echo "✓ Validation passed for $dir"
               else

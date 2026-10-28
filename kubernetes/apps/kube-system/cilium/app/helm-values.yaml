@@ -89,11 +89,13 @@ operator:
       memory: 704Mi
 rollOutCiliumPods: true
 upgradeCompatibility: "1.18"
-daemonSet:
-  updateStrategy:
-    rollingUpdate:
-      maxUnavailable: 1
-    type: RollingUpdate
+# Agent DaemonSet rollout. This is a top-level chart key; it sat under a
+# non-existent `daemonSet:` map before, so the chart default (maxUnavailable
+# 2) was silently in effect.
+updateStrategy:
+  rollingUpdate:
+    maxUnavailable: 1
+  type: RollingUpdate
 routingMode: native
 securityContext:
   capabilities:

@@ -1,101 +1,112 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+# Renders the whole Flux tree offline with flate (the maintained successor to
+# flux-local, which is sunset): every Kustomization AND every HelmRelease is
+# templated, so a bad chart value fails here instead of on the cluster. The
+# diff job posts what actually changes in the rendered output.
 name: "Flux Diff"
 
 on:
   pull_request:
     branches: ["main"]
-    paths: ["kubernetes/**"]
+    paths: ["kubernetes/**", ".github/workflows/flux-diff.yaml"]
+
+permissions:
+  contents: read
+  pull-requests: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  flux-diff:
-    name: Flux Diff - ${{ matrix.resources }}
-    # docker:// container action — needs a runner with Docker (hosted ubuntu has it)
+  flux-render:
+    name: Flux Render
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    strategy:
-      matrix:
-        paths: ["kubernetes"]
-        resources: ["helmrelease", "kustomization"]
-      fail-fast: false
     steps:
-      - name: Checkout PR
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install flate
+        uses: home-operations/flate/action@v0.6.5
+        with:
+          cache: "true"
+
+      # SOPS-encrypted Secrets cannot be decrypted here; flate replaces their
+      # values with placeholders. HelmRelease valuesFrom Secrets that only
+      # exist in-cluster (ExternalSecret products) are skipped automatically,
+      # everything else must render. FLATE_BASE is cleared so this renders the
+      # whole tree rather than only what the PR touched.
+      - name: Render every Kustomization and HelmRelease
+        env:
+          FLATE_BASE: ""
+        run: flate test all --path kubernetes --no-progress
+
+  flux-diff:
+    name: Flux Diff
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
         uses: actions/checkout@v7
         with:
-          path: pull
+          fetch-depth: 0
 
-      - name: Checkout Default Branch
-        uses: actions/checkout@v7
+      - name: Install flate
+        uses: home-operations/flate/action@v0.6.5
         with:
-          ref: "${{ github.event.repository.default_branch }}"
-          path: default
+          cache: "true"
 
-      - name: Diff Resources
-        uses: docker://ghcr.io/allenporter/flux-local:v8.4.0@sha256:c0be852e30f299ce6a220cc992b0c21a2a0b0684cc17713b9d718e18d9c8beff
-        with:
-          args: >-
-            diff ${{ matrix.resources }}
-            --unified 6
-            --path /github/workspace/pull/${{ matrix.paths }}/flux
-            --path-orig /github/workspace/default/${{ matrix.paths }}/flux
-            --strip-attrs "helm.sh/chart,checksum/config,app.kubernetes.io/version,chart"
-            --limit-bytes 10000
-            --all-namespaces
-            --sources "home-kubernetes"
-            --output-file diff.patch
-
-      - name: Generate Diff
+      # Changed-only mode against the default branch. The default strip set
+      # (helm.sh/chart, checksum/, app.kubernetes.io/version, chart) matches
+      # what the old flux-local job stripped.
+      - name: Diff rendered resources against the default branch
         id: diff
         run: |
-          cat diff.patch
+          flate diff all --path kubernetes --no-progress \
+            --base "origin/${{ github.event.repository.default_branch }}" \
+            -o github > diff.md
+          echo "size=$(wc -c < diff.md)" >> "$GITHUB_OUTPUT"
 
-          # Check diff size and truncate if too large to avoid ARG_MAX issues
-          DIFF_SIZE=$(wc -c < diff.patch)
-          MAX_SIZE=50000  # Safe limit to avoid argument list too long errors
-
-          if [ "$DIFF_SIZE" -gt "$MAX_SIZE" ]; then
-            echo "Diff is too large ($DIFF_SIZE bytes), truncating..."
-            echo "diff<<EOF" >> $GITHUB_OUTPUT
-            echo "⚠️ **Diff truncated** - The full diff is too large to display ($DIFF_SIZE bytes)." >> $GITHUB_OUTPUT
-            echo "Full diff: artifact \`flux-diff-${{ matrix.resources }}\` on ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} (\`gh run download ${{ github.run_id }} -n flux-diff-${{ matrix.resources }}\`)" >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-            head -c $MAX_SIZE diff.patch >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-            echo "... (truncated)" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-            echo "truncated=true" >> $GITHUB_OUTPUT
-          else
-            echo "diff<<EOF" >> $GITHUB_OUTPUT
-            cat diff.patch >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-            echo "truncated=false" >> $GITHUB_OUTPUT
-          fi
-
-      # The comment above is capped at 50 KB; the artifact keeps the whole
+      # The PR comment is capped at 50 KB; the artifact keeps the whole
       # rendered diff so large chart bumps stay reviewable
-      # (`gh run download <run-id> -n flux-diff-<resources>`).
-      - if: ${{ steps.diff.outputs.diff != '' }}
-        name: Upload full diff
+      # (`gh run download <run-id> -n flux-diff`).
+      - name: Upload full diff
+        if: steps.diff.outputs.size != '0'
         uses: actions/upload-artifact@v7
         with:
-          name: flux-diff-${{ matrix.resources }}
-          path: diff.patch
+          name: flux-diff
+          path: diff.md
           if-no-files-found: ignore
           retention-days: 14
 
-      - if: ${{ steps.diff.outputs.diff != '' }}
-        name: Add comment
+      - name: Trim comment
+        id: comment
+        if: steps.diff.outputs.size != '0'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SIZE: ${{ steps.diff.outputs.size }}
+        run: |
+          MAX_SIZE=50000
+          {
+            echo "body<<EOF"
+            if [ "$SIZE" -gt "$MAX_SIZE" ]; then
+              echo "⚠️ **Diff truncated** ($SIZE bytes). Full diff: artifact \`flux-diff\` on $RUN_URL"
+              echo ""
+            fi
+            echo '```diff'
+            head -c "$MAX_SIZE" diff.md
+            echo ""
+            if [ "$SIZE" -gt "$MAX_SIZE" ]; then
+              echo "... (truncated)"
+            fi
+            echo '```'
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Add comment
+        if: steps.diff.outputs.size != '0'
         uses: mshick/add-pr-comment@v3
         with:
-          message-id: "${{ github.event.pull_request.number }}/${{ matrix.paths }}/${{ matrix.resources }}"
+          message-id: "${{ github.event.pull_request.number }}/flux-diff"
           message-failure: Diff was not successful
-          message: |
-            ```diff
-            ${{ steps.diff.outputs.diff }}
-            ```
+          message: ${{ steps.comment.outputs.body }}
