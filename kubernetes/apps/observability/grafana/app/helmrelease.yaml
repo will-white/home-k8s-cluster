@@ -278,17 +278,16 @@ spec:
         # Alloy mixin (replaces "Loki stack monitoring (Promtail, Loki)"): the
         # rendered JSON ships in the alloy repo, not on grafana.com. Pinned to
         # the deployed Alloy version; bump alongside the alloy chart.
+        # No `datasource:` on purpose: the chart's sed would rewrite every
+        # "datasource" line, including the ${loki_datasource} refs the log
+        # panels use. The dashboards carry their own datasource variables.
         alloy-logs:
-          datasource: Prometheus
           url: https://raw.githubusercontent.com/grafana/alloy/v1.21.2/operations/alloy-mixin/rendered/dashboards/alloy-logs.json
         alloy-loki:
-          datasource: Prometheus
           url: https://raw.githubusercontent.com/grafana/alloy/v1.21.2/operations/alloy-mixin/rendered/dashboards/alloy-loki.json
         alloy-resources:
-          datasource: Prometheus
           url: https://raw.githubusercontent.com/grafana/alloy/v1.21.2/operations/alloy-mixin/rendered/dashboards/alloy-resources.json
         alloy-controller:
-          datasource: Prometheus
           url: https://raw.githubusercontent.com/grafana/alloy/v1.21.2/operations/alloy-mixin/rendered/dashboards/alloy-controller.json
         logs-app:
           datasource:
