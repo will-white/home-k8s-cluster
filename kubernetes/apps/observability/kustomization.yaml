@@ -6,6 +6,7 @@ resources:
   - ./namespace.yaml
   # Flux-Kustomizations
   - ./adguard-exporter/ks.yaml
+  - ./alloy/ks.yaml
   - ./blackbox-exporter/ks.yaml
   - ./gatus/ks.yaml
   - ./grafana/ks.yaml
@@ -14,7 +15,6 @@ resources:
   - ./node-exporter-lab/ks.yaml
   - ./node-exporter-truenas/ks.yaml
   - ./opnsense-exporter/ks.yaml
-  - ./promtail/ks.yaml
   - ./smartctl-exporter/ks.yaml
   - ./snmp-exporter/ks.yaml
   - ./x509-certificate-exporter/ks.yaml
