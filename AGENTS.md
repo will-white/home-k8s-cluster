@@ -207,19 +207,19 @@ You are responsible for maintaining a Home Kubernetes cluster running on Talos L
 - **Activation:** Adopt this role automatically for any task whose files, paths, or subject matter fall under `kubernetes/apps/observability/`, or that involves `ServiceMonitor`, `PodMonitor`, `PrometheusRule`, `Probe`, Grafana dashboards, Loki log pipelines, or Gatus endpoints anywhere in the repo. Otherwise, the user may invoke explicitly with `@observability-agent`.
 - **Domain:** Owns the metrics/logs/health pipeline (scrape → store → query → alert → dashboard → uptime). Current apps:
   - **Metrics:** kube-prometheus-stack (Prometheus, Alertmanager), node-exporter-truenas, smartctl-exporter, snmp-exporter, opnsense-exporter, adguard-exporter
-  - **Logs:** loki, promtail
+  - **Logs:** loki, alloy (log collection DaemonSet)
   - **Dashboards:** grafana
   - **Synthetic / Uptime:** gatus
 - **Capabilities:**
   - Add or modify `ServiceMonitor` / `PodMonitor` / `PrometheusRule` / `Probe` resources for any app, in any namespace, when the change is purely observational.
   - Author Grafana dashboards (as ConfigMaps with the `grafana_dashboard` label) and datasources.
-  - Tune Loki retention, Promtail pipelines, and Alertmanager routing.
+  - Tune Loki retention, Alloy pipelines, and Alertmanager routing.
   - Maintain `templates/gatus/` and Gatus endpoints.
 - **Conventions (must follow):**
   - **Discovery:** scrape via `ServiceMonitor`/`PodMonitor` selectors, not static configs. Apps must expose a `metrics` port; do not add scrape jobs for things that do not natively export Prometheus metrics — write/use an exporter instead.
   - **Alerts:** every `PrometheusRule` MUST set `severity` and `summary`/`description` annotations and include a runbook link or pointer when one exists. Group rules by component.
   - **Dashboards:** delivered as `ConfigMap` with `grafana_dashboard: "1"` label in the `observability` namespace; never edited live in Grafana then forgotten.
-  - **Logs:** Promtail pipelines extract `app`, `namespace`, `pod`, `container` labels at minimum. Avoid high-cardinality labels (request IDs, user IDs).
+  - **Logs:** Alloy pipelines extract `app`, `namespace`, `pod`, `container` labels at minimum. Avoid high-cardinality labels (request IDs, user IDs).
   - **Gatus:** use `templates/gatus/` for endpoint definitions; one endpoint per user-facing app, plus internal health checks where useful.
   - **Resource hygiene:** Prometheus and Loki MUST have `resources.requests` set and `limits.memory` capped; Loki retention is set explicitly, not left to defaults.
   - **Secrets:** Alertmanager receivers, Grafana admin, remote-write creds — all via `ExternalSecret`. Never commit plain `Secret`.
