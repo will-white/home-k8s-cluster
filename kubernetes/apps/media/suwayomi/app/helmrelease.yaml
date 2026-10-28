@@ -87,7 +87,7 @@ spec:
         ports:
           http:
             port: 4567
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
@@ -95,14 +95,18 @@ spec:
           gethomepage.dev/name: Suwayomi
           gethomepage.dev/icon: suwayomi.png
           gethomepage.dev/description: Manga Downloads
-        className: internal
-        hosts:
-          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     persistence:
       config:
         existingClaim: *app

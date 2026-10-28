@@ -34,7 +34,7 @@ spec:
               TZ: ${TIMEZONE}
               # Homepage validates the Host header and returns HTTP 400 for anything
               # not listed here. Gatus probes the in-cluster Service name (see
-              # templates/gatus/guarded), so it must be allowed alongside the ingress host.
+              # templates/gatus/guarded), so it must be allowed alongside the route host.
               HOMEPAGE_ALLOWED_HOSTS: dash.${SECRET_DOMAIN},${APP}.${NAMESPACE}.svc.cluster.local:${GATUS_PORT}
             envFrom:
               - secretRef:
@@ -60,16 +60,20 @@ spec:
       homepage: {}
     defaultPodOptions:
       automountServiceAccountToken: true
-    ingress:
+    route:
       app:
-        className: internal
-        hosts:
-          - host: dash.${SECRET_DOMAIN}
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - dash.${SECRET_DOMAIN}
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     persistence:
       config:
         type: configMap

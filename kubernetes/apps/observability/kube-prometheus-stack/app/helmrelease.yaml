@@ -219,18 +219,23 @@ spec:
               - alertname =~ "NodeNotReady|NodeUnreachable|NodeFenced"
             target_matchers:
               - alertname = "CiliumAgentUnreachableHealthEndpoint"
-      ingress:
-        annotations:
-          gethomepage.dev/app: alertmanager
-          gethomepage.dev/description: Alerting service
-          gethomepage.dev/enabled: 'true'
-          gethomepage.dev/group: Cluster & Observability
-          gethomepage.dev/icon: alertmanager.png
-          gethomepage.dev/name: Alertmanager
-        enabled: true
-        hosts: ["alertmanager.${SECRET_DOMAIN}"]
-        ingressClassName: internal
-        pathType: Prefix
+      route:
+        main:
+          enabled: true
+          annotations:
+            gethomepage.dev/app: alertmanager
+            gethomepage.dev/description: Alerting service
+            gethomepage.dev/enabled: 'true'
+            gethomepage.dev/group: Cluster & Observability
+            gethomepage.dev/icon: alertmanager.png
+            gethomepage.dev/name: Alertmanager
+          hostnames: ["alertmanager.${SECRET_DOMAIN}"]
+          parentRefs:
+            - name: internal
+              namespace: network
+              sectionName: https
+          timeouts:
+            request: 0s
     cleanPrometheusOperatorObjectNames: true
     crds:
       enabled: true
@@ -386,20 +391,25 @@ spec:
         selector:
           k8s-app: kube-scheduler
     prometheus:
-      ingress:
-        annotations:
-          gethomepage.dev/app: prometheus
-          gethomepage.dev/description: Monitoring Scrape Service
-          gethomepage.dev/enabled: 'true'
-          gethomepage.dev/group: Cluster & Observability
-          gethomepage.dev/icon: prometheus.png
-          gethomepage.dev/name: Prometheus
-          gethomepage.dev/widget.type: prometheus
-          gethomepage.dev/widget.url: http://kube-prometheus-stack-prometheus.observability:9090
-        enabled: true
-        hosts: ["prometheus.${SECRET_DOMAIN}"]
-        ingressClassName: internal
-        pathType: Prefix
+      route:
+        main:
+          enabled: true
+          annotations:
+            gethomepage.dev/app: prometheus
+            gethomepage.dev/description: Monitoring Scrape Service
+            gethomepage.dev/enabled: 'true'
+            gethomepage.dev/group: Cluster & Observability
+            gethomepage.dev/icon: prometheus.png
+            gethomepage.dev/name: Prometheus
+            gethomepage.dev/widget.type: prometheus
+            gethomepage.dev/widget.url: http://kube-prometheus-stack-prometheus.observability:9090
+          hostnames: ["prometheus.${SECRET_DOMAIN}"]
+          parentRefs:
+            - name: internal
+              namespace: network
+              sectionName: https
+          timeouts:
+            request: 0s
       prometheusSpec:
         enableAdminAPI: true
         enableFeatures:

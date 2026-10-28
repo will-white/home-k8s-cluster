@@ -95,7 +95,7 @@ spec:
         ports:
           http:
             port: 8080
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
@@ -107,26 +107,31 @@ spec:
           gethomepage.dev/widget.type: overseerr
           gethomepage.dev/widget.url: http://seerr-app.media:5055
           gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_SEERR_API_KEY}}` }}"
-          external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
-        className: external
-        hosts:
-          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: external
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
       legacy:
-        annotations:
-          external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
-        className: external
-        hosts:
-          - host: "overseerr.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: redirect
-                  port: http
+        hostnames:
+          - "overseerr.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: external
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: redirect
+                port: http
+            timeouts:
+              request: 0s
     persistence:
       # RWO Ceph RBD: scope to the seerr controller only. Mounting on the redirect
       # Caddy pod (which doesn't need it) caused multi-attach deadlocks whenever

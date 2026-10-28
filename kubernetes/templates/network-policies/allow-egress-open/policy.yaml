@@ -4,7 +4,7 @@
 # hosts), gatus probes cluster services, LAN endpoints, and external URLs,
 # alertmanager pushes to Pushover, Grafana reaches its datasources. An
 # itemized egress list here would be permanently wrong. The namespace's win
-# is INGRESS control (only ingress-nginx, monitoring, intra-ns, and the LAN
+# is INGRESS control (only the Cilium Gateway, monitoring, intra-ns, and the LAN
 # may connect in) — egress stays open by explicit decision.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

@@ -168,7 +168,7 @@ Measured with two hosts down: **19 PGs inactive (7.2%)**, 3 erasure-coded PGs
 `down` in `ceph-objectstore.rgw.buckets.data`, 23% of objects degraded, the MDS
 reporting slow metadata IOs, and RGW down from 2 daemons to 1. Everything else
 kept serving, including all 3 mons, both mgrs, all 3 EMQX cores and both
-ingress-nginx controllers.
+ingress controllers (ingress-nginx at the time; now the Cilium Gateways).
 
 **Do not do this arithmetic by hand — ask Ceph.** `ceph osd ok-to-stop` gives
 the authoritative answer, names the PGs that would go offline, and exits

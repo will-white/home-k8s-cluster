@@ -66,7 +66,7 @@ spec:
         ports:
           http:
             port: 7745
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
@@ -74,14 +74,18 @@ spec:
           gethomepage.dev/name: Homebox
           gethomepage.dev/icon: homebox.png
           gethomepage.dev/description: Self hosted inventory management
-        className: internal
-        hosts:
-          - host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - "{{ .Release.Name }}.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     persistence:
       data:
         existingClaim: *app

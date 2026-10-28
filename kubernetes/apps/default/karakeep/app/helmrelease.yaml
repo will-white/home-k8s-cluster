@@ -110,7 +110,7 @@ spec:
             protocol: TCP
         primary: true
         type: ClusterIP
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
@@ -118,14 +118,18 @@ spec:
           gethomepage.dev/name: Karakeep
           gethomepage.dev/icon: karakeep.png
           gethomepage.dev/description: Bookmarking app
-        className: internal
-        hosts:
-          - host: "karakeep.${SECRET_DOMAIN}"
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - "karakeep.${SECRET_DOMAIN}"
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     persistence:
       data:
         existingClaim: *app

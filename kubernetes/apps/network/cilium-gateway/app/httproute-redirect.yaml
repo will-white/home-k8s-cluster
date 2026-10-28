@@ -1,0 +1,23 @@
+---
+# ingress-nginx redirected plain HTTP to HTTPS for every host. App routes only
+# attach to the `https` listeners, so this catch-all on the `http` listeners
+# keeps that behaviour. No hostnames on purpose: external-dns would otherwise
+# publish a record for them.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: https-redirect
+spec:
+  parentRefs:
+    - name: internal
+      namespace: network
+      sectionName: http
+    - name: external
+      namespace: network
+      sectionName: http
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301

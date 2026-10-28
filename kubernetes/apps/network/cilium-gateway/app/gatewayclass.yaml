@@ -1,0 +1,35 @@
+---
+# Cilium creates the `cilium` GatewayClass itself (gatewayAPI.gatewayClass.create:
+# auto) but only a parametersRef lets us turn on Envoy access logs, which the
+# Loki rules in resources/lokirule.yaml depend on (they replaced the
+# ingress-nginx access-log alerts). Flux takes over the object with
+# server-side apply; the operator does not fight for it.
+#
+# Rollback: delete this file. Gateways keep working without the parametersRef,
+# only the access logs stop.
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: cilium
+spec:
+  controllerName: io.cilium/gateway-controller
+  parametersRef:
+    group: cilium.io
+    kind: CiliumGatewayClassConfig
+    name: cilium
+    namespace: network
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumGatewayClassConfig
+metadata:
+  name: cilium
+spec:
+  description: Access logs to cilium-envoy stdout for Loki
+  telemetry:
+    accessLogs:
+      # Cilium's default JSON template: start_time, method, path, protocol,
+      # response_code, response_flags, bytes_received, bytes_sent, duration,
+      # authority, upstream_host, gateway (namespace/name). Lines land in the
+      # kube-system/cilium-envoy container logs.
+      - format: JSON
+        targets: ["HTTP"]

@@ -114,21 +114,25 @@ spec:
         runAsUser: 1000
         seccompProfile:
           type: RuntimeDefault
-    ingress:
+    route:
       app:
         annotations:
           gethomepage.dev/enabled: 'true'
           gethomepage.dev/group: Smart Home
           gethomepage.dev/icon: zigbee2mqtt.png
           gethomepage.dev/name: Zigbee
-        className: internal
-        hosts:
-          - host: zigbee.${SECRET_DOMAIN}
-            paths:
-              - path: /
-                service:
-                  identifier: app
-                  port: http
+        hostnames:
+          - zigbee.${SECRET_DOMAIN}
+        parentRefs:
+          - name: internal
+            namespace: network
+            sectionName: https
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: http
+            timeouts:
+              request: 0s
     persistence:
       config:
         existingClaim: zigbee2mqtt
