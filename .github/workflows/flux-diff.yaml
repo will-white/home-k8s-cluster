@@ -34,10 +34,13 @@ jobs:
 
       # SOPS-encrypted Secrets cannot be decrypted here; flate replaces their
       # values with placeholders. HelmRelease valuesFrom Secrets that only
-      # exist in-cluster (ExternalSecret products) are skipped, everything
-      # else must render.
+      # exist in-cluster (ExternalSecret products) are skipped automatically,
+      # everything else must render. FLATE_BASE is cleared so this renders the
+      # whole tree rather than only what the PR touched.
       - name: Render every Kustomization and HelmRelease
-        run: flate test all --path kubernetes --allow-missing-kinds Secret
+        env:
+          FLATE_BASE: ""
+        run: flate test all --path kubernetes --no-progress
 
   flux-diff:
     name: Flux Diff
@@ -52,17 +55,15 @@ jobs:
         uses: home-operations/flate/action@v0.6.5
         with:
           cache: "true"
-          base: origin/${{ github.event.repository.default_branch }}
 
+      # Changed-only mode against the default branch. The default strip set
+      # (helm.sh/chart, checksum/, app.kubernetes.io/version, chart) matches
+      # what the old flux-local job stripped.
       - name: Diff rendered resources against the default branch
         id: diff
         run: |
-          flate diff all --path kubernetes \
-            --allow-missing-kinds Secret \
-            --strip-attr helm.sh/chart \
-            --strip-attr checksum/config \
-            --strip-attr app.kubernetes.io/version \
-            --strip-attr chart \
+          flate diff all --path kubernetes --no-progress \
+            --base "origin/${{ github.event.repository.default_branch }}" \
             -o github > diff.md
           echo "size=$(wc -c < diff.md)" >> "$GITHUB_OUTPUT"
 
@@ -81,12 +82,15 @@ jobs:
       - name: Trim comment
         id: comment
         if: steps.diff.outputs.size != '0'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SIZE: ${{ steps.diff.outputs.size }}
         run: |
           MAX_SIZE=50000
           {
             echo "body<<EOF"
-            if [ "${{ steps.diff.outputs.size }}" -gt "$MAX_SIZE" ]; then
-              echo "⚠️ **Diff truncated** (${{ steps.diff.outputs.size }} bytes). Full diff: artifact \`flux-diff\` on ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            if [ "$SIZE" -gt "$MAX_SIZE" ]; then
+              echo "⚠️ **Diff truncated** ($SIZE bytes). Full diff: artifact \`flux-diff\` on $RUN_URL"
               echo ""
               head -c "$MAX_SIZE" diff.md
               echo ""
