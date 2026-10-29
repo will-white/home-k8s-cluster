@@ -24,6 +24,12 @@ spec:
               - sh
               - -c
               - cp /config-readonly/repository.config /config/repository.config
+            resources:
+              requests:
+                cpu: 10m
+                memory: 16Mi
+              limits:
+                memory: 64Mi
           init-repository:
             image:
               repository: ghcr.io/home-operations/kopia
@@ -53,6 +59,13 @@ spec:
                   --disable-tls \
                   --password=$KOPIA_PASSWORD \
                   --config-file=/config/repository.config
+            # Connect peaks ~250Mi when it has to create the repository.
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 512Mi
         containers:
           app:
             image:
@@ -104,6 +117,7 @@ spec:
             resources:
               requests:
                 cpu: 10m
+                memory: 128Mi
               limits:
                 memory: 1Gi
     defaultPodOptions:

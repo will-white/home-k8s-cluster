@@ -36,8 +36,10 @@ spec:
     chunksCache:
       enabled: false
     deploymentMode: SingleBinary
+    # Alloy and Grafana talk to loki-headless directly; the nginx gateway was
+    # an idle zero-replica Deployment.
     gateway:
-      replicas: 0
+      enabled: false
     loki:
       # The chart's values.yaml hard-codes loki.image.tag (3.6.11 as of chart 7.5.0),
       # which overrides its appVersion, so chart bumps never moved the image. Pin it here

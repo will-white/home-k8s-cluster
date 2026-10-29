@@ -61,6 +61,7 @@ spec:
                 # resolves ~1,000 episodes, each parsing the show's full episode
                 # list, and crawled at ~2 lookups/min. No CPU limit, as usual.
                 cpu: 500m
+                memory: 256Mi
               limits:
                 memory: 512Mi
         pod:
