@@ -7,6 +7,10 @@ metadata:
     policies.kyverno.io/title: Disallow CPU Limits
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: low
+    # Autogen only for top-level controllers: ReplicaSet/Job copies triple-count
+    # every failure (old zero-replica ReplicaSets included). Bare Pods are
+    # still checked by the Pod rule itself.
+    pod-policies.kyverno.io/autogen-controllers: Deployment,StatefulSet,DaemonSet,CronJob
     policies.kyverno.io/description: >-
       Repo convention (CLAUDE.md): do not set CPU limits. CFS throttling adds
       latency for no protection; CPU is compressible and requests already
