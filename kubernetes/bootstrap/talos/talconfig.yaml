@@ -167,6 +167,7 @@ patches:
   - "@./patches/global/dns.yaml"
   - "@./patches/global/ethernet.yaml"
   - "@./patches/global/hostdns.yaml"
+  - "@./patches/global/ipv6-ra.yaml"
   - "@./patches/global/kubelet.yaml"
   - "@./patches/global/ntp.yaml"
   - "@./patches/global/openebs-local.yaml"

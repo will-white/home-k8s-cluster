@@ -1,0 +1,10 @@
+machine:
+  sysctls:
+    # Matter-over-Thread: the SLZB-Ultima3 OTBR announces the home-thread OMR
+    # prefix (ULA fdxx::/64) in its RAs as a Route Information Option.
+    # accept_ra=2 keeps RAs (SLAAC + default route) accepted despite the
+    # forwarding=1 the CNI needs; rt_info_max_plen=64 installs the RIO route
+    # (default 0 ignores it) so matter-server, on host networking, can reach
+    # Thread devices.
+    net.ipv6.conf.eno1.accept_ra: "2"
+    net.ipv6.conf.eno1.accept_ra_rt_info_max_plen: "64"
