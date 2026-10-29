@@ -1,0 +1,23 @@
+---
+# Wyoming is a raw TCP protocol, so the HTTP-based templates/gatus/guarded
+# does not apply; this is the same shape with a TCP connect check.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wyoming-piper-gatus-ep
+  labels:
+    gatus.io/enabled: "true"
+data:
+  config.yaml: |
+    endpoints:
+      - name: wyoming-piper
+        group: guarded
+        url: tcp://wyoming-piper.default.svc.cluster.local:10200
+        interval: 1m
+        ui:
+          hide-hostname: true
+          hide-url: true
+        conditions:
+          - "[CONNECTED] == true"
+        alerts:
+          - type: pushover
