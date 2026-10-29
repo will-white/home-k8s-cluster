@@ -29,7 +29,7 @@ flux build ks <app> --kustomization-file kubernetes/apps/<ns>/<app>/ks.yaml --pa
 yamllint kubernetes/apps/<ns>/<app>            # or lint a whole stack folder
 ```
 
-Read-only cluster inspection: `kubectl -n <ns> get hr,ks,pods,pvc`. CI mirrors local validation via `.github/workflows/` (`kubeconform.yaml`, `flux-diff.yaml`, `sops-check.yaml`, `gitleaks.yaml`, `agent-validation.yml`).
+Read-only cluster inspection: `kubectl -n <ns> get hr,ks,pods,pvc`. CI mirrors local validation via `.github/workflows/`: `kubeconform.yaml`, `yamllint.yaml`, `rules-lint.yaml`, `sops-check.yaml`, `gitleaks.yaml`, `agent-validation.yml`, and `flux-diff.yaml`, whose Flux Render job templates every Kustomization and HelmRelease with flate, so a bad chart value fails the PR, not the cluster.
 
 ## Architecture / reconciliation flow
 
@@ -50,7 +50,7 @@ kubernetes/apps/<ns>/<app>/
     helmrelease.yaml         # prefer app-template (bjw-s) unless upstream chart is clearly better
     pvc.yaml                 # if stateful
     externalsecret.yaml      # if secrets needed — ExternalSecret ONLY, never a plain Secret
-    gatus.yaml               # health endpoint for user-facing apps
+    gatus.yaml               # health endpoint for user-facing apps (templates/gatus, or a TCP check ConfigMap)
     resources/               # ConfigMaps, scripts, lokirule.yaml, etc.
 ```
 Namespaces are fixed per domain (media apps → `media`; Home Assistant/IoT → `default`; MQTT broker → `database`). Before adding a namespace, confirm with the user. Search `https://kubesearch.dev` for an existing chart before writing custom manifests.
@@ -66,5 +66,8 @@ Namespaces are fixed per domain (media apps → `media`; Home Assistant/IoT → 
 - **Resources:** always set `resources.requests` and cap `limits.memory`; do **not** set CPU limits.
 - **Storage:** StorageClasses are a closed set — `ceph-block`, `ceph-filesystem`, `openebs-hostpath`. Don't invent new ones. Stateful user-data apps use the shared `templates/volsync/` (Kopia → MinIO) backup pattern; Volsync Kopia movers need `moverResources` (floor: `requests memory 512Mi` / `limits 2Gi`).
 - **Databases:** *arr / apps that support Postgres MUST use `cloudnative-pg-cluster` (add to `dependsOn`) rather than embedded SQLite.
-- **Observability:** scrape via `ServiceMonitor`/`PodMonitor` selectors; deliver Grafana dashboards as ConfigMaps labeled `grafana_dashboard: "1"` in the `observability` namespace.
+- **Exposure:** no Ingress objects. app-template apps use a `route:` block (HTTPRoute) with `parentRefs` to Gateway `internal` in namespace `network` (`external` for the few public apps, which cloudflared fronts); `sectionName: https` and `timeouts.request: 0s`. Raw HTTPRoutes for charts without route support. Default-deny namespaces reach the Gateway through the `allow-from-ingress` CiliumNetworkPolicy template.
+- **LoadBalancer IPs:** label `lb-pool: bgp` plus `lbipam.cilium.io/ips` from `192.168.110.0/24` (routed via BGP to OPNsense). Only Services whose off-cluster clients hard-code a LAN IP stay on the L2 `192.168.5.0/24` (UniFi). See `docs/runbooks/cilium-bgp-opnsense.md`.
+- **Policies:** Kyverno (`kubernetes/apps/kyverno`) audits the rules above (no `:latest`, digests, requests + memory limit, no CPU limit). Keep `kubectl get policyreport -A` clean; nothing is enforced yet.
+- **Observability:** scrape via `ServiceMonitor`/`PodMonitor` selectors; deliver Grafana dashboards as ConfigMaps labeled `grafana_dashboard: "1"` in the `observability` namespace. Alert rules are linted in CI (`task kubernetes:rules-lint`).
 - Treat config files (`recyclarr.yml`, Kometa configs, Home Assistant / zigbee2mqtt YAML) as code — review their diffs like manifests.

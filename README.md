@@ -30,13 +30,26 @@ Runbooks:
 - [Full cluster shutdown](./docs/runbooks/full-cluster-shutdown.md) — graceful power-down/up for maintenance
 - [etcd maintenance](./docs/runbooks/etcd-maintenance.md) — defrag, alert triage, network-vs-disk diagnosis
 - [Ceph / data restore](./kubernetes/apps/rook-ceph/rook-ceph/backup/DISASTER-RECOVERY.md) — Garage → RGW → CNPG/Volsync rehydration
+- [Cilium BGP with OPNsense](./docs/runbooks/cilium-bgp-opnsense.md) — FRR peering, the routed LB pool, per-Service migration
+
+Open work is tracked in [docs/backlog.md](./docs/backlog.md).
 
 ## 🔧 Tools
 
-| Tool                                             | Purpose                                                            |
-|--------------------------------------------------|--------------------------------------------------------------------|
-| [flux](https://toolkit.fluxcd.io/)               | Operator that manages the cluster based on this Git repository     |
-| [sops](https://github.com/mozilla/sops)          | Encrypts k8s secrets                                               |
+| Tool | Purpose |
+|---|---|
+| [Talos Linux](https://www.talos.dev/) + [talhelper](https://github.com/budimanjojo/talhelper) | Immutable node OS; `kubernetes/bootstrap/talos`; upgrades via [Tuppr](https://github.com/home-operations/tuppr) |
+| [Flux](https://fluxcd.io/) | Reconciles `kubernetes/` from `main`; OCI chart sources, SOPS decryption, variable substitution |
+| [Cilium](https://cilium.io/) | CNI, kube-proxy replacement, Gateway API (`network/internal` + `external` Gateways), BGP to OPNsense for `192.168.110.0/24` and L2 announcements for the LAN `/24` |
+| [Rook-Ceph](https://rook.io/) / [OpenEBS](https://openebs.io/) | `ceph-block`, `ceph-filesystem`, RGW object store; `openebs-hostpath` for scratch |
+| [CloudNativePG](https://cloudnative-pg.io/) | Shared Postgres for every app that supports it |
+| [Volsync](https://volsync.readthedocs.io/) + Kopia | PVC backups to RGW, mirrored to Garage (`templates/volsync`) |
+| [External Secrets](https://external-secrets.io/) + Bitwarden SM | Every in-cluster secret; [docs/secrets.md](./docs/secrets.md) |
+| [external-dns](https://github.com/kubernetes-sigs/external-dns) + [cert-manager](https://cert-manager.io/) | Cloudflare (public, via cloudflared) and AdGuard (LAN split-horizon) records from HTTPRoutes/Services; wildcard Let's Encrypt cert on the Gateways |
+| [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts), [Loki](https://grafana.com/oss/loki/) + [Alloy](https://grafana.com/oss/alloy-opentelemetry-collector/), [Gatus](https://gatus.io/) | Metrics, logs, alerting (Pushover), synthetic checks |
+| [Kyverno](https://kyverno.io/) | Audit-mode policies for the repo's own conventions (`kubernetes/apps/kyverno`) |
+| [Renovate](https://docs.renovatebot.com/) + [flate](https://github.com/home-operations/flate) | Dependency PRs with digest pinning; every PR renders the full Flux tree in CI |
+| [SOPS](https://github.com/getsops/sops) + Age | The few bootstrap-time secrets that cannot come from Bitwarden |
 
 
 ## 💻 Nodes
