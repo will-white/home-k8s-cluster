@@ -148,9 +148,9 @@ PR; the rest need their external clients repointed first):
 | Gateway `internal` | 192.168.5.46 | 192.168.110.46 | AdGuard records follow automatically |
 | Gateway `external` | 192.168.5.48 | 192.168.110.48 | `adguard-dns-external --default-targets` must match |
 | postgres (CNPG) | 192.168.5.23 | 192.168.110.23 | only in-cluster + `postgres.<domain>` clients |
-| tdarr | 192.168.5.24 | | the external Tdarr node on plex.internal connects by IP |
-| EMQX (mqtt) | 192.168.5.21 | | every ESPHome/Tasmota/Zigbee device configured with the IP |
-| go2rtc | 192.168.5.22 | | cameras/HA using the IP |
+| tdarr | 192.168.5.24 | 192.168.110.24 | the Tdarr node on plex.internal uses `tdarr.internal`, an OPNsense dnsmasq host override: repoint it, then `systemctl restart tdarr-node` there to skip its reconnect backoff |
+| EMQX (mqtt) | 192.168.5.21 | 192.168.110.21 | checked 2026-10-29 with `emqx ctl clients list`: only off-cluster client is the Roborock, via `mqtt.<domain>`; HA uses the ClusterIP name |
+| go2rtc | 192.168.5.22 | 192.168.110.22 | only consumer is Frigate (in-cluster); no WebRTC candidate pinned to the LB IP |
 | UniFi | 192.168.5.25 | | adopted APs inform to this IP; re-adopt or set inform host first |
 
 Verify after each move:
