@@ -63,6 +63,9 @@ spec:
       app:
         controller: go2rtc
         type: LoadBalancer
+        labels:
+          # Routed BGP pool (kube-system/cilium/config/cilium-bgp.yaml)
+          lb-pool: bgp
         annotations:
           external-dns.alpha.kubernetes.io/hostname: go2rtc-streams.${SECRET_DOMAIN}
           lbipam.cilium.io/ips: ${GO2RTC_LB}
