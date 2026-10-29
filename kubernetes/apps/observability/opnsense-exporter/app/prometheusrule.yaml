@@ -1,0 +1,67 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: opnsense-rules
+spec:
+  groups:
+    - name: opnsense.rules
+      rules:
+        # Services whose loss takes something down for the whole house: FRR
+        # (BGP routes to the cluster's LB IPs), dnsmasq (DHCP and .internal
+        # names), Caddy (LAN HTTPS for router-served names), pf (the firewall).
+        - alert: OPNsenseCriticalServiceDown
+          annotations:
+            summary: OPNsense service {{ $labels.name }} is not running
+            description: >-
+              {{ $labels.description }} is stopped on the router. Start it under
+              System → Diagnostics → Services, and check the system log for why it
+              exited.
+          expr: opnsense_services_status{name=~"frr|dnsmasq|caddy|pf"} == 0
+          for: 2m
+          labels:
+            severity: critical
+        - alert: OPNsenseServiceDown
+          annotations:
+            summary: OPNsense service {{ $labels.name }} is not running
+            description: >-
+              {{ $labels.description }} is stopped on the router.
+          expr: opnsense_services_status{name=~"ntpd|dhcpd6|radvd|syslog-ng|configd|nut_upsmon|acme"} == 0
+          for: 10m
+          labels:
+            severity: warning
+        # /var/log is a RAM disk on this box. When it filled on 2026-09-16,
+        # logging stopped silently for weeks (docs/opnsense.md in home-lab,
+        # "IPv6 outage + full /var/log").
+        - alert: OPNsenseLogDiskFilling
+          annotations:
+            summary: OPNsense /var/log is {{ $value | humanizePercentage }} full
+            description: >-
+              The /var/log tmpfs stops accepting writes when full and every log goes
+              quiet. Lower log retention, or clear old logs under /var/log.
+          expr: >-
+            1 - node_filesystem_avail_bytes{instance="opnsense",mountpoint="/var/log"}
+            / node_filesystem_size_bytes{instance="opnsense",mountpoint="/var/log"} > 0.8
+          for: 15m
+          labels:
+            severity: warning
+        - alert: OPNsenseRootDiskFilling
+          annotations:
+            summary: OPNsense root filesystem is {{ $value | humanizePercentage }} full
+          expr: >-
+            1 - node_filesystem_avail_bytes{instance="opnsense",mountpoint="/"}
+            / node_filesystem_size_bytes{instance="opnsense",mountpoint="/"} > 0.85
+          for: 30m
+          labels:
+            severity: warning
+        - alert: OPNsenseMetricsMissing
+          annotations:
+            summary: No metrics from OPNsense ({{ $labels.job }})
+            description: >-
+              The rules above can't fire without these. Check the opnsense-exporter
+              pod (API key) or node_exporter on the router (:9100).
+          expr: up{job=~"opnsense-exporter|lab-node-opnsense"} == 0
+          for: 15m
+          labels:
+            severity: warning

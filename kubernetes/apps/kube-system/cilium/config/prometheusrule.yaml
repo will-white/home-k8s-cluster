@@ -56,3 +56,43 @@ spec:
           for: 5m
           labels:
             severity: warning
+    # BGP with OPNsense (cilium-bgp.yaml). Since the Gateways, Postgres, EMQX,
+    # go2rtc and tdarr moved to 192.168.110.0/24, these routes are the only way
+    # anything outside the cluster reaches them. In-cluster probes (Gatus,
+    # blackbox) skip the router and stay green when BGP is down.
+    - name: cilium-bgp.rules
+      rules:
+        - alert: CiliumBGPSessionDown
+          annotations:
+            summary: BGP session from {{ $labels.node }} to {{ $labels.neighbor }} is down
+            description: >-
+              Node {{ $labels.node }} has no established BGP session with OPNsense.
+              OPNsense stops routing Service IPs via this node; other nodes still
+              carry them. Check `vtysh -c 'show bgp ipv4 unicast summary'` on the
+              router and the cilium-agent logs on the node.
+          expr: cilium_bgp_control_plane_session_state != 1
+          for: 2m
+          labels:
+            severity: warning
+        - alert: CiliumBGPAllSessionsDown
+          annotations:
+            summary: No node has a BGP session with OPNsense
+            description: >-
+              Every Service in the BGP pool (192.168.110.0/24: Gateways, Postgres,
+              MQTT, go2rtc, tdarr) is unreachable from outside the cluster.
+              Check FRR on OPNsense first (Routing → Diagnostics → BGP).
+          expr: count(cilium_bgp_control_plane_session_state == 1) == 0 or absent(cilium_bgp_control_plane_session_state)
+          for: 1m
+          labels:
+            severity: critical
+        - alert: CiliumBGPNoRoutesAdvertised
+          annotations:
+            summary: Cilium advertises no BGP routes
+            description: >-
+              Sessions are up but no node advertises any route, so OPNsense has
+              nothing to send to the BGP pool. Check the lb-pool=bgp Services
+              and CiliumBGPAdvertisement bgp-services.
+          expr: sum(cilium_bgp_control_plane_advertised_routes) == 0
+          for: 5m
+          labels:
+            severity: critical

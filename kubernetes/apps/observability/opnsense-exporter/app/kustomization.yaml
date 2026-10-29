@@ -5,3 +5,4 @@ resources:
   - ./externalsecret.yaml
   - ./ocirepository.yaml
   - ./helmrelease.yaml
+  - ./prometheusrule.yaml

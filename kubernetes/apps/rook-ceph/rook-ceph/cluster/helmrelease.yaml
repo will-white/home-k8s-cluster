@@ -116,6 +116,12 @@ spec:
       # defaults security.cephx.csi.keyType to aes for exactly this reason.
       # Those entities stay at HEALTH_WARN, which does not gate Rook.
       # Revisit once Talos ships a 7.0+ kernel.
+      #
+      # The four AUTH_* warnings this leaves (AUTH_INSECURE_CLIENT_KEY_TYPE,
+      # AUTH_INSECURE_KEYS_ALLOWED, AUTH_INSECURE_KEYS_CREATABLE,
+      # AUTH_EMERGENCY_CIPHERS_SET) are muted in Ceph without a TTL. A timed
+      # mute expires and re-fires CephHealthWarning around the clock. Unmute
+      # (`ceph health unmute <code>`) when the CSI keys are rotated.
       security:
         cephx:
           daemon:
@@ -232,6 +238,17 @@ spec:
             name: nfs
           - enabled: false
             name: restful
+      healthCheck:
+        livenessProbe:
+          mon:
+            # The probe runs `ceph --admin-daemon ... mon_status`, which takes
+            # longer than the 5s default on a node stalled on NFS I/O
+            # (mj0581rw, load ~20 from qbittorrent). mon-k was killed 6 times in
+            # a week, each time raising MON_DOWN/SLOW_OPS while it re-joined.
+            # 15s x 5 still restarts a genuinely hung mon within ~75s.
+            probe:
+              timeoutSeconds: 15
+              failureThreshold: 5
       mon:
         # Five mons, not the chart default of three. Quorum needs a majority,
         # so 3 mons tolerate exactly ONE loss -- which would make the size 4

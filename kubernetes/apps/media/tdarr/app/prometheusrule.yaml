@@ -34,10 +34,14 @@ spec:
               One or more transcodes in library {{ $labels.library_name }}
               failed. The flow keeps the original file on failure; see the job
               report in the Tdarr UI.
+          # The error count is cumulative: alert on new failures in the last
+          # hour, not on the total, or one old failure fires forever.
           expr: >-
-            tdarr_library_transcodes{status="error"}
+            (
+              tdarr_library_transcodes{status="error"}
+              - tdarr_library_transcodes{status="error"} offset 1h
+            )
             * on (library_id, tdarr_instance) group_left(library_name)
             tdarr_library_info > 0
-          for: 5m
           labels:
             severity: warning
