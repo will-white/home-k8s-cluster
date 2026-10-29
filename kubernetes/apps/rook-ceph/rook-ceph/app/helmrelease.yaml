@@ -27,6 +27,13 @@ spec:
     - name: snapshot-controller
       namespace: volsync-system
   values:
+    # ceph-csi-controller-manager (subchart): drop its 500m CPU limit.
+    ceph-csi-operator:
+      controllerManager:
+        manager:
+          resources:
+            limits:
+              cpu: null
     csi:
       # CRITICAL (Talos + Ceph tentacle v20+): the CephFS kernel client must pin
       # ms_mode or the msgr2 handshake to the MDS fails ("mount error: no mds is

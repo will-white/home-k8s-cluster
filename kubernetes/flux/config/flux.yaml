@@ -73,11 +73,17 @@ spec:
                 - name: manager
                   resources:
                     limits:
-                      cpu: 2000m
                       memory: 2Gi
       target:
         kind: Deployment
         name: (kustomize-controller|helm-controller|source-controller)
+    # Upstream ships a 1-CPU limit on every controller; repo convention is no
+    # CPU limits (throttling only slows reconciles, requests drive scheduling).
+    - patch: |
+        - op: remove
+          path: /spec/template/spec/containers/0/resources/limits/cpu
+      target:
+        kind: Deployment
     # Enable Helm near OOM detection
     # https://fluxcd.io/flux/cheatsheets/bootstrap/#enable-helm-near-oom-detection
     - patch: |
