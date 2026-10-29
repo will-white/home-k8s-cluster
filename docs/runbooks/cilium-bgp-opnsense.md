@@ -106,21 +106,38 @@ For the Cilium Gateways that is `spec.infrastructure.labels` plus the
 the label lands, L2 stops announcing the old IP and OPNsense learns the new
 one; external-dns re-points the DNS records from the Gateway/Service status.
 
-**Before the first Service moves**, on OPNsense:
+**Before the first Service moves**, on OPNsense (done 2026-10-29; the rules
+use an alias `K8S_BGP_NET` = `192.168.110.0/24`):
 
 - **LAN clients route asymmetrically.** A LAN host reaches `192.168.110.x`
   through OPNsense, but the node answers it directly on the shared L2, so pf
-  sees only the client half of each TCP connection and can drop it once the
-  state's sequence tracking falls behind. Add a **Firewall → Rules → LAN** pass
-  rule above the default-allow: source `LAN net`, destination
-  `192.168.110.0/24`, *Advanced → State type* `sloppy state`. (The "bypass
-  firewall rules for traffic on the same interface" option does not help: it
-  only covers static routes, not BGP-learned ones.) The existing
-  `LAN net → any` rule already permits the traffic itself.
+  sees only the client half of each TCP connection. A strict state never
+  leaves the opening phase and expires after 30 s. pf keeps a state for each
+  direction the packet crosses the router (LAN in, then LAN out), so both
+  need **sloppy state**:
+  - **Firewall → Rules → LAN**, above the default-allow: pass, source
+    `LAN net`, destination `K8S_BGP_NET`, *Advanced → State type* `sloppy state`.
+  - **Firewall → Rules → Floating**: pass, interface LAN, direction **out**,
+    destination `K8S_BGP_NET`, quick, `sloppy state`.
+
+  (The "bypass firewall rules for traffic on the same interface" option does
+  not help: it only covers static routes, not BGP-learned ones.) Verify with a
+  keep-alive connection that outlives 30 s, e.g.
+  `curl -sk --rate 2/m -w '%{num_connects}\n' -o /dev/null URL -o /dev/null URL -o /dev/null URL`
+  printing `1 0 0`.
 - **VLANs** route symmetrically (the node replies via its default gateway), but
-  their rules are restrictive: add an explicit pass to `192.168.110.0/24`
-  on each VLAN that should reach a moved Service (e.g. IOT devices that talk
-  to a Gateway hostname).
+  check each VLAN's rules in *both* directions. An "internet only" rule
+  written as `→ !LAN net` (as on IOT here) silently **admits** the routed
+  range, so IOT needs a **block** `IOT_NET → K8S_BGP_NET` above it. Add explicit
+  passes only where a VLAN should reach a moved Service.
+- **Anything else that routes only the LAN `/24`** loses the moved Services:
+  the Tailscale subnet router on skylab must also advertise `192.168.110.0/24`
+  (and the route must be approved in the Tailscale admin console).
+- **Make sure both AdGuard external-dns releases are Ready.** The
+  `adguard-dns-external` Kustomization `dependsOn` `adguard-dns-internal`; if
+  the latter is stalled, the new `--default-targets` never deploys and every
+  external-Gateway name keeps resolving to the dead L2 address (this happened
+  on the first run, see #1579).
 - No NAT changes: the Service IPs are only reachable from inside.
 
 Order, from least to most disruptive (only the first two are in the phase-2
