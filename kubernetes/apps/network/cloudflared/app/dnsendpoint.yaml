@@ -3,6 +3,8 @@ apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
 metadata:
   name: cloudflared
+  labels:
+    dns.home.arpa/target: cloudflare
 spec:
   endpoints:
     - dnsName: "external.${SECRET_DOMAIN}"

@@ -50,6 +50,15 @@ spec:
       # the alpha prefix (now on the external Gateway). Without this, 0.22 ignores target annotations and
       # deletes records (tunnel CNAMEs were lost once, see #1381/#1402).
       - --annotation-prefix=external-dns.alpha.kubernetes.io/
+      # DNSEndpoints labelled for AdGuard hold LAN-only records. --label-filter
+      # applies to every source (HTTPRoutes too), so it must stay a negative
+      # selector: unlabelled routes and the tunnel DNSEndpoint still match.
+      - --label-filter=dns.home.arpa/target!=adguard
+      # Fail-closed backstop: a private address never belongs in public DNS,
+      # whatever a future DNSEndpoint is (or isn't) labelled.
+      - --exclude-target-net=10.0.0.0/8
+      - --exclude-target-net=172.16.0.0/12
+      - --exclude-target-net=192.168.0.0/16
     policy: sync
     sources: ["crd", "gateway-httproute"]
     txtPrefix: k8s.
