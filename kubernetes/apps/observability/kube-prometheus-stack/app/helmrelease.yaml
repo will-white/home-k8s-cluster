@@ -28,6 +28,10 @@ spec:
       retries: 3
       strategy: rollback
   values:
+    defaultRules:
+      disabled:
+        # Load-based; misfires on NFS waits. See NodeCPUPressure in node-rules.
+        NodeSystemSaturation: true
     additionalPrometheusRulesMap:
       recording-rules:
         groups:
@@ -102,6 +106,20 @@ spec:
                 for: 2m
                 labels:
                   severity: critical
+              # Replaces the mixin's NodeSystemSaturation (disabled below). That
+              # rule divides load average by cores, and Linux load counts tasks
+              # blocked on NFS: mj0581rw sat at load ~5/core around the clock
+              # with CPU pressure under 10%. PSI measures actual CPU starvation.
+              - alert: NodeCPUPressure
+                annotations:
+                  summary: CPU starvation on {{ $labels.instance }}
+                  description: >-
+                    Tasks on {{ $labels.instance }} spent {{ $value | humanizePercentage }}
+                    of the last 5 minutes waiting for CPU, for over 30 minutes.
+                expr: rate(node_pressure_cpu_waiting_seconds_total[5m]) > 0.5
+                for: 30m
+                labels:
+                  severity: warning
     alertmanager:
       alertmanagerSpec:
         externalUrl: https://alertmanager.${SECRET_DOMAIN}
