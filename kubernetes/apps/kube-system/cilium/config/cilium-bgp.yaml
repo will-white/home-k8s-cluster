@@ -1,0 +1,77 @@
+---
+# Cilium BGP control plane v2 peering with OPNsense (FRR), so LoadBalancer
+# IPs in 192.168.110.0/24 are reached by routing instead of ARP: no L2
+# lease failover, and other VLANs reach them through the firewall without
+# a connected-subnet hack. OPNsense side: docs/runbooks/cilium-bgp-opnsense.md.
+#
+# Opt a Service in with the label lb-pool=bgp and an lbipam.cilium.io/ips
+# annotation from the pool below. Phase 1 (this file) only establishes the
+# sessions; nothing carries the label yet.
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: bgp-pool
+spec:
+  blocks:
+    - cidr: "192.168.110.0/24"
+  serviceSelector:
+    matchLabels:
+      lb-pool: bgp
+---
+apiVersion: cilium.io/v2
+kind: CiliumBGPAdvertisement
+metadata:
+  name: bgp-services
+  labels:
+    advertise: bgp
+spec:
+  advertisements:
+    - advertisementType: Service
+      service:
+        addresses:
+          - LoadBalancerIP
+      selector:
+        matchLabels:
+          lb-pool: bgp
+---
+apiVersion: cilium.io/v2
+kind: CiliumBGPPeerConfig
+metadata:
+  name: opnsense
+spec:
+  # Directly connected on the LAN, so no ebgpMultihop. Fast timers: a node
+  # that drops off the LAN stops attracting traffic within ~9s.
+  timers:
+    connectRetryTimeSeconds: 5
+    holdTimeSeconds: 9
+    keepAliveTimeSeconds: 3
+  # Keep routes installed on OPNsense while a cilium agent restarts (rolling
+  # upgrades), instead of flapping every LB IP.
+  gracefulRestart:
+    enabled: true
+    restartTimeSeconds: 15
+  families:
+    - afi: ipv4
+      safi: unicast
+      advertisements:
+        matchLabels:
+          advertise: bgp
+---
+apiVersion: cilium.io/v2
+kind: CiliumBGPClusterConfig
+metadata:
+  name: home
+spec:
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/os: linux
+  bgpInstances:
+    - name: home
+      # Private ASNs: 64512 for the cluster, 64513 for OPNsense (eBGP).
+      localASN: 64512
+      peers:
+        - name: opnsense
+          peerAddress: "192.168.5.1"
+          peerASN: 64513
+          peerConfigRef:
+            name: opnsense
