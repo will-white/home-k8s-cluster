@@ -34,6 +34,13 @@ spec:
         enabled: true
       policyReports:
         enabled: true
+      # PolicyViolation events on every audited workload drowned the Warning
+      # event stream; policy reports and the Grafana dashboard track results.
+      omitEvents:
+        eventTypes:
+          - PolicyApplied
+          - PolicySkipped
+          - PolicyViolation
     config:
       webhooks:
         namespaceSelector:
