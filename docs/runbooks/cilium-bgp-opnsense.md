@@ -24,11 +24,26 @@ installs each Service IP as an ECMP route via the nodes that host it.
 
 ### OPNsense
 
+Done 2026-10-28 on OPNsense 26.7.7 / os-frr 2.0 (backup of the prior config:
+`/root/config.xml.pre-frr-20261028`).
+
 1. **System → Firmware → Plugins**: install `os-frr`.
-2. **Routing → General**: enable routing, save.
+2. **Routing → General**: enable, and **untick "Firewall rules"**. That
+   option registers `pass in tcp to (self) port 179` on *every* interface,
+   WAN included, and the WAN address is public. The LAN default-allow rule
+   (`LAN net → any`) already admits the nodes, so nothing else is needed.
 3. **Routing → BGP → General**: enable, BGP AS Number `64513`, Router ID
-   `192.168.5.1`, save.
-4. **Routing → BGP → Neighbors**: one entry per node, all identical except the
+   `192.168.5.1`, Log Neighbor Changes on, Maximum Paths `8`, save.
+4. **Routing → BGP → Prefix Lists**: two IPv4 lists, so a node (or anything
+   impersonating one) can only inject Service `/32`s, and OPNsense sends the
+   cluster nothing:
+
+   | Name | Seq | Action | Network |
+   |---|---|---|---|
+   | `cilium-in` | 10 | Permit | `192.168.110.0/24 ge 32` |
+   | `cilium-out` | 10 | Deny | `0.0.0.0/0 le 32` |
+
+5. **Routing → BGP → Neighbors**: one entry per node, all identical except the
    address:
 
    | Field | Value |
@@ -39,14 +54,17 @@ installs each Service IP as an ECMP route via the nodes that host it.
    | Update-Source Interface | LAN |
    | Next-Hop-Self | yes |
    | BFD | off |
+   | Prefix-List In / Out | `cilium-in` / `cilium-out` |
 
-   If your FRR plugin version offers **peer groups** with a listen range,
-   one group `cilium` with `bgp listen range 192.168.5.0/24 peer-group cilium`
-   replaces the eight entries. Nodes added later then peer automatically.
-5. **Firewall → Rules → LAN**: allow TCP `179` from the node IPs (or the LAN
-   net) to `This Firewall`. Without it the sessions sit in `Active`.
-6. Apply. **Routing → Diagnostics → BGP → Summary** should list eight
-   neighbors in state `Established` within ~30 s of the Cilium side landing.
+   The plugin also offers peer groups with a listen range, which would make
+   new nodes peer automatically, but a `/24` listen range lets any LAN host
+   open a session. Explicit neighbors keep that list closed.
+6. **System → Settings → Tunables**: set `net.route.multipath` to `1`.
+   OPNsense defaults it to `0`, which makes zebra install a single next-hop per
+   Service IP instead of ECMP across the nodes.
+7. Apply. **Routing → Diagnostics → BGP → Summary** lists the eight neighbors
+   as `Active` until the cluster side lands, then `Established` within ~30 s.
+   From a shell: `vtysh -c 'show bgp ipv4 unicast summary'`.
 
 ### Cluster
 
@@ -90,11 +108,20 @@ one; external-dns re-points the DNS records from the Gateway/Service status.
 
 **Before the first Service moves**, on OPNsense:
 
-- **Firewall → Rules** on LAN and every VLAN that should reach cluster
-  services: allow traffic to `192.168.110.0/24` (it is now a routed network,
-  not the connected LAN, so existing "LAN net" rules do not cover it).
-- If OPNsense does NAT for outbound only, nothing else; the Service IPs are
-  only reachable from inside.
+- **LAN clients route asymmetrically.** A LAN host reaches `192.168.110.x`
+  through OPNsense, but the node answers it directly on the shared L2, so pf
+  sees only the client half of each TCP connection and can drop it once the
+  state's sequence tracking falls behind. Add a **Firewall → Rules → LAN** pass
+  rule above the default-allow: source `LAN net`, destination
+  `192.168.110.0/24`, *Advanced → State type* `sloppy state`. (The "bypass
+  firewall rules for traffic on the same interface" option does not help: it
+  only covers static routes, not BGP-learned ones.) The existing
+  `LAN net → any` rule already permits the traffic itself.
+- **VLANs** route symmetrically (the node replies via its default gateway), but
+  their rules are restrictive: add an explicit pass to `192.168.110.0/24`
+  on each VLAN that should reach a moved Service (e.g. IOT devices that talk
+  to a Gateway hostname).
+- No NAT changes: the Service IPs are only reachable from inside.
 
 Order, from least to most disruptive (only the first two are in the phase-2
 PR; the rest need their external clients repointed first):
