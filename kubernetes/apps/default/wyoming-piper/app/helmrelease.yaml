@@ -1,0 +1,96 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: wyoming-piper
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: wyoming-piper
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+  install:
+    remediation:
+      retries: 3
+  interval: 30m
+  maxHistory: 2
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    controllers:
+      wyoming-piper:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: rhasspy/wyoming-piper
+              tag: 2.5.2@sha256:7d39aafac409c2b6b09d999ed04d84c311d632e558b35baa60fad6aac722af7a
+            # Voices: https://rhasspy.github.io/piper-samples/ (<lang>-<speaker>-<quality>)
+            args:
+              - --voice
+              - en_US-lessac-medium
+              - --data-dir
+              - /data
+              - --download-dir
+              - /data
+              - --uri
+              - tcp://0.0.0.0:10200
+            env:
+              TZ: ${TIMEZONE}
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 10200
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 10200
+                  # first start downloads the voice (~60 MB)
+                  periodSeconds: 10
+                  failureThreshold: 30
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+    service:
+      app:
+        controller: wyoming-piper
+        ports:
+          wyoming:
+            port: 10200
+    persistence:
+      data:
+        existingClaim: wyoming-piper
+        globalMounts:
+          - path: /data
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+  driftDetection:
+    mode: enabled

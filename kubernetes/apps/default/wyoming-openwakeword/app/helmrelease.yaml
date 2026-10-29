@@ -1,0 +1,81 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: wyoming-openwakeword
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: wyoming-openwakeword
+  install:
+    remediation:
+      retries: 3
+  interval: 30m
+  maxHistory: 2
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    controllers:
+      wyoming-openwakeword:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: rhasspy/wyoming-openwakeword
+              tag: 2.1.0@sha256:52cb1168731a1849fc28cf339c935fde58746bbabc94226668a40ef6ddf5d42b
+            # Built-in wake words ship in the image (ok_nabu, hey_jarvis, ...);
+            # drop custom .tflite models into /custom to add more.
+            args:
+              - --custom-model-dir
+              - /custom
+              - --uri
+              - tcp://0.0.0.0:10400
+            env:
+              TZ: ${TIMEZONE}
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 10400
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+    defaultPodOptions:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+    service:
+      app:
+        controller: wyoming-openwakeword
+        ports:
+          wyoming:
+            port: 10400
+    persistence:
+      custom:
+        type: emptyDir
+        globalMounts:
+          - path: /custom
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+  driftDetection:
+    mode: enabled

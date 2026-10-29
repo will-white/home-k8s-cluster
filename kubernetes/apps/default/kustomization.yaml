@@ -16,11 +16,15 @@ resources:
   - ./matter-server/ks.yaml
   - ./mealie/ks.yaml
   - ./meilisearch/ks.yaml
+  - ./music-assistant/ks.yaml
   - ./paperless/ks.yaml
   # paperless-gpt/ks.yaml missing — re-add when the Flux Kustomization is authored
   - ./spoolman/ks.yaml
   - ./stirling-pdf/ks.yaml
   - ./unifi/ks.yaml
+  - ./wyoming-openwakeword/ks.yaml
+  - ./wyoming-piper/ks.yaml
+  - ./wyoming-whisper/ks.yaml
   - ./zigbee2mqtt/ks.yaml
   - ./zigbee2mqtt-ota/ks.yaml
   - ./zwave-js-ui/ks.yaml

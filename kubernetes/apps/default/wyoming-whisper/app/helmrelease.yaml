@@ -1,0 +1,102 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: wyoming-whisper
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: wyoming-whisper
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+  install:
+    remediation:
+      retries: 3
+  interval: 30m
+  maxHistory: 2
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  values:
+    controllers:
+      wyoming-whisper:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: rhasspy/wyoming-whisper
+              tag: 3.8.1@sha256:ba6fcb6056ebe237d15a325381763a80af2fc8fcedaa04f6a714a7375eb20d80
+            # CPU-only nodes (i7-6700T / i5-6500T): small-int8 is the largest
+            # model that answers a short command in ~1-2s. Pass --model
+            # medium-int8 if accuracy matters more than latency.
+            args:
+              - --model
+              - small-int8
+              - --language
+              - en
+              - --beam-size
+              - "1"
+              - --data-dir
+              - /data
+              - --download-dir
+              - /data
+              - --uri
+              - tcp://0.0.0.0:10300
+            env:
+              TZ: ${TIMEZONE}
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 10300
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 10300
+                  # first start downloads the model (~500 MB)
+                  periodSeconds: 10
+                  failureThreshold: 60
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+            resources:
+              requests:
+                cpu: 250m
+                memory: 1Gi
+              limits:
+                memory: 2Gi
+    defaultPodOptions:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+    service:
+      app:
+        controller: wyoming-whisper
+        ports:
+          wyoming:
+            port: 10300
+    persistence:
+      data:
+        existingClaim: wyoming-whisper
+        globalMounts:
+          - path: /data
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
+  driftDetection:
+    mode: enabled

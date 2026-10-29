@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/_/persistentvolumeclaim_v1.json
+# Voice cache only (re-downloaded from HuggingFace on loss), so a plain PVC
+# rather than the volsync template.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wyoming-piper
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ceph-block
