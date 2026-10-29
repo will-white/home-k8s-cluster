@@ -1,11 +1,19 @@
 ---
 # https://docs.cilium.io/en/latest/network/l2-announcements
+# L2 (ARP) announcements for LoadBalancer IPs on the LAN /24. Services that
+# live in the BGP pool (label lb-pool=bgp, see cilium-bgp.yaml) are routed via
+# OPNsense instead and must not be announced here.
 apiVersion: cilium.io/v2alpha1
 kind: CiliumL2AnnouncementPolicy
 metadata:
   name: l2-policy
 spec:
   loadBalancerIPs: true
+  serviceSelector:
+    matchExpressions:
+      - key: lb-pool
+        operator: NotIn
+        values: ["bgp"]
   # NOTE: interfaces might need to be set if you have more than one active NIC on your hosts
   # interfaces:
   #   - ^eno[0-9]+
@@ -22,3 +30,10 @@ spec:
   allowFirstLastIPs: "Yes"
   blocks:
     - cidr: "192.168.5.0/24"
+  # Keep auto-allocation (Services without lbipam.cilium.io/ips) out of the
+  # BGP range: a Service that opts into BGP gets its IP from bgp-pool only.
+  serviceSelector:
+    matchExpressions:
+      - key: lb-pool
+        operator: NotIn
+        values: ["bgp"]

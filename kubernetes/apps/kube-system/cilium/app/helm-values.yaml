@@ -1,5 +1,10 @@
 ---
 autoDirectNodeRoutes: true
+# BGP control plane v2: peers every node with OPNsense (see
+# config/cilium-bgp.yaml and docs/runbooks/cilium-bgp-opnsense.md). Only
+# Services labelled lb-pool=bgp are advertised; everything else stays on L2.
+bgpControlPlane:
+  enabled: true
 bpf:
   masquerade: false # Required for Talos `.machine.features.hostDNS.forwardKubeDNSToHost`
 cgroup:
