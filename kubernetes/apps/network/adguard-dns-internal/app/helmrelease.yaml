@@ -44,71 +44,12 @@ spec:
       # the alpha prefix. Without this, 0.22 ignores target annotations and
       # deletes records (tunnel CNAMEs were lost once, see #1381/#1402).
       - --annotation-prefix=external-dns.alpha.kubernetes.io/
-    extraContainers:
-      - name: adguard-sidecar
-        image: ghcr.io/will-white/adguard-external-dns-sidecar:v0.4.0@sha256:a7f0598befd0d703691cf41736587356d3a76728d746f58cc29dca66db24949a
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 65534
-          capabilities:
-            drop:
-              - ALL
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 10
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        env:
-          - name: HEALTH_PORT
-            value: "8081"
-          - name: ADGUARD_URL
-            valueFrom:
-              secretKeyRef:
-                name: adguard-dns-secret
-                key: ADGUARD_URL
-          - name: ADGUARD_USER
-            valueFrom:
-              secretKeyRef:
-                name: adguard-dns-secret
-                key: ADGUARD_USER
-          - name: ADGUARD_PASS
-            valueFrom:
-              secretKeyRef:
-                name: adguard-dns-secret
-                key: ADGUARD_PASSWORD
-          - name: ROOT_DOMAIN
-            value: "${SECRET_DOMAIN}"
-          - name: FALLBACK_IP
-            value: "192.168.5.1"
-          - name: CHECK_INTERVAL
-            value: "60"
-          # No catch-all: AdGuard answers with the union of every matching rewrite,
-          # so a wildcard to the router also answered for LoadBalancer Services and
-          # off-cluster hosts, giving them two addresses. Router-served (Caddy) names
-          # are listed explicitly instead; anything undeclared resolves upstream.
-          - name: WILDCARD_FALLBACK
-            value: "false"
-          - name: STATIC_RECORDS
-            value: >-
-              nas=192.168.5.1,opnsense=192.168.5.1,plex=192.168.5.1,
-              portainer=192.168.5.1,netboot=192.168.5.1,konnected=192.168.5.1,
-              pikvm=192.168.5.1,s3=192.168.5.1,weather=192.168.5.1,
-              adguard=192.168.5.2
-        resources:
-          requests:
-            cpu: 10m
-            memory: 32Mi
-          limits:
-            memory: 128Mi
+      # Router-served LAN names come from dnsendpoint.yaml. --label-filter
+      # applies to every source, so keep it a negative selector; it only
+      # skips the Cloudflare tunnel DNSEndpoint.
+      - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
+      - --crd-source-kind=DNSEndpoint
+      - --label-filter=dns.home.arpa/target!=cloudflare
     logLevel: debug
     podAnnotations:
       secret.reloader.stakater.com/reload: adguard-dns-secret
@@ -157,16 +98,9 @@ spec:
             memory: 32Mi
           limits:
             memory: 256Mi
-    # The adguard-sidecar still lists Ingresses on every check; since `ingress`
-    # left `sources` the chart no longer grants that, the sidecar gets a 403 and
-    # never turns ready, and every upgrade times out and rolls back.
-    rbac:
-      additionalPermissions:
-        - apiGroups: ["networking.k8s.io"]
-          resources: ["ingresses"]
-          verbs: ["get", "list", "watch"]
     registry: txt
     sources:
+      - crd
       - gateway-httproute
       - service
     triggerLoopOnEvent: true

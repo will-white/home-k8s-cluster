@@ -1,0 +1,45 @@
+---
+# LAN-only names served outside the cluster (Caddy on the router, AdGuard
+# itself). adguard-dns-internal owns them like any other record; cloudflare-dns
+# skips this label and refuses private targets, so they never go public.
+# No wildcard on purpose: AdGuard answers with the union of every matching
+# rewrite, so a catch-all would give in-cluster names a second address. A
+# name not declared here or by a route/Service resolves upstream.
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: lan-static
+  labels:
+    dns.home.arpa/target: adguard
+spec:
+  endpoints:
+    - dnsName: "nas.${SECRET_DOMAIN}"
+      recordType: A
+      targets: ["192.168.5.1"]
+    - dnsName: "opnsense.${SECRET_DOMAIN}"
+      recordType: A
+      targets: ["192.168.5.1"]
+    - dnsName: "plex.${SECRET_DOMAIN}"
+      recordType: A
+      targets: ["192.168.5.1"]
+    - dnsName: "portainer.${SECRET_DOMAIN}"
+      recordType: A
+      targets: ["192.168.5.1"]
+    - dnsName: "netboot.${SECRET_DOMAIN}"
+      recordType: A
+      targets: ["192.168.5.1"]
+    - dnsName: "konnected.${SECRET_DOMAIN}"
+      recordType: A
+      targets: ["192.168.5.1"]
+    - dnsName: "pikvm.${SECRET_DOMAIN}"
+      recordType: A
+      targets: ["192.168.5.1"]
+    - dnsName: "s3.${SECRET_DOMAIN}"
+      recordType: A
+      targets: ["192.168.5.1"]
+    - dnsName: "weather.${SECRET_DOMAIN}"
+      recordType: A
+      targets: ["192.168.5.1"]
+    - dnsName: "adguard.${SECRET_DOMAIN}"
+      recordType: A
+      targets: ["192.168.5.2"]
