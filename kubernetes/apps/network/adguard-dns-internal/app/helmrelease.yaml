@@ -157,6 +157,14 @@ spec:
             memory: 32Mi
           limits:
             memory: 256Mi
+    # The adguard-sidecar still lists Ingresses on every check; since `ingress`
+    # left `sources` the chart no longer grants that, the sidecar gets a 403 and
+    # never turns ready, and every upgrade times out and rolls back.
+    rbac:
+      additionalPermissions:
+        - apiGroups: ["networking.k8s.io"]
+          resources: ["ingresses"]
+          verbs: ["get", "list", "watch"]
     registry: txt
     sources:
       - gateway-httproute
