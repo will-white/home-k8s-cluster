@@ -158,6 +158,28 @@ spec:
           labels:
             severity: warning
 
+        # A node's NFSv4 client can get stuck re-validating state it lost with
+        # the NAS, looping TEST_STATEID. From 2026-10-26 to 10-29 mj0581rw
+        # sent ~5k/s for three days: load ~5/core from I/O wait, half-speed
+        # qbittorrent, and Ceph's mon on that node failing its liveness probe.
+        # Healthy nodes send none. The session is shared by every pod mounting
+        # the NAS on that node, so restarting one pod doesn't clear it.
+        - alert: NFSClientStateRecoveryLoop
+          annotations:
+            summary: >-
+              NFS client on {{ $labels.instance }} is looping TEST_STATEID
+              ({{ $value | humanize }}/s).
+            description: >-
+              The node's NFSv4 session with the NAS is stuck in state recovery.
+              Clear it by removing every NAS mount on that node at once: delete
+              all pods there with nfs volumes together (they reschedule), or
+              drain the node.
+          expr: |
+            sum by (instance) (rate(node_nfs_requests_total{method="TestStateID"}[10m])) > 50
+          for: 15m
+          labels:
+            severity: warning
+
     - name: ceph.rules
       rules:
         - alert: CephOsdMapFlagsSet
