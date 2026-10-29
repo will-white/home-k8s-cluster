@@ -1,9 +1,22 @@
 ---
-# Area
+# Area (keep in sync with labeler.yaml; label-sync deletes anything not listed)
 - { name: "area/bootstrap", color: "0e8a16" }
-- { name: "area/github", color: "0e8a16" }
+- { name: "area/flux", color: "0e8a16" }
+- { name: "area/templates", color: "0e8a16" }
+- { name: "area/media", color: "0e8a16" }
+- { name: "area/home", color: "0e8a16" }
+- { name: "area/observability", color: "0e8a16" }
+- { name: "area/database", color: "0e8a16" }
+- { name: "area/network", color: "0e8a16" }
+- { name: "area/storage", color: "0e8a16" }
+- { name: "area/platform", color: "0e8a16" }
 - { name: "area/kubernetes", color: "0e8a16" }
+- { name: "area/github", color: "0e8a16" }
 - { name: "area/taskfile", color: "0e8a16" }
+- { name: "area/scripts", color: "0e8a16" }
+- { name: "area/devcontainer", color: "0e8a16" }
+- { name: "area/docs", color: "1d76db" }
+- { name: "area/agents", color: "1d76db" }
 # Distro
 - { name: "distro/talos", color: "ffc300" }
 # Renovate

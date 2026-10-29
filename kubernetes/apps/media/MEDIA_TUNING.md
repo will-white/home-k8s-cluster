@@ -304,6 +304,6 @@ Run after any major change above:
 
 - Custom format additions / quality profile structure → see
   [recyclarr/app/resources/recyclarr.yml](recyclarr/app/resources/recyclarr.yml).
-- Storage / PVC / Volsync → see `@storage-agent` scope.
-- New media app onboarding → follow the per-app layout in `AGENTS.md`
-  under `@media-agent`.
+- Storage / PVC / Volsync → [volsync-system/CLAUDE.md](../volsync-system/CLAUDE.md).
+- New media app onboarding → [CLAUDE.md](./CLAUDE.md) in this folder and
+  [docs/runbooks/add-an-app.md](../../../docs/runbooks/add-an-app.md).

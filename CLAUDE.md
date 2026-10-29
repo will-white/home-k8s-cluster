@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A home Kubernetes cluster running on **Talos Linux**, managed entirely via **Flux GitOps**. Everything is declarative YAML under `kubernetes/`; Flux reconciles the live cluster from the `main` branch of the GitHub repo. There is no application source code here — the unit of work is Kubernetes manifests (HelmReleases, Kustomizations, ExternalSecrets, etc.).
 
-**Read [AGENTS.md](./AGENTS.md) first.** It is the authoritative source for agent policy (allowed/forbidden actions, secret handling, human-approval gates) and defines specialist personas (`@media-agent`, `@home-agent`, `@observability-agent`, `@storage-agent`, `@infra-agent`, etc.) with per-domain conventions and boundaries. This file summarizes the mechanics; AGENTS.md governs the rules.
+**Read [AGENTS.md](./AGENTS.md) first.** It is the authoritative source for agent policy (allowed/forbidden actions, secret handling, human-approval gates) and indexes the specialist roles (`@media-agent`, `@home-agent`, `@observability-agent`, `@storage-agent`, `@db-agent`, `@infra-agent`, ...). Per-domain conventions live next to the manifests in `kubernetes/apps/<ns>/CLAUDE.md` and load automatically when you work in that tree. This file summarizes the mechanics; AGENTS.md governs the rules. Procedures (add an app, add a secret, Flux troubleshooting, restores) are indexed in [docs/README.md](./docs/README.md).
+
+**Cloud sessions have no cluster credentials.** Without `KUBECONFIG` you can validate and open PRs but not reconcile, inspect or watch a rollout, so do not merge your own PR from such a session; report CI and hand the merge to the owner.
 
 ## Commands
 
@@ -23,7 +25,8 @@ task kubernetes:reconcile         # force Flux to pull + reconcile from Git (own
 
 Validating a **single app** (preferred inner-loop check):
 ```bash
-kustomize build --load-restrictor=LoadRestrictionsNone kubernetes/apps/<ns>/<app>/app | kubeconform -strict -
+kustomize build --load-restrictor=LoadRestrictionsNone kubernetes/apps/<ns>/<app>/app \
+  | kubeconform -strict -ignore-missing-schemas -skip Secret,ExternalSecret,ReplicationSource,ReplicationDestination,HTTPRoute -
 # Dry-run the Flux Kustomization for one app:
 flux build ks <app> --kustomization-file kubernetes/apps/<ns>/<app>/ks.yaml --path kubernetes/apps/<ns>/<app>/app --dry-run
 yamllint kubernetes/apps/<ns>/<app>            # or lint a whole stack folder
