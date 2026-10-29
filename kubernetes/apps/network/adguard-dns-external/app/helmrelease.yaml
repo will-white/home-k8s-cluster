@@ -39,7 +39,7 @@ spec:
       - --managed-record-types=TXT
       - --managed-record-types=SRV
       # LB address of the external Cilium Gateway (see cilium-gateway/app/gateway.yaml).
-      - --default-targets=192.168.5.44
+      - --default-targets=192.168.5.48
       - --force-default-targets
       # external-dns 0.22 switched the default annotation prefix to
       # external-dns.kubernetes.io/ with no fallback; every ingress here uses

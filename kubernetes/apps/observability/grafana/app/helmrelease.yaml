@@ -275,11 +275,20 @@ spec:
           # renovate: depName="Kubernetes Service Logs"
           gnetId: 15141
           revision: 1
-        loki-stack-monitoring:
-          datasource: Prometheus
-          # renovate: depName="Loki stack monitoring (Promtail, Loki)"
-          gnetId: 14055
-          revision: 5
+        # Alloy mixin (replaces "Loki stack monitoring (Promtail, Loki)"): the
+        # rendered JSON ships in the alloy repo, not on grafana.com. Pinned to
+        # the deployed Alloy version; bump alongside the alloy chart.
+        # No `datasource:` on purpose: the chart's sed would rewrite every
+        # "datasource" line, including the ${loki_datasource} refs the log
+        # panels use. The dashboards carry their own datasource variables.
+        alloy-logs:
+          url: https://raw.githubusercontent.com/grafana/alloy/v1.21.2/operations/alloy-mixin/rendered/dashboards/alloy-logs.json
+        alloy-loki:
+          url: https://raw.githubusercontent.com/grafana/alloy/v1.21.2/operations/alloy-mixin/rendered/dashboards/alloy-loki.json
+        alloy-resources:
+          url: https://raw.githubusercontent.com/grafana/alloy/v1.21.2/operations/alloy-mixin/rendered/dashboards/alloy-resources.json
+        alloy-controller:
+          url: https://raw.githubusercontent.com/grafana/alloy/v1.21.2/operations/alloy-mixin/rendered/dashboards/alloy-controller.json
         logs-app:
           datasource:
             - name: DS_LOKI
