@@ -28,6 +28,7 @@ so a Kyverno outage can never block admissions.
 ## Validate
 
 ```bash
+task kubernetes:validate APP=<ns>/<app>      # wraps the checks below
 kustomize build --load-restrictor=LoadRestrictionsNone kubernetes/apps/kyverno/policies/app | kubeconform -strict -ignore-missing-schemas -
 kubectl get policyreport -A          # read-only
 ```

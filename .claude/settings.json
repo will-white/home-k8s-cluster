@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(kustomize build:*)",
+      "Bash(kubeconform:*)",
+      "Bash(yamllint:*)",
+      "Bash(flux build:*)",
+      "Bash(flux get:*)",
+      "Bash(flux version:*)",
+      "Bash(flate test:*)",
+      "Bash(flate diff:*)",
+      "Bash(helm template:*)",
+      "Bash(helm show:*)",
+      "Bash(promtool check:*)",
+      "Bash(lokitool rules prepare:*)",
+      "Bash(alloy validate:*)",
+      "Bash(shellcheck:*)",
+      "Bash(yq:*)",
+      "Bash(task kubernetes:validate:*)",
+      "Bash(task kubernetes:kubeconform)",
+      "Bash(task kubernetes:rules-lint)",
+      "Bash(task --list)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(kubectl get:*)",
+      "Bash(kubectl describe:*)",
+      "Bash(kubectl logs:*)",
+      "Bash(kubectl version:*)",
+      "Bash(kubectl -n * get:*)",
+      "Bash(kubectl -n * describe:*)",
+      "Bash(kubectl -n * logs:*)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(sops -d:*)",
+      "Bash(sops --decrypt:*)",
+      "Bash(sops -e:*)",
+      "Bash(sops --encrypt:*)",
+      "Bash(bws secret get:*)",
+      "Bash(bws secret list:*)",
+      "Bash(scripts/bws-secret.sh:*)",
+      "Bash(./scripts/bws-secret.sh:*)",
+      "Bash(kubectl delete:*)",
+      "Bash(kubectl -n * delete:*)",
+      "Bash(kubectl get secret:*)",
+      "Bash(kubectl -n * get secret:*)",
+      "Bash(cat age.key:*)",
+      "Bash(cat kubeconfig:*)",
+      "Bash(cat talosconfig:*)",
+      "Read(./age.key)",
+      "Read(./kubeconfig)",
+      "Read(./talosconfig)",
+      "Read(./github-deploy.key)",
+      "Read(./**/*.key)",
+      "Read(./kubernetes/bootstrap/talos/clusterconfig/**)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh",
+            "timeout": 600
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/yamllint-on-edit.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -42,6 +42,7 @@ here is cluster-critical; most of it is installed once by the Talos bootstrap
 ## Validate
 
 ```bash
+task kubernetes:validate APP=<ns>/<app>      # wraps the checks below
 kustomize build --load-restrictor=LoadRestrictionsNone kubernetes/apps/kube-system/cilium/app | kubeconform -strict -ignore-missing-schemas -
 kubectl get ciliumloadbalancerippool,ciliumbgpclusterconfig,ciliuml2announcementpolicy   # read-only
 kubectl -n kube-system exec ds/cilium -- cilium bgp peers

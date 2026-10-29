@@ -5,8 +5,19 @@ version: '3'
 vars:
   KUBECONFORM_SCRIPT: "{{.SCRIPTS_DIR}}/kubeconform.sh"
   RULES_LINT_SCRIPT: "{{.SCRIPTS_DIR}}/rules-lint.sh"
+  VALIDATE_APP_SCRIPT: "{{.SCRIPTS_DIR}}/validate-app.sh"
 
 tasks:
+
+  validate:
+    desc: Validate ONE app (yamllint, kustomize+kubeconform, flux build, flate) [APP=media/sonarr]
+    cmd: bash {{.VALIDATE_APP_SCRIPT}} {{.APP}}
+    requires:
+      vars: [APP]
+    preconditions:
+      - test -f {{.VALIDATE_APP_SCRIPT}}
+      - test -d {{.KUBERNETES_DIR}}/apps/{{.APP}}/app
+      - which yamllint kustomize kubeconform
 
   apply-ks:
     desc: Apply a Flux KS for a cluster [PATH=required]

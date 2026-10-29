@@ -40,6 +40,10 @@ check_tool "jq"          "jq --version"
 check_tool "yamllint"    "yamllint --version"
 check_tool "shellcheck"  "shellcheck --version | grep version:"
 check_tool "gitleaks"    "gitleaks version"
+check_tool "flate"       "flate --version"
+check_tool "promtool"    "promtool --version"
+check_tool "lokitool"    "lokitool rules --help"
+check_tool "alloy"       "alloy --version"
 check_tool "direnv"      "direnv version"
 check_tool "fish"        "fish --version"
 check_tool "claude"      "claude --version"
@@ -50,7 +54,7 @@ check_tool "claude"      "claude --version"
 echo ""
 echo "=== PATH precedence ==="
 SHADOWED=0
-for tool in kubectl helm kustomize kubeconform sops age talosctl talhelper yq gh flux stern; do
+for tool in kubectl helm kustomize kubeconform sops age talosctl talhelper yq gh flux stern flate promtool lokitool alloy; do
     resolved="$(command -v "$tool" 2>/dev/null || true)"
     case "$resolved" in
         */.bin/*)

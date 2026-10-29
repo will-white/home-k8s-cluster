@@ -3,7 +3,9 @@
 Start with the root [README](../README.md) for what the cluster is and
 [AGENTS.md](../AGENTS.md) + [CLAUDE.md](../CLAUDE.md) for how to work in the
 repo. Domain rules live next to the manifests in
-`kubernetes/apps/<ns>/CLAUDE.md`.
+`kubernetes/apps/<ns>/CLAUDE.md`; repeatable procedures are Claude Code skills
+in `.claude/skills/` (`validate-app`, `new-app`, `expose-app`,
+`onboard-volsync`, `merge-renovate-prs`).
 
 ## Reference
 

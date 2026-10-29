@@ -84,6 +84,7 @@ any pipeline change.
 ## Validate
 
 ```bash
+task kubernetes:validate APP=<ns>/<app>      # wraps the checks below
 kustomize build --load-restrictor=LoadRestrictionsNone kubernetes/apps/media/<app>/app | kubeconform -strict -ignore-missing-schemas -skip Secret,ExternalSecret,ReplicationSource,ReplicationDestination,HTTPRoute -
 flux build ks <app> --kustomization-file kubernetes/apps/media/<app>/ks.yaml --path kubernetes/apps/media/<app>/app --dry-run
 yamllint kubernetes/apps/media/<app>

@@ -47,6 +47,7 @@ the BGP side in [docs/runbooks/cilium-bgp-opnsense.md](../../../docs/runbooks/ci
 ## Validate
 
 ```bash
+task kubernetes:validate APP=<ns>/<app>      # wraps the checks below
 kustomize build --load-restrictor=LoadRestrictionsNone kubernetes/apps/network/<app>/app | kubeconform -strict -ignore-missing-schemas -skip Secret,ExternalSecret,ReplicationSource,ReplicationDestination,HTTPRoute -
 kubectl -n network get gateway,httproute,svc        # read-only
 kubectl -n network logs deploy/cloudflare-dns | grep -E 'action=(DELETE|CREATE)'

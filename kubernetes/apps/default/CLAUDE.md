@@ -71,6 +71,7 @@ Helper script: `scripts/amcrest.sh` (camera provisioning).
 ## Validate
 
 ```bash
+task kubernetes:validate APP=<ns>/<app>      # wraps the checks below
 kustomize build --load-restrictor=LoadRestrictionsNone kubernetes/apps/default/<app>/app | kubeconform -strict -ignore-missing-schemas -skip Secret,ExternalSecret,ReplicationSource,ReplicationDestination,HTTPRoute -
 flux build ks <app> --kustomization-file kubernetes/apps/default/<app>/ks.yaml --path kubernetes/apps/default/<app>/app --dry-run
 yamllint kubernetes/apps/default/<app>
