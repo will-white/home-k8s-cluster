@@ -5,9 +5,9 @@
     },
     "sops.defaults.ageKeyFile": "age.key",
     "vs-kubernetes": {
-        "vs-kubernetes.kubeconfig": "/workspaces/new-cluster/kubeconfig",
+        "vs-kubernetes.kubeconfig": "${workspaceFolder}/kubeconfig",
         "vs-kubernetes.knownKubeconfigs": [
-            "/workspaces/new-cluster/kubeconfig"
+            "${workspaceFolder}/kubeconfig"
         ]
     },
     "terminal.integrated.profiles.linux": {

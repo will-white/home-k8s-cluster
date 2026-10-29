@@ -6,7 +6,7 @@ _... managed with Flux, Renovate, and GitHub Actions_ 🤖
 
 </div>
 
-> **For AI Agents and Developers**: See [AGENTS.md](./AGENTS.md) for comprehensive setup, validation, and operational instructions.
+> **For AI agents and developers**: [AGENTS.md](./AGENTS.md) holds policy and roles, [CLAUDE.md](./CLAUDE.md) the commands and conventions, and each `kubernetes/apps/<ns>/CLAUDE.md` the rules for that namespace.
 
 ## 🚨 Disaster recovery
 
@@ -25,12 +25,9 @@ the Bitwarden bootstrap token. Losing it is unrecoverable, so:
   schema. The NUT upsmon password (`CLUSTER_NUT_MONPWD`) is fetched from
   Bitwarden at `talhelper genconfig` time.
 
-Runbooks:
-- [Bare-metal rebuild](./docs/runbooks/bare-metal-rebuild.md) — nuke & repave from blank nodes
-- [Full cluster shutdown](./docs/runbooks/full-cluster-shutdown.md) — graceful power-down/up for maintenance
-- [etcd maintenance](./docs/runbooks/etcd-maintenance.md) — defrag, alert triage, network-vs-disk diagnosis
-- [Ceph / data restore](./kubernetes/apps/rook-ceph/rook-ceph/backup/DISASTER-RECOVERY.md) — Garage → RGW → CNPG/Volsync rehydration
-- [Cilium BGP with OPNsense](./docs/runbooks/cilium-bgp-opnsense.md) — FRR peering, the routed LB pool, per-Service migration
+Docs: [docs/README.md](./docs/README.md) indexes every runbook and reference
+page (network layout, secrets schema, Flux troubleshooting, Volsync restore,
+BGP, shutdown, rebuild, DR).
 
 Open work is tracked in [docs/backlog.md](./docs/backlog.md).
 
