@@ -1,0 +1,51 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      A mutable tag defeats Renovate's digest pinning and makes rollbacks
+      guesswork. Every container image must carry an explicit, non-latest tag.
+spec:
+  background: true
+  rules:
+    - name: require-image-tag
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+      exclude:
+        any:
+          - resources:
+              namespaces: ["kube-system", "kyverno"]
+      validate:
+        failureAction: Audit
+        message: "An image tag is required (image: {{ request.object.spec.containers[].image }})."
+        pattern:
+          spec:
+            =(initContainers):
+              - image: "*:*"
+            containers:
+              - image: "*:*"
+    - name: validate-image-tag
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+      exclude:
+        any:
+          - resources:
+              namespaces: ["kube-system", "kyverno"]
+      validate:
+        failureAction: Audit
+        message: "Using a mutable image tag (latest) is not allowed."
+        pattern:
+          spec:
+            =(initContainers):
+              - image: "!*:latest & !*:latest@*"
+            containers:
+              - image: "!*:latest & !*:latest@*"

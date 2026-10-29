@@ -1,0 +1,13 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+# Every policy here is Audit-only: violations show up in
+# `kubectl get policyreport -A` and the Kyverno Grafana dashboard, nothing is
+# blocked. Graduate a rule to Enforce by setting validate.failureAction and
+# dropping features.forceFailurePolicyIgnore in ../../kyverno/app.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./disallow-latest-tag.yaml
+  - ./require-image-digest.yaml
+  - ./require-resources.yaml
+  - ./disallow-cpu-limits.yaml
