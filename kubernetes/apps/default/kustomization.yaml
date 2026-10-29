@@ -18,7 +18,6 @@ resources:
   - ./meilisearch/ks.yaml
   - ./music-assistant/ks.yaml
   - ./paperless/ks.yaml
-  # paperless-gpt/ks.yaml missing — re-add when the Flux Kustomization is authored
   - ./spoolman/ks.yaml
   - ./stirling-pdf/ks.yaml
   - ./unifi/ks.yaml

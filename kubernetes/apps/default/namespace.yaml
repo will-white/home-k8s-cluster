@@ -4,14 +4,13 @@ metadata:
   name: default
   labels:
     kustomize.toolkit.fluxcd.io/prune: disabled
-    # PodSecurity admission: enforce is set to "privileged" because
-    # home-assistant requires hostNetwork (mDNS/zeroconf device discovery),
-    # which "baseline" forbids. HA is the only hostNetwork workload here and
-    # is otherwise hardened (runAsNonRoot, drop ALL caps, seccomp
-    # RuntimeDefault). warn/audit stay at "restricted" so violations in the
-    # other workloads remain visible.
-    # TODO: move home-assistant to a dedicated privileged namespace so this
-    # shared namespace can return to baseline enforcement.
+    # PodSecurity admission: enforce stays "privileged" because home-assistant,
+    # matter-server and music-assistant need hostNetwork (mDNS/SSDP/Matter
+    # discovery), and frigate / zigbee2mqtt / zwave-js-ui pass through host
+    # devices; "baseline" forbids both. Those pods are otherwise hardened
+    # (runAsNonRoot, drop ALL caps, seccomp RuntimeDefault). warn/audit stay
+    # at "restricted" so violations elsewhere remain visible; the Kyverno
+    # policies (kubernetes/apps/kyverno) report the rest.
     pod-security.kubernetes.io/enforce: privileged
     pod-security.kubernetes.io/warn: restricted
     pod-security.kubernetes.io/audit: restricted

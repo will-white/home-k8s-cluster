@@ -50,6 +50,7 @@ You are responsible for maintaining a Home Kubernetes cluster running on Talos L
 - **Validation:** Kubeconform, Yamllint, Kustomize
 - **Networking:** Cilium (Gateway API), Cert-Manager, External-DNS
 - **Storage:** Rook-CEPH, OpenEBS
+- **Policy:** Pod Security admission (baseline where workloads allow it) + Kyverno in Audit mode
 
 ## Specialist Agents
 
@@ -74,7 +75,7 @@ You are responsible for maintaining a Home Kubernetes cluster running on Talos L
 - **Capabilities:**
   - Manage core cluster components (Cilium, CoreDNS, Flux System).
   - Handle storage providers (Rook-CEPH, OpenEBS).
-  - Configure Ingress and Networking.
+  - Configure Gateway API routes, LB IP pools (L2 and BGP) and networking.
 - **Boundaries:**
   - **CRITICAL:** Changes here can break the entire cluster. Always double-check dependencies.
   - **CRITICAL:** Ensure Talos configuration compatibility when modifying bootstrap files.
@@ -141,7 +142,7 @@ You are responsible for maintaining a Home Kubernetes cluster running on Talos L
   - **Storage:** use the shared `templates/volsync/` pattern for PVCs that need backup; otherwise `openebs-hostpath` for scratch and `ceph-block` / `ceph-filesystem` for shared media. Never invent a new StorageClass.
   - **Databases:** *arr apps that support Postgres MUST use `cloudnative-pg-cluster` (add it to `dependsOn`); do not run embedded SQLite if Postgres is supported.
   - **Secrets:** `ExternalSecret` only, sourced from Bitwarden via `external-secrets-stores`. Never commit a plain `Secret`.
-  - **Ingress / DNS:** follow the pattern used by existing apps; host `${APP}.${SECRET_DOMAIN}` — never hard-code the domain.
+  - **Routes / DNS:** app-template `route:` block to Gateway `internal` in `network` (`external` only for public apps), hostname `${APP}.${SECRET_DOMAIN}` — never hard-code the domain. external-dns creates the records from the route.
   - **Health checks:** every user-facing app gets a `gatus.yaml` from `templates/gatus/`.
   - **Resource hygiene:** always set `resources.requests`; cap memory with `limits.memory`; do not set CPU limits.
 - **Heuristics:**
