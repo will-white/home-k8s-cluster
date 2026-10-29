@@ -285,5 +285,17 @@ spec:
         globalMounts:
           - path: /Downloads
             subPath: Downloads
+      # In-progress downloads (qBittorrent temp path). A separate ZFS dataset,
+      # main/downloads-incomplete: 64K records (main/media uses 1M, so random
+      # piece writes forced read-modify-write of whole records on RAIDZ2),
+      # sync off, no snapshots, 2T quota. Completed files move to /Downloads.
+      incomplete:
+        type: nfs
+        server: ${NAS_IP}
+        path: /mnt/main/downloads-incomplete
+        advancedMounts:
+          qbittorrent:
+            app:
+              - path: /incomplete
   driftDetection:
     mode: enabled
