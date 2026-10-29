@@ -4,10 +4,11 @@ kind: Gateway
 metadata:
   name: internal
   annotations:
-    # ingress-nginx-internal's old address, reclaimed after its Service was
-    # pruned. Keep in sync with infrastructure.annotations below; external-dns
+    # Routed BGP pool (kube-system/cilium/config/cilium-bgp.yaml); the label in
+    # infrastructure.labels is what opts the generated Service into BGP.
+    # Keep in sync with infrastructure.annotations below; external-dns
     # re-points the AdGuard records from the Gateway status address.
-    lbipam.cilium.io/ips: "192.168.5.46"
+    lbipam.cilium.io/ips: "192.168.110.46"
 spec:
   gatewayClassName: cilium
   listeners:
@@ -29,17 +30,18 @@ spec:
           - kind: Secret
             name: "${SECRET_DOMAIN/./-}-gateway-tls"
   infrastructure:
+    labels:
+      lb-pool: bgp
     annotations:
-      lbipam.cilium.io/ips: "192.168.5.46"
+      lbipam.cilium.io/ips: "192.168.110.46"
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: external
   annotations:
-    # ingress-nginx-external's old address, reclaimed after its Service was
-    # pruned. adguard-dns-external --default-targets must match.
-    lbipam.cilium.io/ips: "192.168.5.48"
+    # Routed BGP pool; adguard-dns-external --default-targets must match.
+    lbipam.cilium.io/ips: "192.168.110.48"
     # external-dns reads the target from the Gateway, not from HTTPRoutes:
     # every route attached here gets a Cloudflare CNAME to the tunnel.
     external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
@@ -64,5 +66,7 @@ spec:
           - kind: Secret
             name: "${SECRET_DOMAIN/./-}-gateway-tls"
   infrastructure:
+    labels:
+      lb-pool: bgp
     annotations:
-      lbipam.cilium.io/ips: "192.168.5.48"
+      lbipam.cilium.io/ips: "192.168.110.48"
