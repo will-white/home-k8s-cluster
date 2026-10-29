@@ -1,6 +1,6 @@
 ---
-# Enforced yamllint — unlike the old copy buried in agent-validation.yml
-# (continue-on-error), this one fails the build.
+# Enforced yamllint: fails the build (the old continue-on-error copy in the
+# removed agent-validation workflow could only warn).
 name: YAML Lint
 on:
   pull_request:

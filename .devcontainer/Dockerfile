@@ -34,6 +34,14 @@ ARG GH_VERSION=v2.103.2
 ARG JQ_VERSION=1.8.2
 # renovate: datasource=github-releases depName=gitleaks/gitleaks
 ARG GITLEAKS_VERSION=v8.30.1
+# renovate: datasource=github-releases depName=home-operations/flate
+ARG FLATE_VERSION=v0.6.5
+# renovate: datasource=github-releases depName=prometheus/prometheus
+ARG PROMETHEUS_VERSION=v3.9.1
+# renovate: datasource=github-releases depName=grafana/loki
+ARG LOKI_VERSION=v3.7.9
+# renovate: datasource=github-releases depName=grafana/alloy
+ARG ALLOY_VERSION=v1.21.2
 
 # Install system packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -113,7 +121,23 @@ RUN set -eux \
     && curl -fsSL "https://github.com/bitwarden/sdk-sm/releases/download/bws-${BWS_VERSION}/bws-x86_64-unknown-linux-gnu-${BWS_VERSION#v}.zip" -o /tmp/bws.zip \
     && unzip -o /tmp/bws.zip -d /usr/local/bin/ \
     && chmod +x /usr/local/bin/bws \
-    && rm -f /tmp/bws.zip
+    && rm -f /tmp/bws.zip \
+    # flate - offline Flux render (CI's Flux Render job, scripts/validate-app.sh)
+    && curl -fsSL "https://github.com/home-operations/flate/releases/download/${FLATE_VERSION}/flate_${FLATE_VERSION#v}_linux_amd64.tar.gz" | tar xz -C /usr/local/bin flate \
+    && chmod +x /usr/local/bin/flate \
+    # promtool / lokitool / alloy - task kubernetes:rules-lint (same pins as .github/workflows/rules-lint.yaml)
+    && curl -fsSL "https://github.com/prometheus/prometheus/releases/download/${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION#v}.linux-amd64.tar.gz" | tar xz -C /usr/local/bin --strip-components=1 "prometheus-${PROMETHEUS_VERSION#v}.linux-amd64/promtool" \
+    && chmod +x /usr/local/bin/promtool \
+    && curl -fsSL "https://github.com/grafana/loki/releases/download/${LOKI_VERSION}/lokitool-linux-amd64.zip" -o /tmp/lokitool.zip \
+    && unzip -o /tmp/lokitool.zip -d /tmp/ \
+    && mv /tmp/lokitool-linux-amd64 /usr/local/bin/lokitool \
+    && chmod +x /usr/local/bin/lokitool \
+    && rm -f /tmp/lokitool.zip \
+    && curl -fsSL "https://github.com/grafana/alloy/releases/download/${ALLOY_VERSION}/alloy-linux-amd64.zip" -o /tmp/alloy.zip \
+    && unzip -o /tmp/alloy.zip -d /tmp/ \
+    && mv /tmp/alloy-linux-amd64 /usr/local/bin/alloy \
+    && chmod +x /usr/local/bin/alloy \
+    && rm -f /tmp/alloy.zip
 
 # Create directories and set fish as default shell
 RUN mkdir -p /home/vscode/.bin /home/vscode/.config/fish/completions /home/vscode/.claude \

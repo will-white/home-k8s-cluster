@@ -86,7 +86,7 @@ Adopt the role whose scope matches the files or subject of the task; the user ma
 | `@infra-agent` | `kubernetes/flux/**`, `kubernetes/bootstrap/**`, `kubernetes/apps/kube-system/**`, `network/**`, `cert-manager/**`, `external-secrets/**`, `kyverno/**`, `system-upgrade/**`, `actions-runner-system/**`, `flux-system/**`, `kubernetes/templates/network-policies/` | [kube-system/CLAUDE.md](./kubernetes/apps/kube-system/CLAUDE.md), [network/CLAUDE.md](./kubernetes/apps/network/CLAUDE.md), [kyverno/CLAUDE.md](./kubernetes/apps/kyverno/CLAUDE.md) |
 | `@app-agent` | Any other app folder under `kubernetes/apps/` | The namespace's `CLAUDE.md` if one exists, else root `CLAUDE.md` |
 | `@ops-agent` | Live-cluster operations: Flux reconcile, rollout checks, debugging pods and nodes | [docs/runbooks/flux-troubleshooting.md](./docs/runbooks/flux-troubleshooting.md) |
-| `@test-agent` | CI workflows, `scripts/`, validation tooling | root `CLAUDE.md` "Commands" |
+| `@test-agent` | CI workflows, `scripts/`, `.claude/` hooks and skills, validation tooling | root `CLAUDE.md` "Commands" |
 
 ### Rules shared by every role
 
@@ -95,7 +95,7 @@ Adopt the role whose scope matches the files or subject of the task; the user ma
 - **Charts:** prefer `app-template` (bjw-s) via an `OCIRepository` unless the upstream chart is demonstrably better. Search <https://kubesearch.dev> before writing custom manifests.
 - **Secrets:** `ExternalSecret` from the `bitwarden-secrets-manager` `ClusterSecretStore` only. Never a plain `Secret`; never SOPS for app secrets (`docs/runbooks/add-a-secret.md`).
 - **Shared infra versions** (chart `version:`, CRDs) for cnpg, external-secrets, volsync, rook-ceph, kube-prometheus-stack, loki, cilium belong to `@infra-agent` / `@storage-agent`; other roles do not bump them in passing.
-- **Validate before proposing:** the single-app inner loop in root `CLAUDE.md`, then `task kubernetes:kubeconform`; `task kubernetes:rules-lint` when alert rules or the Alloy pipeline change.
+- **Validate before proposing:** `task kubernetes:validate APP=<ns>/<app>` (the single-app inner loop), then `task kubernetes:kubeconform`; `task kubernetes:rules-lint` when alert rules or the Alloy pipeline change.
 
 ### `@infra-agent` specifics
 - Changes here can break the entire cluster: double-check `dependsOn` ordering and Talos compatibility when touching `kubernetes/bootstrap/`.
@@ -110,7 +110,7 @@ Adopt the role whose scope matches the files or subject of the task; the user ma
 ## Global Boundaries
 1. **Secrets:** NEVER commit an unencrypted secret. Committed secrets are SOPS-encrypted (`*.sops.yaml`); everything else reaches the cluster through an `ExternalSecret`. Never print, log or echo a secret value.
 2. **Bitwarden:** agents MAY use the `bws` CLI to create or update secrets when explicitly requested for a named app. Confirm only with the key name and a success/failure status.
-3. **Validation:** ALWAYS run the single-app inner loop and `task kubernetes:kubeconform` before proposing changes; CI must be fully green before any merge.
+3. **Validation:** ALWAYS run `task kubernetes:validate APP=<ns>/<app>` and `task kubernetes:kubeconform` before proposing changes; CI must be fully green before any merge.
 4. **Safety:** cluster `apply` / reconcile is permitted under the owner's standing approval from a session with cluster access. Prefer `--dry-run` where practical, monitor rollouts afterward, and never delete PVCs, PVs, snapshots or Kopia data without explicit, named human approval.
 5. **Structure:** respect `kubernetes/apps/<namespace>/<app>/`; keep domain rules in that namespace's `CLAUDE.md`.
 6. **No sudo, no exfiltration.** `age.key`, `kubeconfig`, `talosconfig` and `*.key` are local credentials: never commit, print or upload them.

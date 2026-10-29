@@ -750,6 +750,7 @@
       managerFilePatterns: [
         '/(^|/).devcontainer/Dockerfile$/',
         '/(^|/).github/workflows/.+\\.ya?ml$/',
+        '/(^|/).claude/hooks/session-start\\.sh$/',
       ],
       matchStrings: [
         '# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( extractVersion=(?<extractVersion>.+?))?\\nARG \\w+_VERSION=(?<currentValue>\\S+)',

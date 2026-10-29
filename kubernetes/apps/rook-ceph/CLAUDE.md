@@ -40,6 +40,7 @@ for `openebs-system/`). Everything here holds user data.
 ## Validate
 
 ```bash
+task kubernetes:validate APP=<ns>/<app>      # wraps the checks below
 kustomize build --load-restrictor=LoadRestrictionsNone kubernetes/apps/rook-ceph/rook-ceph/cluster | kubeconform -strict -ignore-missing-schemas -
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph -s          # read-only
 kubectl -n rook-ceph exec deploy/rook-ceph-tools -- ceph osd tree

@@ -53,6 +53,7 @@ Restore procedure: [docs/runbooks/volsync-restore.md](../../../docs/runbooks/vol
 ## Validate
 
 ```bash
+task kubernetes:validate APP=<ns>/<app>      # wraps the checks below
 kustomize build --load-restrictor=LoadRestrictionsNone kubernetes/apps/<ns>/<app>/app | kubeconform -strict -ignore-missing-schemas -skip Secret,ExternalSecret,ReplicationSource,ReplicationDestination,HTTPRoute -
 kubectl get replicationsource,replicationdestination -A        # read-only
 kubectl -n volsync-system logs job/<volsync-canary-job>

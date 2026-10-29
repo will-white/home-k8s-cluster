@@ -8,6 +8,8 @@ A home Kubernetes cluster running on **Talos Linux**, managed entirely via **Flu
 
 **Read [AGENTS.md](./AGENTS.md) first.** It is the authoritative source for agent policy (allowed/forbidden actions, secret handling, human-approval gates) and indexes the specialist roles (`@media-agent`, `@home-agent`, `@observability-agent`, `@storage-agent`, `@db-agent`, `@infra-agent`, ...). Per-domain conventions live next to the manifests in `kubernetes/apps/<ns>/CLAUDE.md` and load automatically when you work in that tree. This file summarizes the mechanics; AGENTS.md governs the rules. Procedures (add an app, add a secret, Flux troubleshooting, restores) are indexed in [docs/README.md](./docs/README.md).
 
+**Claude Code setup in this repo.** `.claude/settings.json` pre-approves the read-only inner loop (kustomize, kubeconform, yamllint, flux build, flate, git reads, kubectl get) and denies secret-revealing commands (`sops -d`, `bws secret get`, reading `age.key` / `kubeconfig`). `.claude/hooks/session-start.sh` installs the pinned validation tools in cloud sessions; `.claude/hooks/yamllint-on-edit.sh` lints every YAML file you edit. Skills: `/validate-app`, `/new-app`, `/expose-app`, `/onboard-volsync`, `/merge-renovate-prs`.
+
 **Cloud sessions have no cluster credentials.** Without `KUBECONFIG` you can validate and open PRs but not reconcile, inspect or watch a rollout, so do not merge your own PR from such a session; report CI and hand the merge to the owner.
 
 ## Commands
@@ -16,6 +18,7 @@ Task runner is **Go-Task** (`Taskfile.yaml` + `.taskfiles/`). `KUBECONFIG` and `
 
 ```bash
 task                              # list all tasks
+task kubernetes:validate APP=media/sonarr   # ONE app: yamllint, kustomize+kubeconform, flux build, flate render — the inner loop
 task kubernetes:kubeconform       # validate ALL manifests — run before proposing any change
 task kubernetes:rules-lint        # promtool / lokitool / alloy validate on alert rules and the log pipeline
 task kubernetes:resources         # dump nodes/ks/hr/pods/etc. cluster-wide (support snapshot)
@@ -23,7 +26,7 @@ task kubernetes:apply-ks PATH=media/sonarr   # server-side apply one app's Flux 
 task kubernetes:reconcile         # force Flux to pull + reconcile from Git (owner standing-approval; monitor after)
 ```
 
-Validating a **single app** (preferred inner-loop check):
+`task kubernetes:validate` wraps the single-app checks below (`scripts/validate-app.sh`); run them by hand when Task is unavailable:
 ```bash
 kustomize build --load-restrictor=LoadRestrictionsNone kubernetes/apps/<ns>/<app>/app \
   | kubeconform -strict -ignore-missing-schemas -skip Secret,ExternalSecret,ReplicationSource,ReplicationDestination,HTTPRoute -
@@ -32,7 +35,7 @@ flux build ks <app> --kustomization-file kubernetes/apps/<ns>/<app>/ks.yaml --pa
 yamllint kubernetes/apps/<ns>/<app>            # or lint a whole stack folder
 ```
 
-Read-only cluster inspection: `kubectl -n <ns> get hr,ks,pods,pvc`. CI mirrors local validation via `.github/workflows/`: `kubeconform.yaml`, `yamllint.yaml`, `rules-lint.yaml`, `sops-check.yaml`, `gitleaks.yaml`, `agent-validation.yml`, and `flux-diff.yaml`, whose Flux Render job templates every Kustomization and HelmRelease with flate, so a bad chart value fails the PR, not the cluster.
+Read-only cluster inspection: `kubectl -n <ns> get hr,ks,pods,pvc`. CI mirrors local validation via `.github/workflows/`: `kubeconform.yaml`, `yamllint.yaml`, `rules-lint.yaml`, `shellcheck.yaml`, `sops-check.yaml`, `gitleaks.yaml`, and `flux-diff.yaml`, whose Flux Render job templates every Kustomization and HelmRelease with flate, so a bad chart value fails the PR, not the cluster.
 
 ## Architecture / reconciliation flow
 

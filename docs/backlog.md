@@ -61,8 +61,6 @@ they are not re-proposed.
   Render/Diff, Rules Lint, YAML Lint, SOPS, Gitleaks).
 - **`pre-commit` config** running yamllint, kustomize build and gitleaks
   locally.
-- **Devcontainer tools.** `task kubernetes:rules-lint` needs `promtool`,
-  `lokitool` and `alloy` on PATH; the devcontainer image does not ship them yet.
 
 ## Rejected (do not re-propose)
 
