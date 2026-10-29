@@ -55,9 +55,11 @@ spec:
           capabilities:
             drop:
               - ALL
+        # /healthz fails while AdGuard is unreachable, so as a liveness probe it
+        # restart-looped the sidecar; /readyz only checks the process is up.
         livenessProbe:
           httpGet:
-            path: /healthz
+            path: /readyz
             port: 8081
           initialDelaySeconds: 10
           periodSeconds: 30
