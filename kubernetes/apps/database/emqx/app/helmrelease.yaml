@@ -40,5 +40,13 @@ spec:
     fullnameOverride: emqx-operator
     image:
       repository: ghcr.io/emqx/emqx-operator
+    # Chart defaults, minus the 500m CPU limit (repo convention: no CPU limits).
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: null
+        memory: 512Mi
   driftDetection:
     mode: enabled

@@ -28,6 +28,14 @@ spec:
       runAsNonRoot: true
       runAsUser: 1000
       runAsGroup: 1000
+    # Chart defaults, minus the 1-CPU limit (repo convention: no CPU limits).
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: null
+        memory: 1Gi
   driftDetection:
     mode: enabled
   install:

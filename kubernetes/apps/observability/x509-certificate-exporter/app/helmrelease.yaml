@@ -45,6 +45,8 @@ spec:
           cpu: 20m
           memory: 32Mi
         limits:
+          # null drops the chart's default 1-CPU limit.
+          cpu: null
           memory: 128Mi
     # Only the Secrets exporter is needed; node-filesystem (kubelet/etcd) certs
     # are managed by Talos and would require hostPath mounts Talos restricts.
