@@ -126,6 +126,8 @@ spec:
             subPath: config
           - path: /app/cache
             subPath: cache
+          - path: /var/lib/redis
+            subPath: redis
       media:
         type: nfs
         server: ${NAS_IP}
