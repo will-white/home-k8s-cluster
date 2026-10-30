@@ -79,7 +79,7 @@ spec:
           gethomepage.dev/icon: komga.png
           gethomepage.dev/description: eBooks & Comics Reader
           gethomepage.dev/widget.type: komga
-          gethomepage.dev/widget.url: http://komga.media
+          gethomepage.dev/widget.url: http://komga.media:25600
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:
