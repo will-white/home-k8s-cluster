@@ -1,0 +1,57 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: qbittorrent-rules
+spec:
+  groups:
+    - name: qbittorrent.rules
+      rules:
+        - alert: QbittorrentDown
+          annotations:
+            summary: qBittorrent's exporter cannot reach the WebUI, or reports no data.
+            description: >-
+              The pod may be down, scaled to 0, or stuck before the VPN came up
+              (gluetun is a native sidecar and gates the app containers).
+          expr: qbittorrent_up == 0 or absent(qbittorrent_up)
+          for: 15m
+          labels:
+            severity: warning
+        - alert: QbittorrentNotConnectable
+          annotations:
+            summary: qBittorrent is firewalled or disconnected; peers cannot reach it.
+            description: >-
+              Usually the PIA forwarded port was lost or not pushed after a VPN
+              reconnect. Check the gluetun logs for the port-forwarding up command
+              and that listen_port matches the forwarded port.
+          expr: qbittorrent_firewalled == 1 or qbittorrent_connected == 0
+          for: 30m
+          labels:
+            severity: warning
+        - alert: QbittorrentTorrentErrors
+          annotations:
+            summary: "{{ $value }} torrent(s) in error or missingFiles state."
+            description: >-
+              Files went missing (a move, NFS or path change) or a disk error hit
+              the save path. Force a recheck once the files are back, or remove the
+              torrent.
+          expr: sum(qbittorrent_torrents_count{status=~"error|missingFiles|unknown"}) > 0
+          for: 30m
+          labels:
+            severity: warning
+        # Completed downloads are copied from main/downloads-incomplete into
+        # main/media (separate datasets), so short "moving" spells are normal.
+        # On 2026-10-29, 29 moves sat queued for hours behind a slow cross-
+        # filesystem copy and nothing noticed.
+        - alert: QbittorrentMovesStuck
+          annotations:
+            summary: Torrents have been in "moving" state for 6 hours.
+            description: >-
+              libtorrent moves storage one torrent at a time; a large backlog or a
+              hung NFS mount keeps them queued. Check NFS on the pod's node and the
+              qBittorrent log for storage-move errors.
+          expr: sum(qbittorrent_torrents_count{status="moving"}) > 0
+          for: 6h
+          labels:
+            severity: warning

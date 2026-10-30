@@ -4,6 +4,7 @@ resources:
   - ./externalsecret.yaml
   - ./ocirepository.yaml
   - ./helmrelease.yaml
+  - ./prometheusrule.yaml
   - ../../../../templates/gatus/guarded
   - ../../../../templates/volsync
 configMapGenerator:

@@ -174,6 +174,18 @@ global upload limit at `UP_LIMIT_STREAMING` (200 KiB/s), otherwise
 inside one VPN tunnel. Tune the two env values in the HelmRelease; a value set
 in the WebUI is overwritten within 20s.
 
+**Resume data and checking** (set 2026-10-29, WebUI → Advanced):
+- Save resume data interval: **5 min** (was 60). Pieces downloaded since the last
+  save are forgotten on any restart or OOM kill, so a recheck was needed after
+  the 2026-10-29 `/incomplete` migration.
+- Hashing threads: **2** (was 1).
+- WebUI CSRF protection: **on**. API clients (gluetun's port push, the
+  exporter, Homepage) send no Origin/Referer and are unaffected.
+
+**Alerts**: [prometheusrule.yaml](qbittorrent/app/prometheusrule.yaml) covers
+the WebUI being down, not connectable (forwarded port lost), torrents in
+`error`/`missingFiles`, and moves stuck for 6 h.
+
 **Stalled downloads**: Sonarr/Radarr never give up on a dead torrent by
 themselves — see Cleanuparr (queue cleaner) for strike-based removal +
 blocklist + re-search.
