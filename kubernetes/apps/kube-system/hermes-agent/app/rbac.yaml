@@ -1,0 +1,35 @@
+---
+# Identity for the Hermes Agent, which runs outside the cluster on the `hermes` VM
+# (pve VM 9120; home-lab repo: ansible/playbooks/hermes.yml). The owner chose full
+# admin through a dedicated account, so it can be audited and revoked on its own:
+# delete this app (or the token Secret) to cut it off. The kubeconfig built from the
+# token lives in the home-lab repo's SOPS file, never in this repo.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hermes-agent
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: hermes-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: hermes-agent
+    namespace: kube-system
+---
+# Long-lived token, filled in by the token controller. Rotate by deleting it; Flux
+# recreates it empty and the controller issues a new one.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hermes-agent-token
+  namespace: kube-system
+  annotations:
+    kubernetes.io/service-account.name: hermes-agent
+type: kubernetes.io/service-account-token
