@@ -153,10 +153,29 @@ release.
 **Categories**: `sonarr`, `radarr` (set by each *arr's download client) and
 `prowlarr` (manual grabs from Prowlarr). All save under `/Downloads/<category>`.
 
-**Seeding policy — seed indefinitely** (owner preference, set 2026-10-25):
-- Tools → Options → BitTorrent → Seeding Limits: ratio, seeding time and
-  inactive seeding time limits all **off**. Nothing is removed automatically,
-  so Sonarr/Radarr "Remove Completed" never fires; that is intended.
+**Seeding policy — Cleanuparr seeding rules** (owner decision 2026-10-29;
+replaces "seed indefinitely" from 2026-10-25, which had grown to ~3,500
+torrents and ~7 TB of downloads no longer in the library):
+- qBittorrent's own Seeding Limits stay **off**. Removal is done by Cleanuparr's
+  Download Cleaner (hourly; Cleanuparr UI → Download Cleaner), which can match
+  per tracker. A removal deletes the `Downloads` copy only; library hardlinks
+  survive.
+- Rules, first match wins. All of them skip a torrent that uploaded or
+  downloaded within the last **3 days**:
+
+  | # | Matches | Removed when |
+  |---|---|---|
+  | 1 | FunFile (`funfile.org`) | ratio ≥ 1 or 30 days seeded |
+  | 2 | Other private trackers | ratio ≥ 1 or 30 days |
+  | 3 | Public sonarr/radarr tagged `cleanuparr-unlinked` (no library hardlink left: upgraded or deleted) | 7 days |
+  | 4 | Public sonarr/radarr still in the library | ratio ≥ 2 or 30 days, but never while the swarm has < 3 seeders |
+  | 5 | Public `prowlarr` (manual grabs) | ratio ≥ 2 or 30 days (import within 30 days) |
+
+- Unlinked tagging covers `sonarr` and `radarr` only; `prowlarr` grabs may never
+  be imported and would look unlinked. Cleanuparr mounts `/Downloads` read-only
+  for this check.
+- FunFile's exact hit-and-run rule was not verified (owner recollection: 1:1 or
+  30 days). Check it if FunFile ever warns.
 - Queueing: **300** active uploads / **350** active torrents (was 50/100,
   which left ~3,000 completed torrents queued at ratio 0).
 - Manual imports from the `prowlarr` category are **copies**, not hardlinks,
