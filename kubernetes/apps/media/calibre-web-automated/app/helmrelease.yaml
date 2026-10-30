@@ -39,6 +39,9 @@ spec:
               # tricks that misbehave on network mounts and switches to polling.
               NETWORK_SHARE_MODE: "true"
               CWA_WATCH_MODE: poll
+            envFrom:
+              - secretRef:
+                  name: calibre-web-automated-secret
             probes:
               liveness: &probes
                 enabled: true
