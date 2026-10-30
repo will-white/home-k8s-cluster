@@ -1,0 +1,36 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app calibre-web-automated
+  namespace: flux-system
+spec:
+  targetNamespace: media
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  dependsOn:
+    - name: rook-ceph-cluster
+    - name: external-secrets-stores
+    - name: volsync
+  path: ./kubernetes/apps/media/calibre-web-automated/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false
+  interval: 30m
+  timeout: 5m
+  postBuild:
+    substitute:
+      APP: *app
+      NAMESPACE: media
+      GATUS_PORT: "8083"
+      GATUS_PATH: /login
+      VOLSYNC_CAPACITY: 5Gi
+      VOLSYNC_BOOTSTRAP_SOURCE_NAMESPACE: media
+      VOLSYNC_ACCESSMODES: ReadWriteMany
+      PVC_VOLSYNC_STORAGECLASS: ceph-filesystem
+      VOLSYNC_STORAGECLASS: ceph-filesystem
+      VOLSYNC_SNAPSHOTCLASS: csi-ceph-filesystem
+      VOLSYNC_SNAP_ACCESSMODES: ReadWriteMany

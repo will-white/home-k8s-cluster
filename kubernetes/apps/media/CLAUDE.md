@@ -11,10 +11,10 @@ library → notify.
 
 | Stage | Apps |
 |---|---|
-| Indexers / requests | prowlarr, flaresolverr, autobrr, omegabrr, seerr |
-| Managers (*arr) | sonarr, radarr, bazarr, recyclarr |
+| Indexers / requests | prowlarr, flaresolverr, autobrr, omegabrr, seerr, shelfmark, readmeabook |
+| Managers (*arr) | sonarr, radarr, lidarr, bazarr, recyclarr |
 | Download / post-process | qbittorrent (gluetun VPN sidecar), unpackerr, cleanuparr, tdarr |
-| Libraries / readers | komga, komf, kavita, suwayomi |
+| Libraries / readers | komga, komf, kavita, suwayomi, audiobookshelf, calibre-web-automated, storyteller |
 | Metadata / curation | kometa |
 
 Operational tuning (indexers, qBittorrent, release profiles, Bazarr scores)
