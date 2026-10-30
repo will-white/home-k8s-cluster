@@ -112,6 +112,10 @@ spec:
             subPath: books/cwa-ingest
           - path: /audiobooks
             subPath: audiobooks
+          # Read-only: lets Shelfmark flag books already in the Calibre library.
+          - path: /calibre-library
+            subPath: books/calibre-library
+            readOnly: true
           # qBittorrent reports completed paths as /Downloads/...; Shelfmark must
           # see the identical path to import torrent downloads.
           - path: /Downloads
