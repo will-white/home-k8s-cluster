@@ -30,7 +30,7 @@ spec:
           app:
             image:
               repository: registry.gitlab.com/storyteller-platform/storyteller
-              tag: web-v2.11.13@sha256:466f5d468f7b524dcf5dcffa0f12fff3dd20463fd8b878f5ec228de3a1cacfa3
+              tag: web-v2.14.23@sha256:1ae16005572519f56abac2d65ab879d20115cd257fde7e89cf739ea82aed4de3
             env:
               TZ: ${TIMEZONE}
               STORYTELLER_DATA_DIR: /data
