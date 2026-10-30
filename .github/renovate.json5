@@ -94,6 +94,18 @@
     },
     {
       description: [
+        // Storyteller publishes web-vX.Y.Z plus -cuda/-rocm/-vulkan/-blas/
+        // -experimental variants of every release. Only the plain CPU tag is
+        // valid here; the regex scheme rejects every variant tag.
+        'Storyteller: only plain web-vX.Y.Z tags',
+      ],
+      matchPackageNames: [
+        'registry.gitlab.com/storyteller-platform/storyteller',
+      ],
+      versioning: 'regex:^web-v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$',
+    },
+    {
+      description: [
         'Pin all container image versions to immutable digests',
       ],
       matchDatasources: [
