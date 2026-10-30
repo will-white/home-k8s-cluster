@@ -176,8 +176,14 @@ torrents and ~7 TB of downloads no longer in the library):
   for this check.
 - FunFile's exact hit-and-run rule was not verified (owner recollection: 1:1 or
   30 days). Check it if FunFile ever warns.
-- Queueing: **300** active uploads / **350** active torrents (was 50/100,
-  which left ~3,000 completed torrents queued at ratio 0).
+- Queueing: **1500** active uploads / **1600** active torrents (2026-10-30;
+  was 300/350, before that 50/100). Queued torrents accrue no seeding time, so
+  the seeding rules never fire for them, and queued private torrents risk
+  hit-and-run. Keep the limits above the torrent count (~1,000 after pruning).
+- One-time prune 2026-10-30: 2,490 public sonarr/radarr torrents removed by
+  completion age (not seeding time) — unlinked and finished > 7 days, or in the
+  library, finished > 30 days with ≥ 3 swarm seeders; ~3.9 TB freed. Private
+  torrents were left to the rules.
 - Manual imports from the `prowlarr` category are **copies**, not hardlinks,
   on purpose: library files stay independent of the torrents, so torrents can
   be pruned later (e.g. once a show is replaced by a season pack).
@@ -186,12 +192,22 @@ torrents and ~7 TB of downloads no longer in the library):
 regions have no PF). gluetun pushes the forwarded port into qBittorrent and
 binds it to `tun0` — see [helmrelease.yaml](qbittorrent/app/helmrelease.yaml).
 
-**Upload limit**: managed by the `upload-throttle` sidecar, not the WebUI. It
-polls Plex every 20s; while any **remote** (WAN) stream is active it holds the
-global upload limit at `UP_LIMIT_STREAMING` (200 KiB/s), otherwise
-`UP_LIMIT_IDLE` (1 MiB/s). Router QoS can't do this: all torrent traffic is
-inside one VPN tunnel. Tune the two env values in the HelmRelease; a value set
-in the WebUI is overwritten within 20s.
+**Upload limit**: managed by the `upload-throttle` sidecar, not the WebUI. Every
+20s it sets the global upload limit to the lowest that applies:
+- `UP_LIMIT_STREAMING` (200 KiB/s) while any **remote** (WAN) Plex stream runs;
+- `UP_LIMIT_GAMING` (200 KiB/s) while a `GAMING_HOSTS` device has a real-time
+  UDP flow to the internet above its packets/s threshold, held 3 min after the
+  last hit. Read from OPNsense pfTop with the read-only API user
+  `qbt-gaming-detector` (Bitwarden `QBITTORRENT_OPNSENSE_API_KEY` /
+  `_SECRET`); devices are listed by MAC. `wings-01` (hosted game servers,
+  players arrive through the VPS WireGuard tunnel) uses `@50` because the
+  tunnel idles at ~15-18 pkt/s;
+- otherwise `UP_LIMIT_IDLE` (2 MiB/s, raised from 1 MiB/s on 2026-10-30).
+
+The router shapes the uplink at 36 Mbit/s with FQ-CoDel, which keeps other
+flows responsive, but all torrent traffic is one VPN flow, so the cap is what
+leaves headroom. Tune the env values in the HelmRelease; a value set in the
+WebUI is overwritten within 20s.
 
 **Resume data and checking** (set 2026-10-29, WebUI → Advanced):
 - Save resume data interval: **5 min** (was 60). Pieces downloaded since the last
