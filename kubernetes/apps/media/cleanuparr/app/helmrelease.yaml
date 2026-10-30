@@ -25,8 +25,9 @@ spec:
   # stalled, too slow, stuck on metadata or failing to import, blocklists the
   # release and has the *arr search for another. All rules (strikes, schedules,
   # *arr + qBittorrent connections) are configured in its web UI and stored in
-  # Postgres. The Download Cleaner (seeding removal) stays OFF: torrents seed
-  # indefinitely by policy (see MEDIA_TUNING.md section 2).
+  # Postgres. Its Download Cleaner also removes torrents that met their seeding
+  # rules (per tracker, see MEDIA_TUNING.md section 2) and tags downloads that
+  # lost their library hardlinks, which is why it mounts /Downloads.
   values:
     controllers:
       cleanuparr:
@@ -85,12 +86,14 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: {drop: ["ALL"]}
+            # The Download Cleaner holds all ~3,500 torrents (and their file
+            # lists for the hardlink check) in memory; it was OOMKilled at 512Mi.
             resources:
               requests:
                 cpu: 15m
                 memory: 256Mi
               limits:
-                memory: 512Mi
+                memory: 2Gi
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -134,5 +137,15 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /tmp
+      # Same path qBittorrent reports, so the unlinked (hardlink) check can stat
+      # torrent files. Read-only: removals go through qBittorrent's API.
+      media:
+        type: nfs
+        server: ${NAS_IP}
+        path: /mnt/main/media
+        globalMounts:
+          - path: /Downloads
+            subPath: Downloads
+            readOnly: true
   driftDetection:
     mode: enabled
