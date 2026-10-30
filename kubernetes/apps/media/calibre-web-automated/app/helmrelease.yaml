@@ -90,6 +90,10 @@ spec:
           gethomepage.dev/name: Calibre-Web Automated
           gethomepage.dev/icon: calibre-web.png
           gethomepage.dev/description: Ebook Library
+          gethomepage.dev/widget.type: calibreweb
+          gethomepage.dev/widget.url: http://calibre-web-automated.media:8083
+          gethomepage.dev/widget.username: potatoes
+          gethomepage.dev/widget.password: "{{ `{{HOMEPAGE_VAR_CALIBREWEB_PASSWORD}}` }}"
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:

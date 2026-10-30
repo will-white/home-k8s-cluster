@@ -89,6 +89,9 @@ spec:
           gethomepage.dev/name: Audiobookshelf
           gethomepage.dev/icon: audiobookshelf.png
           gethomepage.dev/description: Audiobooks & Podcasts
+          gethomepage.dev/widget.type: audiobookshelf
+          gethomepage.dev/widget.url: http://audiobookshelf.media:13378
+          gethomepage.dev/widget.key: "{{ `{{HOMEPAGE_VAR_AUDIOBOOKSHELF_API_KEY}}` }}"
         hostnames:
           - "{{ .Release.Name }}.${SECRET_DOMAIN}"
         parentRefs:
