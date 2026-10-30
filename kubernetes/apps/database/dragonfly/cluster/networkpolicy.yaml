@@ -2,7 +2,7 @@
 # The dragonfly-operator (v1.6+) auto-generates a NetworkPolicy that only
 # permits ingress to the Dragonfly pods on 6379 from within the database
 # namespace (its `from` uses an empty podSelector with no namespaceSelector).
-# paperless (default namespace) and readmeabook (media) use dragonfly.database.svc:6379 as its Redis
+# paperless (default namespace) uses dragonfly.database.svc:6379 as its Redis
 # cache and was blocked by that policy. NetworkPolicies are additive, so this
 # supplemental policy restores the cross-namespace access without fighting the
 # operator-managed `dragonfly` policy.
@@ -21,9 +21,6 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: default
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: media
       ports:
         - port: 6379
           protocol: TCP
