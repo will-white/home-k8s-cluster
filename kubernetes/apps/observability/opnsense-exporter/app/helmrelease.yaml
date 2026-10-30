@@ -40,6 +40,10 @@ spec:
               OPNSENSE_EXPORTER_DISABLE_UNBOUND: "true"
               OPNSENSE_EXPORTER_DISABLE_KEADHCPV4: "true"
               OPNSENSE_EXPORTER_DISABLE_KEADHCPV6: "true"
+              # core/firmware/status runs a live update check: 25-30s per call
+              # (measured), longer than the exporter's 15s client timeout, so each
+              # scrape retried it 3x and never finished. Everything else is ~1s.
+              OPNSENSE_EXPORTER_DISABLE_FIRMWARE: "true"
               OPNSENSE_EXPORTER_OPS_API_KEY:
                 valueFrom:
                   secretKeyRef:
