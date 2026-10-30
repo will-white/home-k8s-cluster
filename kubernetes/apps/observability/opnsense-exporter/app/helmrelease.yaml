@@ -34,6 +34,12 @@ spec:
               OPNSENSE_EXPORTER_OPS_API: "192.168.5.1:8443"
               OPNSENSE_EXPORTER_OPS_INSECURE: "true"
               OPNSENSE_EXPORTER_INSTANCE_LABEL: "opnsense"
+              # Unbound and Kea are not used on this router. Unbound's
+              # stats call returns {"status":"failed"} and the exporter logs an
+              # error each scrape; the Kea lease calls only queue behind the rest.
+              OPNSENSE_EXPORTER_DISABLE_UNBOUND: "true"
+              OPNSENSE_EXPORTER_DISABLE_KEADHCPV4: "true"
+              OPNSENSE_EXPORTER_DISABLE_KEADHCPV6: "true"
               OPNSENSE_EXPORTER_OPS_API_KEY:
                 valueFrom:
                   secretKeyRef:
@@ -78,7 +84,9 @@ spec:
           - port: http
             scheme: http
             path: /metrics
-            interval: 1m
-            scrapeTimeout: 10s
+            # OPNsense's API serialises requests: ~1s alone, 5-10s for the
+            # exporter's parallel burst. 10s timed out ~60% of scrapes.
+            interval: 2m
+            scrapeTimeout: 45s
   driftDetection:
     mode: enabled
