@@ -92,21 +92,33 @@ spec:
                 memory: 64Mi
               limits:
                 memory: 128Mi
-          # Plex-aware upload limit (resources/upload-throttle.sh): low while
-          # anyone streams remotely, higher otherwise. Router QoS can't help
-          # because all torrent traffic is inside one VPN tunnel.
+          # Plex- and gaming-aware upload limit (resources/upload-throttle.sh):
+          # low while anyone streams remotely or games, higher otherwise. The
+          # router's FQ-CoDel shaper can't prioritise inside the one VPN flow.
           upload-throttle:
             image:
               repository: docker.io/alpine/k8s
               tag: 1.37.1@sha256:712dc5385d1c1a3f83b747fa9e40f64d433a97f72ff42f9755ff7dd1f62846e4
             command: ["/bin/bash", "/scripts/upload-throttle.sh"]
             env:
-              UP_LIMIT_IDLE: "1048576"       # 1 MiB/s with no remote Plex streams
+              UP_LIMIT_IDLE: "2097152"       # 2 MiB/s (~17 of the 36 Mbit/s uplink)
               UP_LIMIT_STREAMING: "204800"   # 200 KiB/s while streaming remotely
+              UP_LIMIT_GAMING: "204800"      # 200 KiB/s while gaming
+              # Watched by MAC (ARP/NDP follow DHCP and IPv6 privacy addresses).
+              # wings-01 carries the hosted game servers' players through the
+              # VPS WireGuard tunnel, which idles at ~15-18 pkt/s, hence @50.
+              GAMING_HOSTS: "main-pc=10:ff:e0:ac:04:ea wings-01=bc:24:11:44:4d:93@50"
+              GAMING_PPS: "30"
+              GAMING_HOLD: "180"
               INTERVAL: "20"
             envFrom:
               - secretRef:
                   name: qbittorrent-throttle-secret
+              # Read-only OPNsense API user qbt-gaming-detector (pfTop, ARP,
+              # NDP). Optional: without it gaming detection is skipped.
+              - secretRef:
+                  name: qbittorrent-opnsense-secret
+                  optional: true
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
