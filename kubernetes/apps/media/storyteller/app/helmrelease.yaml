@@ -34,6 +34,8 @@ spec:
             env:
               TZ: ${TIMEZONE}
               STORYTELLER_DATA_DIR: /data
+              PUID: "1000"
+              PGID: "1000"
             envFrom:
               - secretRef:
                   name: storyteller-secret
@@ -57,9 +59,8 @@ spec:
                   periodSeconds: 10
                   failureThreshold: 60
             securityContext:
-              allowPrivilegeEscalation: false
+              allowPrivilegeEscalation: true
               readOnlyRootFilesystem: false
-              capabilities: {drop: ["ALL"]}
             # Forced alignment (Whisper transcription) is CPU- and memory-hungry:
             # upstream asks for 8 GB RAM and up to 4 cores. Idle cost is small.
             resources:
@@ -69,10 +70,11 @@ spec:
               limits:
                 memory: 8Gi
     defaultPodOptions:
+      # Entrypoint refuses a pre-set user and wants PUID/PGID: start as root,
+      # it drops privileges itself.
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
+        runAsUser: 0
+        runAsGroup: 0
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile: {type: RuntimeDefault}
