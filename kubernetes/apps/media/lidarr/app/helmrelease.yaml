@@ -114,7 +114,7 @@ spec:
                 valueFrom:
                   secretKeyRef:
                     name: lidarr-secret
-                    key: SONARR__AUTH__APIKEY
+                    key: LIDARR__AUTH__APIKEY
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
