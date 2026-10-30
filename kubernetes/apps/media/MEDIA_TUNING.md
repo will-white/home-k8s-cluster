@@ -345,6 +345,31 @@ Run after any major change above:
 | Bazarr download success rate | Bazarr → System → Logs filter `subtitle` |
 | qBittorrent ratio compliance | qBittorrent UI → sort by ratio, anything <1.0 on private should still be seeding |
 
+## 7. Books, audiobooks and music (Lidarr, Shelfmark, ReadMeABook, CWA, Audiobookshelf, Storyteller)
+
+Added 2026-10-30. Paths on the NAS share (`/mnt/main/media`):
+
+| Path | Used by |
+|---|---|
+| `music/` | Lidarr root folder (`/media/music`) |
+| `audiobooks/` | Audiobookshelf library, Shelfmark audiobook destination (`/audiobooks`), ReadMeABook library (`/media`) |
+| `books/calibre-library/` | Calibre-Web Automated library (Shelfmark mounts it read-only for the "already owned" check) |
+| `books/cwa-ingest/` | CWA ingest folder = Shelfmark book destination (`/books`) |
+| `Downloads/` | qBittorrent completed downloads; mounted at `/Downloads` in Shelfmark and ReadMeABook so client-reported paths match |
+
+- **Lidarr** is a Prowlarr app (full sync, music categories only); qBittorrent
+  category `lidarr`; remote path mapping `/Downloads/` -> `/media/Downloads/`;
+  Unpackerr extracts `/Downloads/lidarr`. Cleanuparr has no Lidarr instance
+  yet: add it in Cleanuparr's UI (Lidarr `http://lidarr.media.svc.cluster.local`).
+  Recyclarr has no Lidarr support, so quality profiles are managed in the UI.
+- **Shelfmark** uses Prowlarr indexers 1337x, FunFile, TPB, Uindex (the video
+  and anime indexers are excluded); hardlinks are off because downloads and
+  libraries are separate NFS mounts, so imports copy.
+- **ReadMeABook** and Shelfmark both fetch audiobooks; keep only one if the
+  overlap is not worth the extra app.
+- Credentials: every app's admin is `potatoes`; the initial password is in
+  Bitwarden `MEDIA_ADMIN_PASSWORD` and is meant to be rotated.
+
 ---
 
 ## Out of scope for this doc
