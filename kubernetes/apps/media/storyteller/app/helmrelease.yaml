@@ -113,5 +113,18 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /tmp
+      media:
+        type: nfs
+        server: ${NAS_IP}
+        path: /mnt/main/media
+        globalMounts:
+          # Auto-import root (Settings -> import path = /library). Storyteller
+          # writes metadata into these files and the readaloud EPUB next to the
+          # source EPUB; Audiobookshelf and Calibre-Web Automated own the same
+          # folders, so keep an eye on the first imports.
+          - path: /library/audiobooks
+            subPath: audiobooks
+          - path: /library/ebooks
+            subPath: books/calibre-library
   driftDetection:
     mode: enabled
