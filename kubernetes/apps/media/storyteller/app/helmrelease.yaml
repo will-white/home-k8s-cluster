@@ -118,13 +118,10 @@ spec:
         server: ${NAS_IP}
         path: /mnt/main/media
         globalMounts:
-          # Auto-import root (Settings -> import path = /library). Storyteller
-          # writes metadata into these files and the readaloud EPUB next to the
-          # source EPUB; Audiobookshelf and Calibre-Web Automated own the same
-          # folders, so keep an eye on the first imports.
+          # Auto-import root (Settings -> import rule /library). Audiobooks only:
+          # Storyteller rewrites EPUB2 files in place, which corrupted the
+          # Calibre library, so the ebook folder is deliberately not mounted.
           - path: /library/audiobooks
             subPath: audiobooks
-          - path: /library/ebooks
-            subPath: books/calibre-library
   driftDetection:
     mode: enabled
