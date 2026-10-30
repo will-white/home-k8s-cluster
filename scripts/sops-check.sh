@@ -49,6 +49,14 @@ while IFS= read -r file; do
 
     checked=$((checked + 1))
 
+    # A service-account-token Secret with no data is a request, not a secret: the
+    # token controller fills it in-cluster, so there is nothing to encrypt. Exempt
+    # it only while the file carries no data/stringData at all.
+    if grep -qE '^type:[[:space:]]+kubernetes\.io/service-account-token[[:space:]]*$' "$file" \
+        && ! grep -qE '^[[:space:]]*(data|stringData):' "$file"; then
+        continue
+    fi
+
     # ExternalSecret / SealedSecret / etc. are NOT plain Secrets.
     # We already filtered to `kind: Secret` above; ensure the file has SOPS metadata.
     if ! grep -qE '^sops:' "$file"; then
