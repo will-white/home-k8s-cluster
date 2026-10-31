@@ -100,9 +100,11 @@ cameras:
       enabled: true
       timestamp: true
       bounding_box: true
-      crop: true
-      height: 175
-      quality: 70
+      # Full-frame (not cropped) snapshot at a phone-notification-friendly
+      # size: HA shows it as the Frigate fallback person alert image.
+      crop: false
+      height: 540
+      quality: 80
     detect:
       enabled: true
       width: 1280
