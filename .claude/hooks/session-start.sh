@@ -47,7 +47,7 @@ if ! sha256sum --check --status "${hashes}" 2>/dev/null; then
   tar xzf "${work}/kubeconform.tgz" -C "${BIN}" kubeconform
 
   # renovate: datasource=github-releases depName=fluxcd/flux2
-  FLUX_VERSION="2.9.6"
+  FLUX_VERSION="2.10.0"
   fetch "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" "${work}/flux.tgz"
   tar xzf "${work}/flux.tgz" -C "${BIN}" flux
 
