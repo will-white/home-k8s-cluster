@@ -41,7 +41,7 @@ ARG PROMETHEUS_VERSION=v3.9.1
 # renovate: datasource=github-releases depName=grafana/loki
 ARG LOKI_VERSION=v3.7.9
 # renovate: datasource=github-releases depName=grafana/alloy
-ARG ALLOY_VERSION=v1.21.2
+ARG ALLOY_VERSION=v1.21.3
 
 # Install system packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
