@@ -58,7 +58,7 @@ jobs:
           }
 
           # renovate: datasource=github-releases depName=prometheus/prometheus
-          PROMETHEUS_VERSION="v3.9.1"
+          PROMETHEUS_VERSION="v3.15.1"
           fetch "https://github.com/prometheus/prometheus/releases/download/${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION#v}.linux-amd64.tar.gz" prometheus.tgz
           tar xzf prometheus.tgz --strip-components=1 "prometheus-${PROMETHEUS_VERSION#v}.linux-amd64/promtool"
           mv promtool "$HOME/.local/bin/"
