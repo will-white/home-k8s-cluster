@@ -9,7 +9,7 @@ shared rules live in [AGENTS.md](../../../AGENTS.md); mechanics in the root
 | Group | Apps | Notes |
 |---|---|---|
 | Home automation hub | home-assistant, matter-server, music-assistant | `hostNetwork: true` (mDNS, Matter, Sonos/Chromecast discovery); this is why the namespace enforces PSA `privileged` while warning/auditing `restricted` |
-| Zigbee / Z-Wave | zigbee2mqtt, zigbee2mqtt-ota, zwave-js-ui | Radios are network coordinators (SLZB remote serial over TCP), so no USB passthrough today. If a USB device is ever needed: `nodeSelector` on node-feature-discovery labels, never a hard-coded node name, and only one pod may hold it |
+| Zigbee / Z-Wave | zigbee2mqtt, zwave-js-ui | Radios are network coordinators (SLZB remote serial over TCP), so no USB passthrough today. If a USB device is ever needed: `nodeSelector` on node-feature-discovery labels, never a hard-coded node name, and only one pod may hold it |
 | Cameras | frigate, go2rtc, dahua-companion | Frigate consumes streams via go2rtc, never RTSP straight from a camera. go2rtc has a BGP LoadBalancer (`${GO2RTC_LB}`); Frigate needs explicit GPU / Coral device requests |
 | Voice | wyoming-whisper, wyoming-piper, wyoming-openwakeword | Wyoming protocol services for Home Assistant Assist |
 | Network appliance | unifi | L2 LoadBalancer `${UNIFI_LB}` (adopted APs inform to that IP); HTTPS-only UI, so no HTTPRoute yet (see backlog) |
