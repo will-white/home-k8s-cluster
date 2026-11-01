@@ -5,7 +5,7 @@
 # pulled them. Runs ONE app per invocation, fails loudly on errors.
 #
 # Usage:  scripts/storage-migrate.sh <app>
-# Apps:   kometa | recyclarr | zigbee2mqtt-ota | seerr | bazarr | qbittorrent
+# Apps:   kometa | recyclarr | seerr | bazarr | qbittorrent
 #
 # Requires: kubectl, flux, jq. KUBECONFIG must point at the cluster.
 
@@ -41,7 +41,7 @@ wait_pvc_bound() {
 }
 
 cutover_simple_cronjob() {
-    # For kometa, recyclarr, zigbee2mqtt-ota — disposable data, just delete & let Flux recreate.
+    # For kometa, recyclarr — disposable data, just delete & let Flux recreate.
     local ns="$1" pvc="$2"
     log "=== cutover_simple_cronjob ns=$ns pvc=$pvc ==="
 
@@ -217,10 +217,9 @@ cutover_volsync() {
 case "$APP" in
     kometa)            cutover_simple_cronjob "$NS_media"   "kometa" ;;
     recyclarr)         cutover_simple_cronjob "$NS_media"   "recyclarr" ;;
-    zigbee2mqtt-ota)   cutover_simple_cronjob "$NS_default" "zigbee2mqtt-ota-state" ;;
     seerr)             cutover_seerr ;;
     bazarr)            cutover_volsync "bazarr" ;;
     qbittorrent)       cutover_volsync "qbittorrent" ;;
-    "")                die "Usage: $0 <kometa|recyclarr|zigbee2mqtt-ota|seerr|bazarr|qbittorrent>" ;;
+    "")                die "Usage: $0 <kometa|recyclarr|seerr|bazarr|qbittorrent>" ;;
     *)                 die "Unknown app: $APP" ;;
 esac
