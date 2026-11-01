@@ -37,7 +37,7 @@ ARG GITLEAKS_VERSION=v8.30.1
 # renovate: datasource=github-releases depName=home-operations/flate
 ARG FLATE_VERSION=v0.6.5
 # renovate: datasource=github-releases depName=prometheus/prometheus
-ARG PROMETHEUS_VERSION=v3.9.1
+ARG PROMETHEUS_VERSION=v3.15.1
 # renovate: datasource=github-releases depName=grafana/loki
 ARG LOKI_VERSION=v3.7.9
 # renovate: datasource=github-releases depName=grafana/alloy
