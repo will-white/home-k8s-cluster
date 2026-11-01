@@ -101,8 +101,8 @@ spec:
             sectionName: https
         rules:
           - backendRefs:
-              - identifier: app
-                port: http
+              - name: host-network-proxy
+                port: 8095
             timeouts:
               request: 0s
     persistence:
