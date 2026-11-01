@@ -11,6 +11,7 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
+    - name: host-network-proxy
     - name: volsync
   path: ./kubernetes/apps/default/music-assistant/app
   prune: true

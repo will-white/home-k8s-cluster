@@ -99,8 +99,8 @@ spec:
             sectionName: https
         rules:
           - backendRefs:
-              - identifier: app
-                port: http
+              - name: host-network-proxy
+                port: 8123
             timeouts:
               request: 0s
       code-server:
@@ -112,8 +112,8 @@ spec:
             sectionName: https
         rules:
           - backendRefs:
-              - identifier: app
-                port: code-server
+              - name: host-network-proxy
+                port: 12321
             timeouts:
               request: 0s
     persistence:

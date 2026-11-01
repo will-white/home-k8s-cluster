@@ -9,6 +9,7 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
+    - name: host-network-proxy
     - name: external-secrets-stores
     - name: volsync
   path: ./kubernetes/apps/default/home-assistant/app
