@@ -47,23 +47,26 @@ opn() {
 # Prints "<name> <pps> <threshold> <flow>" for the flow furthest over its
 # host's threshold, or nothing. Returns non-zero if OPNsense could not be read.
 gaming_flow() {
-  local macs arp ndp top now
+  local macs now
   macs=$(printf '%s\n' $GAMING_HOSTS | jq -R --argjson def "$GAMING_PPS" '
     split("=") | (.[1] | split("@")) as $m
     | {($m[0] | ascii_downcase): {name: .[0], pps: (($m[1] // "") | tonumber? // $def)}}' | jq -s 'add // {}')
-  arp=$(opn "$OPNSENSE_URL/api/diagnostics/interface/get_arp") || return 1
-  ndp=$(opn "$OPNSENSE_URL/api/diagnostics/interface/get_ndp") || return 1
-  top=$(opn -H 'Content-Type: application/json' -X POST \
+  # Responses go to files and are read with --slurpfile: the pfTop table can
+  # exceed the kernel's argv limit ("jq: Argument list too long") via --argjson.
+  opn "$OPNSENSE_URL/api/diagnostics/interface/get_arp" > "$STATE/arp.json" || return 1
+  opn "$OPNSENSE_URL/api/diagnostics/interface/get_ndp" > "$STATE/ndp.json" || return 1
+  opn -H 'Content-Type: application/json' -X POST \
       -d '{"current":1,"rowCount":-1,"searchPhrase":"udp"}' \
-      "$OPNSENSE_URL/api/diagnostics/firewall/query_pf_top") || return 1
+      "$OPNSENSE_URL/api/diagnostics/firewall/query_pf_top" > "$STATE/top.json" || return 1
   now=$(date +%s)
   # Current packet counters per flow from a watched host to a public address.
-  jq -n --argjson macs "$macs" --argjson arp "$arp" --argjson ndp "$ndp" \
-      --argjson top "$top" --arg ignore "$GAMING_IGNORE_PORTS" '
-    ([($arp + $ndp)[] | select($macs[.mac | ascii_downcase])
+  jq -n --argjson macs "$macs" --slurpfile arp "$STATE/arp.json" \
+      --slurpfile ndp "$STATE/ndp.json" --slurpfile top "$STATE/top.json" \
+      --arg ignore "$GAMING_IGNORE_PORTS" '
+    ([($arp[0] + $ndp[0])[] | select($macs[.mac | ascii_downcase])
       | {key: (.ip | sub("%.*"; "")), value: $macs[.mac | ascii_downcase]}] | from_entries) as $ips
     | ($ignore | split(" ") | map(select(length > 0))) as $ign
-    | [$top.rows[]
+    | [$top[0].rows[]
        | select(.proto == "udp" and .dir == "in" and $ips[.src_addr])
        | select(.dst_addr | test("^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|f[cd]|fe80)") | not)
        | select((.dst_port | tostring) as $p | $ign | index($p) | not)
