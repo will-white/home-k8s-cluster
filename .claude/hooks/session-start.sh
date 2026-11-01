@@ -71,7 +71,7 @@ if ! sha256sum --check --status "${hashes}" 2>/dev/null; then
   unzip -qo "${work}/lokitool.zip" -d "${work}" && mv "${work}/lokitool-linux-amd64" "${BIN}/lokitool"
 
   # renovate: datasource=github-releases depName=grafana/alloy
-  ALLOY_VERSION="v1.21.2"
+  ALLOY_VERSION="v1.21.3"
   fetch "https://github.com/grafana/alloy/releases/download/${ALLOY_VERSION}/alloy-linux-amd64.zip" "${work}/alloy.zip"
   unzip -qo "${work}/alloy.zip" -d "${work}" && mv "${work}/alloy-linux-amd64" "${BIN}/alloy"
 

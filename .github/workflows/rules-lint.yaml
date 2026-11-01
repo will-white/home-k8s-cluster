@@ -69,7 +69,7 @@ jobs:
           unzip -q lokitool.zip && mv lokitool-linux-amd64 "$HOME/.local/bin/lokitool"
 
           # renovate: datasource=github-releases depName=grafana/alloy
-          ALLOY_VERSION="v1.21.2"
+          ALLOY_VERSION="v1.21.3"
           fetch "https://github.com/grafana/alloy/releases/download/${ALLOY_VERSION}/alloy-linux-amd64.zip" alloy.zip
           unzip -q alloy.zip && mv alloy-linux-amd64 "$HOME/.local/bin/alloy"
 
