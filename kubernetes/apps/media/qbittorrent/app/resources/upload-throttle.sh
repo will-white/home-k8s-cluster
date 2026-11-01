@@ -32,8 +32,9 @@ UP_LIMIT_GAMING=${UP_LIMIT_GAMING:-204800}
 GAMING_HOSTS=${GAMING_HOSTS:-}                # "name=mac[@pps] ..."
 GAMING_PPS=${GAMING_PPS:-30}                  # default threshold, packets/s
 GAMING_HOLD=${GAMING_HOLD:-180}
-# UDP ports that are never gaming: DNS, NTP, QUIC/HTTPS, mDNS, SSDP.
-GAMING_IGNORE_PORTS=${GAMING_IGNORE_PORTS:-53 123 443 5353 1900}
+# UDP ports that are never gaming: DNS, NTP, QUIC/HTTPS, mDNS, SSDP, and
+# Discord voice (server ports 19294-19344). Entries are ports or "lo-hi" ranges.
+GAMING_IGNORE_PORTS=${GAMING_IGNORE_PORTS:-53 123 443 5353 1900 19294-19344}
 INTERVAL=${INTERVAL:-20}
 
 STATE=/tmp/upload-throttle
@@ -69,7 +70,10 @@ gaming_flow() {
     | [$top[0].rows[]
        | select(.proto == "udp" and .dir == "in" and $ips[.src_addr])
        | select(.dst_addr | test("^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|f[cd]|fe80)") | not)
-       | select((.dst_port | tostring) as $p | $ign | index($p) | not)
+       | select((.dst_port | tonumber) as $p
+              | $ign | any(if test("^[0-9]+-[0-9]+$")
+                            then (split("-") | map(tonumber)) as $r | $p >= $r[0] and $p <= $r[1]
+                            else (tonumber? // -1) == $p end) | not)
        | {key: "\(.src_addr):\(.src_port)>\(.dst_addr):\(.dst_port)",
           value: {host: $ips[.src_addr].name, limit: $ips[.src_addr].pps,
                   pkts: (.pkts | tonumber), age: (.age | tonumber)}}]
