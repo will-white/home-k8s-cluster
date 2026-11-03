@@ -27,7 +27,7 @@ data:
             widget:
               type: calendar
               view: agenda
-              maxEvents: 20
+              maxEvents: 5
               integrations:
                 - type: sonarr
                   service_group: Automation
@@ -88,11 +88,6 @@ data:
       showSearchSuggestions: true
       hideVisitURL: true
     layout:
-      Calendar:
-        tab: Media
-        icon: mdi-calendar
-        style: row
-        columns: 1
       Libraries:
         tab: Media
         icon: mdi-bookshelf
@@ -104,13 +99,16 @@ data:
         icon: mdi-robot
         style: row
         columns: 4
-        initiallyCollapsed: true
       Downloads:
         tab: Media
         icon: mdi-download-circle
         style: row
         columns: 3
-        initiallyCollapsed: true
+      Calendar:
+        tab: Media
+        icon: mdi-calendar
+        style: row
+        columns: 1
       Smart Home:
         tab: Home
         icon: mdi-home-automation
@@ -132,13 +130,11 @@ data:
         icon: mdi-kubernetes
         style: row
         columns: 4
-        initiallyCollapsed: true
       Storage & Infrastructure:
         tab: Infra
         icon: mdi-server
         style: row
         columns: 4
-        initiallyCollapsed: true
   widgets.yaml: |
     - kubernetes:
         cluster:
