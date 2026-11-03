@@ -13,7 +13,6 @@ set -euo pipefail
 
 APP="${1:-}"
 NS_media="media"
-NS_default="default"
 NFS_SCRATCH="/mnt/main/_migrate"   # used only by the seerr rsync path
 
 die() { echo "ERROR: $*" >&2; exit 1; }
