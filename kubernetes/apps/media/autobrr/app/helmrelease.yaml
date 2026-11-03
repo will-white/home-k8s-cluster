@@ -91,7 +91,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Downloads
+          gethomepage.dev/group: Request & Discover
           gethomepage.dev/name: Autobrr
           gethomepage.dev/icon: autobrr.png
           gethomepage.dev/description: monitors IRC channels and/or RSS feeds for new torrents that fits your criteria set within your autobrr filters

@@ -30,10 +30,10 @@ data:
               maxEvents: 20
               integrations:
                 - type: sonarr
-                  service_group: Downloads
+                  service_group: Automation
                   service_name: Sonarr
                 - type: radarr
-                  service_group: Downloads
+                  service_group: Automation
                   service_name: Radarr
     - Network:
         # UniFi only serves HTTPS with a self-signed cert, which Gateway API
@@ -89,23 +89,56 @@ data:
       hideVisitURL: true
     layout:
       Calendar:
+        tab: Media
         icon: mdi-calendar
-      Media:
-        icon: mdi-filmstrip
+        style: row
+        columns: 1
+      Libraries:
+        tab: Media
+        icon: mdi-bookshelf
+      Request & Discover:
+        tab: Media
+        icon: mdi-magnify-plus
+      Automation:
+        tab: Media
+        icon: mdi-robot
+        style: row
+        columns: 4
+        initiallyCollapsed: true
       Downloads:
+        tab: Media
         icon: mdi-download-circle
+        style: row
+        columns: 3
+        initiallyCollapsed: true
       Smart Home:
+        tab: Home
         icon: mdi-home-automation
       Productivity:
+        tab: Home
         icon: mdi-text-box-check
       Tools:
+        tab: Home
         icon: mdi-tools
+        style: row
+        columns: 4
       Network:
+        tab: Infra
         icon: mdi-network
+        style: row
+        columns: 2
       Cluster & Observability:
+        tab: Infra
         icon: mdi-kubernetes
+        style: row
+        columns: 4
+        initiallyCollapsed: true
       Storage & Infrastructure:
+        tab: Infra
         icon: mdi-server
+        style: row
+        columns: 4
+        initiallyCollapsed: true
   widgets.yaml: |
     - kubernetes:
         cluster:

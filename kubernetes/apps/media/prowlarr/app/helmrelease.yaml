@@ -140,7 +140,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Downloads
+          gethomepage.dev/group: Request & Discover
           gethomepage.dev/name: Prowlarr
           gethomepage.dev/icon: prowlarr.png
           gethomepage.dev/description: Torrent/NZB Indexer Management

@@ -89,7 +89,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Media
+          gethomepage.dev/group: Libraries
           gethomepage.dev/name: Calibre-Web Automated
           gethomepage.dev/icon: calibre-web.png
           gethomepage.dev/description: Ebook Library

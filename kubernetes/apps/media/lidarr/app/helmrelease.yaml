@@ -145,7 +145,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Downloads
+          gethomepage.dev/group: Automation
           gethomepage.dev/name: Lidarr
           gethomepage.dev/icon: lidarr.png
           gethomepage.dev/description: Music Downloads
