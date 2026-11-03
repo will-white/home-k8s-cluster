@@ -76,7 +76,7 @@ if ! sha256sum --check --status "${hashes}" 2>/dev/null; then
   unzip -qo "${work}/alloy.zip" -d "${work}" && mv "${work}/alloy-linux-amd64" "${BIN}/alloy"
 
   # renovate: datasource=github-releases depName=go-task/task
-  TASK_VERSION="v3.52.0"
+  TASK_VERSION="v3.54.0"
   fetch "https://github.com/go-task/task/releases/download/${TASK_VERSION}/task_linux_amd64.tar.gz" "${work}/task.tgz"
   tar xzf "${work}/task.tgz" -C "${BIN}" task
 
