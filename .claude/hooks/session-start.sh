@@ -61,7 +61,7 @@ if ! sha256sum --check --status "${hashes}" 2>/dev/null; then
   fetch "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" "${BIN}/yq"
 
   # renovate: datasource=github-releases depName=prometheus/prometheus
-  PROMETHEUS_VERSION="v3.9.1"
+  PROMETHEUS_VERSION="v3.15.1"
   fetch "https://github.com/prometheus/prometheus/releases/download/${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION#v}.linux-amd64.tar.gz" "${work}/prometheus.tgz"
   tar xzf "${work}/prometheus.tgz" -C "${BIN}" --strip-components=1 "prometheus-${PROMETHEUS_VERSION#v}.linux-amd64/promtool"
 
