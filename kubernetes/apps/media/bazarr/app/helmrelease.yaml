@@ -172,7 +172,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Downloads
+          gethomepage.dev/group: Automation
           gethomepage.dev/name: Bazarr
           gethomepage.dev/icon: bazarr.png
           gethomepage.dev/description: Subtitle Downloads

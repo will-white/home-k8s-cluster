@@ -82,7 +82,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Media
+          gethomepage.dev/group: Request & Discover
           gethomepage.dev/name: Shelfmark
           gethomepage.dev/icon: mdi-book-arrow-down
           gethomepage.dev/description: Book & Audiobook Search

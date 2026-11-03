@@ -99,7 +99,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Media
+          gethomepage.dev/group: Request & Discover
           gethomepage.dev/name: Seerr
           gethomepage.dev/icon: overseerr.png
           gethomepage.dev/description: Application for managing requests for the media library
