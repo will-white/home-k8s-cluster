@@ -88,50 +88,64 @@ data:
       showSearchSuggestions: true
       hideVisitURL: true
     layout:
-      Libraries:
-        tab: Media
+      Books:
+        tab: Home
         icon: mdi-bookshelf
+        style: row
+        columns: 3
+      Audio:
+        tab: Home
+        icon: mdi-headphones
+        style: row
+        columns: 2
       Request & Discover:
-        tab: Media
+        tab: Home
         icon: mdi-magnify-plus
-      Automation:
-        tab: Media
-        icon: mdi-robot
         style: row
         columns: 4
       Downloads:
-        tab: Media
+        tab: Home
         icon: mdi-download-circle
         style: row
         columns: 3
-      Calendar:
-        tab: Media
-        icon: mdi-calendar
+      Automation:
+        tab: Home
+        icon: mdi-robot
         style: row
-        columns: 1
+        columns: 4
       Smart Home:
         tab: Home
         icon: mdi-home-automation
+        style: row
+        columns: 4
       Productivity:
         tab: Home
         icon: mdi-text-box-check
+        style: row
+        columns: 4
       Tools:
         tab: Home
         icon: mdi-tools
         style: row
         columns: 4
+      Calendar:
+        tab: Home
+        icon: mdi-calendar
+        style: row
+        columns: 1
+        header: false
       Network:
-        tab: Infra
+        tab: Infrastructure
         icon: mdi-network
         style: row
         columns: 2
       Cluster & Observability:
-        tab: Infra
+        tab: Infrastructure
         icon: mdi-kubernetes
         style: row
-        columns: 4
+        columns: 5
       Storage & Infrastructure:
-        tab: Infra
+        tab: Infrastructure
         icon: mdi-server
         style: row
         columns: 4

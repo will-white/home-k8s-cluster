@@ -91,7 +91,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Libraries
+          gethomepage.dev/group: Books
           gethomepage.dev/name: Kavita
           gethomepage.dev/icon: kavita.png
           gethomepage.dev/description: Manga, Manhwa & Books Reader

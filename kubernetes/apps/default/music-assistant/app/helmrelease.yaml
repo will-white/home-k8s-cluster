@@ -89,7 +89,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Libraries
+          gethomepage.dev/group: Audio
           gethomepage.dev/name: Music Assistant
           gethomepage.dev/icon: music-assistant.png
           gethomepage.dev/description: Music library and player hub

@@ -88,7 +88,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Libraries
+          gethomepage.dev/group: Books
           gethomepage.dev/name: Storyteller
           gethomepage.dev/icon: mdi-book-open-page-variant
           gethomepage.dev/description: Readaloud Ebooks (audio/ebook sync)

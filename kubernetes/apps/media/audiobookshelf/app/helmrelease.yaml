@@ -85,7 +85,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Libraries
+          gethomepage.dev/group: Audio
           gethomepage.dev/name: Audiobookshelf
           gethomepage.dev/icon: audiobookshelf.png
           gethomepage.dev/description: Audiobooks & Podcasts
