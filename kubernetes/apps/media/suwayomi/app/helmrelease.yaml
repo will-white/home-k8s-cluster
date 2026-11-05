@@ -92,7 +92,7 @@ spec:
       app:
         annotations:
           gethomepage.dev/enabled: "true"
-          gethomepage.dev/group: Libraries
+          gethomepage.dev/group: Books
           gethomepage.dev/name: Suwayomi
           gethomepage.dev/icon: suwayomi.png
           gethomepage.dev/description: Manga Downloads
