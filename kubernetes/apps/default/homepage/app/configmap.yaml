@@ -91,64 +91,39 @@ data:
       Books:
         tab: Home
         icon: mdi-bookshelf
-        style: row
-        columns: 3
       Audio:
         tab: Home
         icon: mdi-headphones
-        style: row
-        columns: 2
       Request & Discover:
         tab: Home
         icon: mdi-magnify-plus
-        style: row
-        columns: 4
       Downloads:
         tab: Home
         icon: mdi-download-circle
-        style: row
-        columns: 3
       Automation:
         tab: Home
         icon: mdi-robot
-        style: row
-        columns: 4
       Smart Home:
         tab: Home
         icon: mdi-home-automation
-        style: row
-        columns: 4
       Productivity:
         tab: Home
         icon: mdi-text-box-check
-        style: row
-        columns: 4
       Tools:
         tab: Home
         icon: mdi-tools
-        style: row
-        columns: 4
       Calendar:
         tab: Home
         icon: mdi-calendar
-        style: row
-        columns: 1
-        header: false
       Network:
         tab: Infrastructure
         icon: mdi-network
-        style: row
-        columns: 2
       Cluster & Observability:
         tab: Infrastructure
         icon: mdi-kubernetes
-        style: row
-        columns: 5
       Storage & Infrastructure:
         tab: Infrastructure
         icon: mdi-server
-        style: row
-        columns: 4
   widgets.yaml: |
     - kubernetes:
         cluster:
