@@ -15,5 +15,7 @@ configMapGenerator:
       - ./resources/lists/playlists.yml
       - ./resources/lists/fate-stay-night.txt
       - ./resources/lists/monogatari.txt
+      - ./resources/lists/plex-smart-lists.py
+      - ./resources/lists/plex-smart-lists.json
 generatorOptions:
   disableNameSuffixHash: true

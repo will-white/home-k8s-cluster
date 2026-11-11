@@ -28,7 +28,7 @@ spec:
           reloader.stakater.com/auto: "true"
         type: cronjob
         cronjob:
-          # Weekly is plenty: the only playlist (One Piece Canon) changes when
+          # Weekly is plenty: the playlists (watch orders) change when
           # the list in Git changes or new episodes land, and a run takes ~40 min.
           # After editing a list, run once by hand:
           #   kubectl -n media create job kometa-manual --from=cronjob/kometa
@@ -66,6 +66,44 @@ spec:
                 memory: 512Mi
         pod:
           restartPolicy: Never
+      # Labels the One Piece canon episodes and keeps the per-user smart
+      # "Next Up" playlist (see resources/lists/plex-smart-lists.py and
+      # docs/runbooks/plex-smart-lists.md). Reuses the Kometa image for its
+      # Python; the script is stdlib-only.
+      plex-lists:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        type: cronjob
+        cronjob:
+          schedule: "30 4 * * *"
+          timeZone: ${TIMEZONE}
+          backoffLimit: 1
+          concurrencyPolicy: Forbid
+          successfulJobsHistory: 1
+          failedJobsHistory: 1
+          ttlSecondsAfterFinished: 86400
+        containers:
+          app:
+            image:
+              # renovate: datasource=docker
+              repository: docker.io/kometateam/kometa
+              tag: v2.5.3@sha256:48c3cb318ec984213587f221e8e762c5ad2dbd0e6966efc7bba0a5868a6c5758
+            command: ["python3", "-I", "/scripts/plex-smart-lists.py", "sync"]
+            envFrom:
+              - secretRef:
+                  name: kometa-secret
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: {drop: ["ALL"]}
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
+        pod:
+          restartPolicy: Never
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -77,22 +115,36 @@ spec:
     persistence:
       config:
         existingClaim: *app
+        advancedMounts:
+          kometa:
+            app:
+              - path: /config
       config-file:
         type: configMap
         name: kometa-configmap
-        globalMounts:
-          - path: /config/config.yml
-            subPath: config.yml
-            readOnly: true
+        advancedMounts:
+          kometa:
+            app:
+              - path: /config/config.yml
+                subPath: config.yml
+                readOnly: true
       lists:
         type: configMap
         name: kometa-lists
-        globalMounts:
-          - path: /config/lists
-            readOnly: true
+        advancedMounts:
+          kometa:
+            app:
+              - path: /config/lists
+                readOnly: true
+          plex-lists:
+            app:
+              - path: /scripts
+                readOnly: true
       logs:
         type: emptyDir
-        globalMounts:
-          - path: /config/logs
+        advancedMounts:
+          kometa:
+            app:
+              - path: /config/logs
   driftDetection:
     mode: enabled
