@@ -57,7 +57,7 @@ if ! sha256sum --check --status "${hashes}" 2>/dev/null; then
   tar xzf "${work}/flate.tgz" -C "${BIN}" flate
 
   # renovate: datasource=github-releases depName=mikefarah/yq
-  YQ_VERSION="v4.54.1"
+  YQ_VERSION="v4.54.3"
   fetch "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" "${BIN}/yq"
 
   # renovate: datasource=github-releases depName=prometheus/prometheus
