@@ -8,7 +8,7 @@ the `plex-lists` CronJob (`kubernetes/apps/media/kometa/app/resources/lists/plex
 
 - `plex-smart-lists.json` defines each list: playlist name, label, source file
   (Kometa `tvdb_episode:<show>_<season>_<episode>` lines), library.
-- Daily (04:30) the job labels every listed episode (`List: One Piece Canon`)
+- Weekly (Sunday 05:00) the job labels every listed episode (`List: One Piece Canon`)
   and removes the label from episodes no longer listed. Episodes not yet in
   Plex are skipped and get labelled on a later run.
 - It then makes sure the owner and every shared user has a smart playlist
