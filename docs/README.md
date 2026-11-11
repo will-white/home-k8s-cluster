@@ -26,6 +26,7 @@ in `.claude/skills/` (`validate-app`, `new-app`, `expose-app`,
 | [add-a-secret.md](./runbooks/add-a-secret.md) | Creating or rotating a Bitwarden secret and wiring the `ExternalSecret` |
 | [flux-troubleshooting.md](./runbooks/flux-troubleshooting.md) | Something is not reconciling |
 | [volsync-restore.md](./runbooks/volsync-restore.md) | Restoring a PVC, a snapshot or a single file from Kopia |
+| [plex-smart-lists.md](./runbooks/plex-smart-lists.md) | Plex label-driven "Next Up" smart playlists and resetting a list |
 | [cilium-bgp-opnsense.md](./runbooks/cilium-bgp-opnsense.md) | BGP peering, moving a Service between the L2 and BGP pools, rollback |
 
 ## Runbooks: incidents and maintenance
