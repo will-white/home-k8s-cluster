@@ -75,7 +75,9 @@ spec:
           reloader.stakater.com/auto: "true"
         type: cronjob
         cronjob:
-          schedule: "30 4 * * *"
+          # Weekly, after the Kometa run: only needs to pick up newly imported episodes.
+          # Run by hand after editing a list: kubectl -n media create job plex-lists-manual --from=cronjob/kometa-plex-lists
+          schedule: "0 5 * * 0"
           timeZone: ${TIMEZONE}
           backoffLimit: 1
           concurrencyPolicy: Forbid
