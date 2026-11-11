@@ -22,8 +22,8 @@ spec:
         strategy: Recreate # one node identity; two pods would fight over the state Secret
         annotations:
           reloader.stakater.com/auto: "true"
-        pod:
-          serviceAccountName: tailscale
+        serviceAccount:
+          name: tailscale
         containers:
           app:
             image:
