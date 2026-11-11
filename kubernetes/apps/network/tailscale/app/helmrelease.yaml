@@ -1,0 +1,86 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tailscale
+spec:
+  interval: 30m
+  maxHistory: 2
+  chartRef:
+    kind: OCIRepository
+    name: tailscale
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    controllers:
+      tailscale:
+        strategy: Recreate # one node identity; two pods would fight over the state Secret
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod:
+          serviceAccountName: tailscale
+        containers:
+          app:
+            image:
+              repository: docker.io/tailscale/tailscale
+              tag: v1.104.4@sha256:ed6480b33c6eb67c9cbd203ed42b9fb57e361986725b6856def71b7a3d9e276c
+            env:
+              # Userspace networking: no NET_ADMIN / /dev/net/tun, so the pod
+              # stays within the namespace's baseline Pod Security level.
+              TS_USERSPACE: "true"
+              TS_HOSTNAME: k8s-subnet-router
+              TS_ROUTES: 192.168.5.0/24,192.168.110.0/24
+              TS_ACCEPT_DNS: "false"
+              TS_KUBE_SECRET: tailscale-state
+              TS_AUTH_ONCE: "true"
+              TS_ENABLE_HEALTH_CHECK: "true"
+              TS_LOCAL_ADDR_PORT: 0.0.0.0:9002
+              TS_TAILSCALED_EXTRA_ARGS: --port=41641
+              POD_NAME:
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.name
+              POD_UID:
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.uid
+            envFrom:
+              - secretRef:
+                  name: tailscale-secret
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: 9002
+                  initialDelaySeconds: 10
+                  periodSeconds: 20
+                  timeoutSeconds: 3
+                  failureThreshold: 3
+              readiness: *probes
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false
+              capabilities: {drop: ["ALL"]}
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 512Mi
+    defaultPodOptions:
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile: {type: RuntimeDefault}
+  driftDetection:
+    mode: enabled
