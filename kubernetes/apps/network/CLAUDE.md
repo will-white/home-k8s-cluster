@@ -10,6 +10,7 @@ the BGP side in [docs/runbooks/cilium-bgp-opnsense.md](../../../docs/runbooks/ci
 |---|---|
 | cilium-gateway | `GatewayClass cilium` + Gateways `internal` (`192.168.110.46`) and `external` (`192.168.110.48`), both on the BGP pool; wildcard Let's Encrypt cert `certificates/wildcard.yaml`; HTTP → HTTPS redirect route; Envoy access-log Loki rules |
 | cloudflared | Tunnel: `*.${SECRET_DOMAIN}` → `cilium-gateway-external.network.svc:443` |
+| tailscale | Subnet router (userspace, no NET_ADMIN) advertising `192.168.5.0/24` + `192.168.110.0/24` to the tailnet; auth key `TAILSCALE_AUTHKEY`; node state in Secret `tailscale-state`. Routes must be approved in the Tailscale admin console; split-DNS for `${SECRET_DOMAIN}` → AdGuard is set there too |
 | cloudflare-dns | external-dns → Cloudflare, `gateway-httproute` + `crd` sources, only routes on Gateway `external`; CNAME target from the Gateway's `external-dns.alpha.kubernetes.io/target` annotation; refuses private targets |
 | adguard-dns-internal | external-dns → AdGuard, routes on Gateway `internal` resolve to its LB address; `dnsendpoint.yaml` holds the LAN-only static names (router-served services) |
 | adguard-dns-external | external-dns → AdGuard, routes on Gateway `external` forced to `--default-targets=192.168.110.48` so public apps resolve on-LAN without hairpinning through Cloudflare |
