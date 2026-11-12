@@ -14,6 +14,7 @@ configMapGenerator:
     files:
       - anime-foreign-subs.json=./resources/custom-formats/sonarr/anime-foreign-subs.json
       - anime-hi10p.json=./resources/custom-formats/sonarr/anime-hi10p.json
+      - anime-dual-audio-misparsed.json=./resources/custom-formats/sonarr/anime-dual-audio-misparsed.json
     options: &noSubstitute
       # CF regexes contain `$`; keep Flux postBuild envsubst off them.
       annotations:
