@@ -72,6 +72,31 @@ spec:
             # mj0581m7 held 16, and postgres16-4 (openebs-hostpath, pinned to
             # mj0581rw at 87% cpu / 88% mem) could not schedule at all,
             # blocking 9 Kustomizations behind the CNPG health check.
+            # Self-heal EMQX core split-brain. After rolling node reboots a core
+            # can come back with a Mnesia schema that no longer merges with the
+            # others ("inconsistent_database, starting_partitioned_network" ->
+            # "FATAL Failed to merge schema") and crash-loops forever: its data
+            # is an emptyDir, which survives container restarts, so every
+            # restart reloads the bad schema. Evicting the pod gives it a fresh
+            # emptyDir and it rejoins the healthy cores at once.
+            # This matters beyond MQTT: while one core is down the emqx-core
+            # PDB (maxUnavailable 1) allows 0 disruptions, so every node drain
+            # stalls on the next EMQX pod. On 2026-11-12 that made tuppr's
+            # Talos upgrade job time out without rebooting, leaving mj0581rw
+            # cordoned. Scoped to crash-looping EMQX core pods only.
+            - name: RemovePodsHavingTooManyRestarts
+              args:
+                podRestartThreshold: 5
+                includingInitContainers: true
+                states:
+                  - CrashLoopBackOff
+                namespaces:
+                  include:
+                    - database
+                labelSelector:
+                  matchLabels:
+                    apps.emqx.io/instance: emqx
+                    apps.emqx.io/db-role: core
             - name: LowNodeUtilization
               args:
                 thresholds:
@@ -92,6 +117,7 @@ spec:
                 - RemovePodsViolatingInterPodAntiAffinity
                 - RemovePodsViolatingNodeAffinity
                 - RemovePodsViolatingNodeTaints
+                - RemovePodsHavingTooManyRestarts
     service:
       enabled: true
     serviceMonitor:
