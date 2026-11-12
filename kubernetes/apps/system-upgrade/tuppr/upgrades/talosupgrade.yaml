@@ -28,10 +28,28 @@ spec:
       kind: ReplicationSource
       expr: |-
         status.conditions.filter(c, c.type == "Synchronizing").all(c, c.status == "False")
+    # Wait for Ceph to settle between nodes: a rebooted node's OSD shows up
+    # as OSD_DOWN / PG_DEGRADED, which keeps this false until it re-peers.
+    #
+    # HEALTH_WARN passes only when every listed check is on the allowlist:
+    # - BLUESTORE_SLOW_OP_ALERT: a slow disk (osd.5 on mj04ew44, 2026-11),
+    #   not a failure. It lingers for bluestore_slow_ops_warn_lifetime (1h)
+    #   and would otherwise stall the roll.
+    # - AUTH_*: muted cluster-wide but still listed in status.ceph.details.
+    # Any other check (OSD down, degraded/undersized PGs, mon down…) blocks.
     - apiVersion: ceph.rook.io/v1
       kind: CephCluster
       expr: |-
-        status.ceph.health in ['HEALTH_OK']
+        status.ceph.health == 'HEALTH_OK' ||
+        (status.ceph.health == 'HEALTH_WARN' &&
+          has(status.ceph.details) &&
+          status.ceph.details.all(k, k in [
+            'BLUESTORE_SLOW_OP_ALERT',
+            'AUTH_EMERGENCY_CIPHERS_SET',
+            'AUTH_INSECURE_CLIENT_KEY_TYPE',
+            'AUTH_INSECURE_KEYS_ALLOWED',
+            'AUTH_INSECURE_KEYS_CREATABLE'
+          ]))
     # Refuse to start the next node if any node is not Ready (catches the
     # case where a previous upgrade left a node unreachable).
     - apiVersion: v1
