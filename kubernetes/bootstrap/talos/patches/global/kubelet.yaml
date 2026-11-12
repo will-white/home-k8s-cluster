@@ -6,6 +6,16 @@ machine:
       # Graceful node shutdown settings for better pod eviction during upgrades
       shutdownGracePeriod: 60s
       shutdownGracePeriodCriticalPods: 20s
+      # Image GC. The Ceph mon store shares EPHEMERAL with containerd, and
+      # Ceph raises MON_DISK_LOW below 30% free (mon_data_avail_warn), which
+      # fails the tuppr CephCluster health check and stalls Talos rolls.
+      # The kubelet default (GC at 85% used) let unused images pile up to
+      # ~150G / 773 images on the 222G nodes (2026-11-12 v1.13.12 roll).
+      # Start GC at 65% used, keeping >=35% free, and drop any image unused
+      # for two weeks regardless of disk use.
+      imageGCHighThresholdPercent: 65
+      imageGCLowThresholdPercent: 50
+      imageMaximumGCAge: 336h
     nodeIP:
       validSubnets:
         - 192.168.5.0/24
