@@ -12,13 +12,18 @@ the repo's own conventions; it does not enforce anything yet.
 | `disallow-latest-tag` | No `:latest` (Renovate pins digests) |
 | `require-image-digest` | Image references carry a `@sha256` digest |
 
-All are `validate.failureAction: Audit` with `features.forceFailurePolicyIgnore`
-so a Kyverno outage can never block admissions.
+All are `policies.kyverno.io/v1` `ValidatingPolicy` (CEL) with
+`validationActions: [Audit]` and `features.forceFailurePolicyIgnore`, so a
+Kyverno outage can never block admissions. Autogen covers Deployment,
+StatefulSet, DaemonSet and CronJob only (`spec.autogen.podControllers`).
 
 ## Conventions
 
-- A new convention worth auditing gets a `ClusterPolicy` here **and** a line
-  in root `CLAUDE.md`; the policy is the check, the doc is the rule.
+- A new convention worth auditing gets a `ValidatingPolicy` here **and** a
+  line in root `CLAUDE.md`; the legacy `kyverno.io` `ClusterPolicy` engine is
+  gone in Kyverno 1.20, so never add one. The policy is the check, the doc
+  is the rule. Test with `kyverno apply <policy> --resource <manifests>
+  --audit-warn` before merging.
 - Keep `kubectl get policyreport -A` clean: fix the workload, do not add an
   exclusion unless the exception is documented in the policy itself.
 - Graduating a policy to `Enforce` is a backlog item
