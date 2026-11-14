@@ -25,7 +25,7 @@ ARG KUBECTL_VERSION=v1.37.2
 # renovate: datasource=github-releases depName=helm/helm
 ARG HELM_VERSION=v4.3.1
 # renovate: datasource=github-releases depName=helmfile/helmfile
-ARG HELMFILE_VERSION=v1.8.3
+ARG HELMFILE_VERSION=v1.8.4
 # renovate: datasource=github-releases depName=stern/stern
 ARG STERN_VERSION=v1.35.0
 # renovate: datasource=github-releases depName=cli/cli
