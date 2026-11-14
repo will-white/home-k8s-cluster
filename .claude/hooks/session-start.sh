@@ -66,7 +66,7 @@ if ! sha256sum --check --status "${hashes}" 2>/dev/null; then
   tar xzf "${work}/prometheus.tgz" -C "${BIN}" --strip-components=1 "prometheus-${PROMETHEUS_VERSION#v}.linux-amd64/promtool"
 
   # renovate: datasource=github-releases depName=grafana/loki
-  LOKI_VERSION="v3.7.9"
+  LOKI_VERSION="v3.7.10"
   fetch "https://github.com/grafana/loki/releases/download/${LOKI_VERSION}/lokitool-linux-amd64.zip" "${work}/lokitool.zip"
   unzip -qo "${work}/lokitool.zip" -d "${work}" && mv "${work}/lokitool-linux-amd64" "${BIN}/lokitool"
 

@@ -64,7 +64,7 @@ jobs:
           mv promtool "$HOME/.local/bin/"
 
           # renovate: datasource=github-releases depName=grafana/loki
-          LOKI_VERSION="v3.7.9"
+          LOKI_VERSION="v3.7.10"
           fetch "https://github.com/grafana/loki/releases/download/${LOKI_VERSION}/lokitool-linux-amd64.zip" lokitool.zip
           unzip -q lokitool.zip && mv lokitool-linux-amd64 "$HOME/.local/bin/lokitool"
 

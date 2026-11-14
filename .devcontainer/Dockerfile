@@ -39,7 +39,7 @@ ARG FLATE_VERSION=v0.6.5
 # renovate: datasource=github-releases depName=prometheus/prometheus
 ARG PROMETHEUS_VERSION=v3.16.0
 # renovate: datasource=github-releases depName=grafana/loki
-ARG LOKI_VERSION=v3.7.9
+ARG LOKI_VERSION=v3.7.10
 # renovate: datasource=github-releases depName=grafana/alloy
 ARG ALLOY_VERSION=v1.21.3
 
