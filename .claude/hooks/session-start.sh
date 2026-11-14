@@ -52,7 +52,7 @@ if ! sha256sum --check --status "${hashes}" 2>/dev/null; then
   tar xzf "${work}/flux.tgz" -C "${BIN}" flux
 
   # renovate: datasource=github-releases depName=home-operations/flate
-  FLATE_VERSION="v0.6.5"
+  FLATE_VERSION="v0.7.3"
   fetch "https://github.com/home-operations/flate/releases/download/${FLATE_VERSION}/flate_${FLATE_VERSION#v}_linux_amd64.tar.gz" "${work}/flate.tgz"
   tar xzf "${work}/flate.tgz" -C "${BIN}" flate
 
