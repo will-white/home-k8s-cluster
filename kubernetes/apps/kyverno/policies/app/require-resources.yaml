@@ -1,41 +1,51 @@
 ---
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
   name: require-resources
   annotations:
     policies.kyverno.io/title: Require Resource Requests and Memory Limits
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: medium
-    # Autogen only for top-level controllers: ReplicaSet/Job copies triple-count
-    # every failure (old zero-replica ReplicaSets included). Bare Pods are
-    # still checked by the Pod rule itself.
-    pod-policies.kyverno.io/autogen-controllers: Deployment,StatefulSet,DaemonSet,CronJob
     policies.kyverno.io/description: >-
       Repo convention (CLAUDE.md): every container sets resources.requests
       and caps limits.memory. Without a memory limit one leaking pod can take
       a node down; without requests the scheduler packs blindly.
 spec:
-  background: true
-  rules:
-    - name: require-requests-and-memory-limit
-      match:
-        any:
-          - resources:
-              kinds: ["Pod"]
-      exclude:
-        any:
-          - resources:
-              namespaces: ["kube-system", "kyverno"]
-      validate:
-        failureAction: Audit
-        message: "Containers must set resources.requests.cpu, resources.requests.memory and resources.limits.memory."
-        pattern:
-          spec:
-            containers:
-              - resources:
-                  requests:
-                    cpu: "?*"
-                    memory: "?*"
-                  limits:
-                    memory: "?*"
+  validationActions: ["Audit"]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  # Autogen only for top-level controllers: ReplicaSet/Job copies triple-count
+  # every failure (old zero-replica ReplicaSets included). Bare Pods are
+  # still checked by the Pod rule itself.
+  autogen:
+    podControllers:
+      controllers: ["deployments", "statefulsets", "daemonsets", "cronjobs"]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: ["kube-system", "kyverno"]
+  variables:
+    - name: missing
+      # init containers are not checked (same as the ClusterPolicy this replaced)
+      expression: >-
+        object.spec.containers.filter(c,
+          !('cpu' in c.?resources.?requests.orValue({})) ||
+          !('memory' in c.?resources.?requests.orValue({})) ||
+          !('memory' in c.?resources.?limits.orValue({})))
+  validations:
+    - expression: "size(variables.missing) == 0"
+      message: "Containers must set resources.requests.cpu, resources.requests.memory and resources.limits.memory."
+      messageExpression: >-
+        'Containers must set resources.requests.cpu, resources.requests.memory and resources.limits.memory (missing on: ' +
+        variables.missing.map(c, c.name).join(', ') + ').'

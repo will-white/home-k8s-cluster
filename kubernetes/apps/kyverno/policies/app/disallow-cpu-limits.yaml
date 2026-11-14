@@ -1,42 +1,47 @@
 ---
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
   name: disallow-cpu-limits
   annotations:
     policies.kyverno.io/title: Disallow CPU Limits
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: low
-    # Autogen only for top-level controllers: ReplicaSet/Job copies triple-count
-    # every failure (old zero-replica ReplicaSets included). Bare Pods are
-    # still checked by the Pod rule itself.
-    pod-policies.kyverno.io/autogen-controllers: Deployment,StatefulSet,DaemonSet,CronJob
     policies.kyverno.io/description: >-
       Repo convention (CLAUDE.md): do not set CPU limits. CFS throttling adds
       latency for no protection; CPU is compressible and requests already
       drive scheduling and fair share.
 spec:
-  background: true
-  rules:
-    - name: no-cpu-limit
-      match:
-        any:
-          - resources:
-              kinds: ["Pod"]
-      exclude:
-        any:
-          - resources:
-              namespaces: ["kube-system", "kyverno"]
-      validate:
-        failureAction: Audit
-        message: "Do not set resources.limits.cpu; use requests only."
-        pattern:
-          spec:
-            =(initContainers):
-              - =(resources):
-                  =(limits):
-                    X(cpu): "null"
-            containers:
-              - =(resources):
-                  =(limits):
-                    X(cpu): "null"
+  validationActions: ["Audit"]
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
+  # Autogen only for top-level controllers: ReplicaSet/Job copies triple-count
+  # every failure (old zero-replica ReplicaSets included). Bare Pods are
+  # still checked by the Pod rule itself.
+  autogen:
+    podControllers:
+      controllers: ["deployments", "statefulsets", "daemonsets", "cronjobs"]
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values: ["kube-system", "kyverno"]
+  variables:
+    - name: containers
+      expression: "object.spec.containers + object.spec.?initContainers.orValue([])"
+  validations:
+    - expression: >-
+        variables.containers.all(c, !('cpu' in c.?resources.?limits.orValue({})))
+      message: "Do not set resources.limits.cpu; use requests only."
+      messageExpression: >-
+        'Do not set resources.limits.cpu; use requests only (containers: ' +
+        variables.containers.filter(c, 'cpu' in c.?resources.?limits.orValue({})).map(c, c.name).join(', ') + ').'

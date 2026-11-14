@@ -17,7 +17,7 @@ they are not re-proposed.
   pool means re-adopting or setting the inform host first.
 - **Kyverno: graduate to Enforce.** Policies in `kubernetes/apps/kyverno` are
   Audit-only with fail-open webhooks. Once `kubectl get policyreport -A` is
-  clean (burn-down: #1586 to #1590), flip `validate.failureAction` per policy
+  clean (burn-down: #1586 to #1590), flip `validationActions` to `[Deny]` per policy
   and drop `features.forceFailurePolicyIgnore`.
 - **Off-site backup target.** Kopia and CNPG land in Ceph RGW, then rclone
   mirrors to Garage. If Garage is on the same LAN, one encrypted rclone target
