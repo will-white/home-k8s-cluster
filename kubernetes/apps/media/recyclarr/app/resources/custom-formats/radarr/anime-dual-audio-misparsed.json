@@ -1,0 +1,35 @@
+{
+  "trash_id": "4cf3a03f34b307b56a274d8f9510e119",
+  "trash_description": "Local: cancels the phantom +4000 'Language: Not English' on dual-audio anime movies. At grab time Radarr parses language from the release title (often Unknown, which matches Language: Not English); at import it reads the file (JA+EN) and the CF drops off, so the release is rejected as not an upgrade. Fires only when the title says dual-audio AND English is missing from the parsed languages, so it is inactive after import.",
+  "name": "Anime Dual Audio Misparsed",
+  "includeCustomFormatWhenRenaming": false,
+  "specifications": [
+    {
+      "name": "Dual Audio (same regex as Anime Dual Audio)",
+      "implementation": "ReleaseTitleSpecification",
+      "negate": false,
+      "required": true,
+      "fields": {
+        "value": "dual[ ._-]?(audio)|[([]dual[])]|\\b(JA|ZH|KO)(?= ?\\+ ?.*?\\b(EN))|\\b(EN)(?= ?\\+ ?.*?\\b(JA|ZH|KO))|\\b(Japanese|Chinese|Korean) ?[ ._\\+&-] ?\\b(English)|\\b(English) ?[ ._\\+&-] ?\\b(Japanese|Chinese|Korean)|\\b(\\d{3,4}(p|i)|4K|U(ltra)?HD)\\b.*\\b(DUAL)\\b(?!.*\\(|\\))"
+      }
+    },
+    {
+      "name": "Not Single Language Only",
+      "implementation": "ReleaseTitleSpecification",
+      "negate": true,
+      "required": true,
+      "fields": {
+        "value": "\\[(JA|ZH|KO)\\]"
+      }
+    },
+    {
+      "name": "Not English Language",
+      "implementation": "LanguageSpecification",
+      "negate": true,
+      "required": true,
+      "fields": {
+        "value": 1
+      }
+    }
+  ]
+}

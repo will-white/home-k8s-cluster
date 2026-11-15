@@ -515,6 +515,19 @@ radarr:
           - name: Anime
             score: 1000
 
+      # Phantom-language guard (same as the Sonarr Anime profile). The language is
+      # parsed from the release TITLE at grab time but read from the FILE at import;
+      # a dual-audio title parsed as Unknown/Japanese-only grabs as 7000+4000 and
+      # imports as 7000, so it is grabbed as an upgrade then rejected. This CF
+      # matches only that mismatch and cancels the +4000; it cannot fire after
+      # import. Keep the score equal to the Language: Not English score. Local CF:
+      # resources/custom-formats/radarr/anime-dual-audio-misparsed.json.
+      - trash_ids:
+          - 4cf3a03f34b307b56a274d8f9510e119 # Anime Dual Audio Misparsed
+        assign_scores_to:
+          - name: Anime
+            score: -4000
+
       # Raws are Japanese audio with NO subtitles. Without this they would pick
       # up the +4000 "Language: Not English" score above and outrank a dub, which
       # is not what "we'll take Japanese" means. Blocked outright.

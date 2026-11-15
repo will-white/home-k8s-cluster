@@ -22,6 +22,7 @@ configMapGenerator:
   - name: recyclarr-custom-formats-radarr
     files:
       - anime-foreign-subs.json=./resources/custom-formats/radarr/anime-foreign-subs.json
+      - anime-dual-audio-misparsed.json=./resources/custom-formats/radarr/anime-dual-audio-misparsed.json
     options: *noSubstitute
   - name: recyclarr-upgrade-search
     files:
