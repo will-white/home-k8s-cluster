@@ -35,7 +35,7 @@ ARG JQ_VERSION=1.8.2
 # renovate: datasource=github-releases depName=gitleaks/gitleaks
 ARG GITLEAKS_VERSION=v8.30.1
 # renovate: datasource=github-releases depName=home-operations/flate
-ARG FLATE_VERSION=v0.6.5
+ARG FLATE_VERSION=v0.7.3
 # renovate: datasource=github-releases depName=prometheus/prometheus
 ARG PROMETHEUS_VERSION=v3.16.0
 # renovate: datasource=github-releases depName=grafana/loki
