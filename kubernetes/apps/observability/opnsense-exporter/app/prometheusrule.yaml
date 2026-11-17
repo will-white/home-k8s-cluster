@@ -55,6 +55,52 @@ spec:
           for: 30m
           labels:
             severity: warning
+        # 2026-11-17: a LAN link flap made the kernel drop the BGP routes while FRR
+        # still reported them installed and every session stayed up, so all Gateway
+        # VIPs (192.168.110.x) were unreachable for ~5 h with nothing firing. The
+        # router runs /usr/local/sbin/bgp-route-watchdog (home-lab repo,
+        # opnsense/sbin) which writes these metrics and restarts FRR itself.
+        - alert: OPNsenseBGPRoutesMissingFromKernel
+          annotations:
+            summary: OPNsense kernel has {{ $value }} fewer BGP routes than FRR
+            description: >-
+              FRR holds more 192.168.110.x prefixes than the kernel routing table.
+              Traffic to those Gateway/LB VIPs leaves via the WAN default route and
+              is lost. The watchdog should have restarted FRR after about 45 s; if
+              this is still firing, run `sudo configctl service restart frr` on the
+              router (ssh opnsense) and check `netstat -rn -f inet | grep -c
+              ^192.168.110` (expect 6 VIPs x 8 nodes = 48). Threshold: any
+              difference for 2 minutes, longer than the watchdog's 45 s plus
+              restart time.
+          expr: >-
+            router_bgp_routes_bgp_table{instance="opnsense"}
+            - router_bgp_routes_kernel{instance="opnsense"} > 0
+          for: 2m
+          labels:
+            severity: critical
+        - alert: OPNsenseBGPRouteWatchdogHealed
+          annotations:
+            summary: The router watchdog restarted FRR to restore BGP routes
+            description: >-
+              Kernel routes to the cluster VIPs vanished and the watchdog fixed it by
+              restarting FRR. Find the trigger: `grep 'link state' /var/log/system/*`
+              on the router for an igb2 flap, and the UniFi switch event log.
+          expr: increase(router_bgp_route_heals_total{instance="opnsense"}[30m]) > 0
+          labels:
+            severity: warning
+        - alert: OPNsenseBGPRouteWatchdogStale
+          annotations:
+            summary: The router BGP route watchdog has stopped reporting
+            description: >-
+              No fresh router_bgp_* metrics: the watchdog is not running (or the
+              textfile collector is not reading /var/tmp/node_exporter). Restart it
+              with /usr/local/etc/rc.syshook.d/start/85-bgp-route-watchdog on the router.
+          expr: >-
+            time() - router_bgp_watchdog_last_run_timestamp_seconds{instance="opnsense"} > 300
+            or absent(router_bgp_watchdog_last_run_timestamp_seconds{instance="opnsense"})
+          for: 10m
+          labels:
+            severity: warning
         - alert: OPNsenseMetricsMissing
           annotations:
             summary: No metrics from OPNsense ({{ $labels.job }})
