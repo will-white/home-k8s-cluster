@@ -5,6 +5,7 @@ resources:
   - ./namespace.yaml
   - ./cilium-gateway/ks.yaml
   - ./cloudflared/ks.yaml
+  - ./tailscale/ks.yaml
   - ./adguard-dns-external/ks.yaml
   - ./adguard-dns-internal/ks.yaml
   - ./cloudflare-dns/ks.yaml
